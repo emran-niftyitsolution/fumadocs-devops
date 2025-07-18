@@ -1,8 +1,1246 @@
 ---
-title: "Day 26: Title"
-description: "DevOps 100 Days - Day 26"
+title: "Day 26: Advanced Networking and Security"
+description: "Master advanced networking architecture, security protocols, monitoring, zero trust implementation, and cloud networking best practices"
 ---
 
-# Day 26
+# Day 26: Advanced Networking and Security
 
-Content coming soon.
+## Learning Objectives
+
+- Understand advanced network architecture and design patterns
+- Master network security protocols and implementations
+- Learn network monitoring and troubleshooting techniques
+- Explore zero trust networking principles
+- Implement cloud networking best practices
+- Understand network automation and orchestration
+
+## Network Architecture Fundamentals
+
+### Network Design Patterns
+
+```yaml
+# Network Architecture Patterns
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: network-patterns
+data:
+  patterns: |
+    # Hub and Spoke Architecture
+    hub_spoke:
+      description: "Centralized network with spoke connections"
+      components:
+        - hub: "Central network hub"
+        - spokes: "Branch networks"
+        - transit: "Hub-to-spoke connectivity"
+      use_cases:
+        - "Multi-region deployments"
+        - "Branch office connectivity"
+        - "Cloud-to-on-premises"
+
+    # Mesh Network Architecture
+    mesh_network:
+      description: "Full mesh connectivity between nodes"
+      components:
+        - nodes: "Network nodes"
+        - connections: "Direct node-to-node links"
+        - routing: "Dynamic routing protocols"
+      use_cases:
+        - "High availability requirements"
+        - "Low latency applications"
+        - "Distributed systems"
+
+    # Three-Tier Architecture
+    three_tier:
+      description: "Web, application, and database tiers"
+      components:
+        - web_tier: "Load balancers and web servers"
+        - app_tier: "Application servers"
+        - db_tier: "Database servers"
+      use_cases:
+        - "Traditional web applications"
+        - "Scalable architectures"
+        - "Security segmentation"
+```
+
+### Network Segmentation
+
+```yaml
+# Network Segmentation Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: network-segmentation
+data:
+  segments: |
+    # Network Segments
+    dmz:
+      description: "Demilitarized Zone"
+      subnets:
+        - "10.0.1.0/24"
+        - "10.0.2.0/24"
+      services:
+        - "Web servers"
+        - "Load balancers"
+        - "Public APIs"
+      security:
+        - "Firewall rules"
+        - "Intrusion detection"
+        - "DDoS protection"
+
+    application:
+      description: "Application Tier"
+      subnets:
+        - "10.0.10.0/24"
+        - "10.0.11.0/24"
+      services:
+        - "Application servers"
+        - "Microservices"
+        - "API gateways"
+      security:
+        - "Network policies"
+        - "Service mesh"
+        - "TLS encryption"
+
+    database:
+      description: "Database Tier"
+      subnets:
+        - "10.0.20.0/24"
+        - "10.0.21.0/24"
+      services:
+        - "Database servers"
+        - "Cache servers"
+        - "Storage systems"
+      security:
+        - "Strict access controls"
+        - "Encryption at rest"
+        - "Audit logging"
+
+    management:
+      description: "Management Network"
+      subnets:
+        - "10.0.100.0/24"
+      services:
+        - "Monitoring systems"
+        - "Logging servers"
+        - "Management tools"
+      security:
+        - "VPN access only"
+        - "Multi-factor authentication"
+        - "Jump hosts"
+```
+
+## Advanced Security Protocols
+
+### TLS/SSL Configuration
+
+```yaml
+# TLS Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tls-config
+data:
+  tls_settings: |
+    # TLS 1.3 Configuration
+    tls_1_3:
+      enabled: true
+      cipher_suites:
+        - "TLS_AES_256_GCM_SHA384"
+        - "TLS_CHACHA20_POLY1305_SHA256"
+        - "TLS_AES_128_GCM_SHA256"
+      key_exchange:
+        - "ECDHE"
+        - "DHE"
+      certificate_verification:
+        - "Strict hostname checking"
+        - "Certificate transparency"
+        - "OCSP stapling"
+
+    # Security Headers
+    security_headers:
+      - "Strict-Transport-Security: max-age=31536000; includeSubDomains"
+      - "X-Content-Type-Options: nosniff"
+      - "X-Frame-Options: DENY"
+      - "X-XSS-Protection: 1; mode=block"
+      - "Referrer-Policy: strict-origin-when-cross-origin"
+      - "Content-Security-Policy: default-src 'self'"
+```
+
+```nginx
+# Nginx TLS Configuration
+server {
+    listen 443 ssl http2;
+    server_name example.com;
+
+    # SSL Configuration
+    ssl_certificate /etc/ssl/certs/example.com.crt;
+    ssl_certificate_key /etc/ssl/private/example.com.key;
+
+    # Modern SSL Configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # Security Headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options DENY always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" always;
+
+    # OCSP Stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+    resolver 8.8.8.8 8.8.4.4 valid=300s;
+    resolver_timeout 5s;
+
+    location / {
+        root /var/www/html;
+        index index.html;
+    }
+}
+```
+
+### VPN and Remote Access
+
+```yaml
+# OpenVPN Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vpn-config
+data:
+  openvpn.conf: |
+    # OpenVPN Server Configuration
+    port 1194
+    proto udp
+    dev tun
+    ca ca.crt
+    cert server.crt
+    key server.key
+    dh dh2048.pem
+    server 10.8.0.0 255.255.255.0
+    ifconfig-pool-persist ipp.txt
+    push "redirect-gateway def1 bypass-dhcp"
+    push "dhcp-option DNS 8.8.8.8"
+    push "dhcp-option DNS 8.8.4.4"
+    keepalive 10 120
+    tls-auth ta.key 0
+    cipher AES-256-GCM
+    auth SHA256
+    key-direction 0
+    user nobody
+    group nobody
+    persist-key
+    persist-tun
+    status openvpn-status.log
+    verb 3
+    explicit-exit-notify 1
+```
+
+```yaml
+# WireGuard Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wireguard-config
+data:
+  wg0.conf: |
+    [Interface]
+    PrivateKey = <server_private_key>
+    Address = 10.0.0.1/24
+    ListenPort = 51820
+    PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+
+    [Peer]
+    PublicKey = <client_public_key>
+    AllowedIPs = 10.0.0.2/32
+    PersistentKeepalive = 25
+```
+
+## Network Monitoring and Troubleshooting
+
+### Network Monitoring Tools
+
+```yaml
+# Network Monitoring Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: network-monitoring
+data:
+  monitoring_tools: |
+    # Network Monitoring Stack
+    prometheus:
+      description: "Metrics collection and storage"
+      features:
+        - "Network metrics collection"
+        - "Custom exporters"
+        - "Alerting rules"
+      exporters:
+        - "node-exporter"
+        - "blackbox-exporter"
+        - "snmp-exporter"
+
+    grafana:
+      description: "Network dashboards and visualization"
+      dashboards:
+        - "Network throughput"
+        - "Latency monitoring"
+        - "Error rates"
+        - "Bandwidth utilization"
+
+    netflow:
+      description: "Network flow analysis"
+      collectors:
+        - "nfdump"
+        - "nfsen"
+        - "nfdump"
+
+    packet_capture:
+      description: "Deep packet inspection"
+      tools:
+        - "tcpdump"
+        - "wireshark"
+        - "tshark"
+```
+
+### Network Troubleshooting Commands
+
+```bash
+# Network Troubleshooting Toolkit
+#!/bin/bash
+
+# Network connectivity tests
+echo "=== Network Connectivity Tests ==="
+ping -c 4 google.com
+traceroute google.com
+mtr google.com
+
+# DNS resolution
+echo "=== DNS Resolution ==="
+nslookup google.com
+dig google.com
+host google.com
+
+# Port scanning
+echo "=== Port Scanning ==="
+nmap -sT -p 80,443,22,21 localhost
+nmap -sU -p 53,123,161 localhost
+
+# Network interface information
+echo "=== Network Interface Info ==="
+ip addr show
+ip route show
+ip link show
+
+# Network statistics
+echo "=== Network Statistics ==="
+ss -tuln
+netstat -i
+cat /proc/net/dev
+
+# Firewall rules
+echo "=== Firewall Rules ==="
+iptables -L -n -v
+iptables -L -n -v -t nat
+
+# Network performance
+echo "=== Network Performance ==="
+iperf3 -c speedtest.local
+iperf3 -s &
+iperf3 -c localhost -t 10
+killall iperf3
+
+# Packet capture
+echo "=== Packet Capture ==="
+tcpdump -i eth0 -c 10 -w capture.pcap
+tcpdump -r capture.pcap
+
+# Network configuration
+echo "=== Network Configuration ==="
+cat /etc/network/interfaces
+cat /etc/resolv.conf
+cat /etc/hosts
+```
+
+### Network Performance Monitoring
+
+```python
+# Network Performance Monitor
+import time
+import subprocess
+import json
+from typing import Dict, List
+from dataclasses import dataclass
+from datetime import datetime
+
+@dataclass
+class NetworkMetrics:
+    timestamp: datetime
+    interface: str
+    rx_bytes: int
+    tx_bytes: int
+    rx_packets: int
+    tx_packets: int
+    rx_errors: int
+    tx_errors: int
+    latency_ms: float
+    packet_loss: float
+
+class NetworkMonitor:
+    def __init__(self):
+        self.metrics_history: List[NetworkMetrics] = []
+
+    def get_interface_stats(self, interface: str = "eth0") -> Dict:
+        """Get network interface statistics"""
+        try:
+            with open(f"/proc/net/dev", "r") as f:
+                lines = f.readlines()
+
+            for line in lines:
+                if interface in line:
+                    parts = line.split()
+                    return {
+                        "rx_bytes": int(parts[1]),
+                        "tx_bytes": int(parts[9]),
+                        "rx_packets": int(parts[2]),
+                        "tx_packets": int(parts[10]),
+                        "rx_errors": int(parts[3]),
+                        "tx_errors": int(parts[11])
+                    }
+        except Exception as e:
+            print(f"Error reading interface stats: {e}")
+            return {}
+
+    def measure_latency(self, target: str = "8.8.8.8") -> float:
+        """Measure network latency"""
+        try:
+            result = subprocess.run(
+                ["ping", "-c", "1", "-W", "1", target],
+                capture_output=True,
+                text=True
+            )
+
+            if result.returncode == 0:
+                # Extract time from ping output
+                for line in result.stdout.split('\n'):
+                    if 'time=' in line:
+                        time_str = line.split('time=')[1].split()[0]
+                        return float(time_str)
+
+            return -1.0  # Indicates failure
+        except Exception as e:
+            print(f"Error measuring latency: {e}")
+            return -1.0
+
+    def measure_packet_loss(self, target: str = "8.8.8.8", count: int = 10) -> float:
+        """Measure packet loss percentage"""
+        try:
+            result = subprocess.run(
+                ["ping", "-c", str(count), "-W", "1", target],
+                capture_output=True,
+                text=True
+            )
+
+            if result.returncode == 0:
+                # Parse ping statistics
+                for line in result.stdout.split('\n'):
+                    if 'packets transmitted' in line:
+                        parts = line.split(',')
+                        transmitted = int(parts[0].split()[0])
+                        received = int(parts[1].split()[0])
+                        loss_percentage = ((transmitted - received) / transmitted) * 100
+                        return loss_percentage
+
+            return 100.0  # 100% loss if ping fails
+        except Exception as e:
+            print(f"Error measuring packet loss: {e}")
+            return 100.0
+
+    def collect_metrics(self, interface: str = "eth0") -> NetworkMetrics:
+        """Collect comprehensive network metrics"""
+        stats = self.get_interface_stats(interface)
+        latency = self.measure_latency()
+        packet_loss = self.measure_packet_loss()
+
+        metrics = NetworkMetrics(
+            timestamp=datetime.now(),
+            interface=interface,
+            rx_bytes=stats.get("rx_bytes", 0),
+            tx_bytes=stats.get("tx_bytes", 0),
+            rx_packets=stats.get("rx_packets", 0),
+            tx_packets=stats.get("tx_packets", 0),
+            rx_errors=stats.get("rx_errors", 0),
+            tx_errors=stats.get("tx_errors", 0),
+            latency_ms=latency,
+            packet_loss=packet_loss
+        )
+
+        self.metrics_history.append(metrics)
+        return metrics
+
+    def generate_report(self) -> Dict:
+        """Generate network performance report"""
+        if not self.metrics_history:
+            return {}
+
+        recent_metrics = self.metrics_history[-10:]  # Last 10 measurements
+
+        avg_latency = sum(m.latency_ms for m in recent_metrics if m.latency_ms > 0) / len([m for m in recent_metrics if m.latency_ms > 0])
+        avg_packet_loss = sum(m.packet_loss for m in recent_metrics) / len(recent_metrics)
+
+        # Calculate bandwidth usage
+        if len(recent_metrics) >= 2:
+            time_diff = (recent_metrics[-1].timestamp - recent_metrics[0].timestamp).total_seconds()
+            bytes_diff = (recent_metrics[-1].rx_bytes + recent_metrics[-1].tx_bytes) - (recent_metrics[0].rx_bytes + recent_metrics[0].tx_bytes)
+            bandwidth_mbps = (bytes_diff * 8) / (time_diff * 1000000)  # Convert to Mbps
+        else:
+            bandwidth_mbps = 0
+
+        return {
+            "average_latency_ms": avg_latency,
+            "average_packet_loss_percent": avg_packet_loss,
+            "bandwidth_usage_mbps": bandwidth_mbps,
+            "total_measurements": len(self.metrics_history),
+            "last_measurement": self.metrics_history[-1].timestamp.isoformat()
+        }
+
+# Usage
+monitor = NetworkMonitor()
+
+# Collect metrics for 1 minute
+for i in range(60):
+    metrics = monitor.collect_metrics()
+    print(f"Latency: {metrics.latency_ms}ms, Packet Loss: {metrics.packet_loss}%")
+    time.sleep(1)
+
+# Generate report
+report = monitor.generate_report()
+print(json.dumps(report, indent=2))
+```
+
+## Zero Trust Networking
+
+### Zero Trust Architecture
+
+```yaml
+# Zero Trust Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zero-trust-config
+data:
+  zero_trust: |
+    # Zero Trust Principles
+    principles:
+      - "Never trust, always verify"
+      - "Assume breach"
+      - "Verify explicitly"
+      - "Use least privilege access"
+      - "Monitor and log everything"
+
+    # Identity Verification
+    identity:
+      multi_factor_authentication: true
+      single_sign_on: true
+      identity_providers:
+        - "Active Directory"
+        - "LDAP"
+        - "SAML"
+        - "OAuth 2.0"
+      device_verification: true
+      certificate_based_auth: true
+
+    # Network Segmentation
+    segmentation:
+      micro_segmentation: true
+      network_policies: true
+      service_mesh: true
+      api_gateway: true
+      load_balancer_security: true
+
+    # Continuous Monitoring
+    monitoring:
+      real_time_monitoring: true
+      behavioral_analytics: true
+      threat_detection: true
+      automated_response: true
+      audit_logging: true
+```
+
+### Zero Trust Implementation
+
+```yaml
+# Kubernetes Zero Trust Implementation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-api
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-to-database
+spec:
+  podSelector:
+    matchLabels:
+      app: database
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - protocol: TCP
+          port: 5432
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: api-authorization
+spec:
+  selector:
+    matchLabels:
+      app: api
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/default/sa/frontend"]
+      to:
+        - operation:
+            methods: ["GET", "POST"]
+            paths: ["/api/*"]
+    - from:
+        - source:
+            namespaces: ["monitoring"]
+      to:
+        - operation:
+            methods: ["GET"]
+            paths: ["/metrics"]
+```
+
+## Cloud Networking
+
+### AWS VPC Configuration
+
+```yaml
+# AWS VPC Terraform Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-vpc-config
+data:
+  main.tf: |
+    # VPC Configuration
+    resource "aws_vpc" "main" {
+      cidr_block           = "10.0.0.0/16"
+      enable_dns_hostnames = true
+      enable_dns_support   = true
+      
+      tags = {
+        Name = "main-vpc"
+        Environment = "production"
+      }
+    }
+
+    # Public Subnets
+    resource "aws_subnet" "public" {
+      count             = 3
+      vpc_id            = aws_vpc.main.id
+      cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index)
+      availability_zone = data.aws_availability_zones.available.names[count.index]
+      
+      map_public_ip_on_launch = true
+      
+      tags = {
+        Name = "public-subnet-${count.index + 1}"
+      }
+    }
+
+    # Private Subnets
+    resource "aws_subnet" "private" {
+      count             = 3
+      vpc_id            = aws_vpc.main.id
+      cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index + 3)
+      availability_zone = data.aws_availability_zones.available.names[count.index]
+      
+      tags = {
+        Name = "private-subnet-${count.index + 1}"
+      }
+    }
+
+    # Internet Gateway
+    resource "aws_internet_gateway" "main" {
+      vpc_id = aws_vpc.main.id
+      
+      tags = {
+        Name = "main-igw"
+      }
+    }
+
+    # NAT Gateway
+    resource "aws_nat_gateway" "main" {
+      count         = 3
+      allocation_id = aws_eip.nat[count.index].id
+      subnet_id     = aws_subnet.public[count.index].id
+      
+      tags = {
+        Name = "nat-gateway-${count.index + 1}"
+      }
+    }
+
+    # Security Groups
+    resource "aws_security_group" "web" {
+      name_prefix = "web-sg-"
+      vpc_id      = aws_vpc.main.id
+      
+      ingress {
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+      }
+      
+      ingress {
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+      }
+      
+      egress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+      }
+    }
+
+    resource "aws_security_group" "app" {
+      name_prefix = "app-sg-"
+      vpc_id      = aws_vpc.main.id
+      
+      ingress {
+        from_port       = 8080
+        to_port         = 8080
+        protocol        = "tcp"
+        security_groups = [aws_security_group.web.id]
+      }
+      
+      egress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+      }
+    }
+```
+
+### Azure Virtual Network
+
+```yaml
+# Azure Virtual Network Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: azure-vnet-config
+data:
+  vnet.json: |
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-05-01",
+      "name": "main-vnet",
+      "location": "eastus",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": ["10.0.0.0/16"]
+        },
+        "subnets": [
+          {
+            "name": "public-subnet",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "networkSecurityGroup": {
+                "id": "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Network/networkSecurityGroups/public-nsg"
+              },
+              "routeTable": {
+                "id": "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Network/routeTables/public-rt"
+              }
+            }
+          },
+          {
+            "name": "private-subnet",
+            "properties": {
+              "addressPrefix": "10.0.2.0/24",
+              "networkSecurityGroup": {
+                "id": "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Network/networkSecurityGroups/private-nsg"
+              }
+            }
+          }
+        ]
+      }
+    }
+```
+
+## Network Automation
+
+### Network Configuration Management
+
+```yaml
+# Ansible Network Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: network-ansible-config
+data:
+  playbook.yml: |
+    ---
+    - name: Configure Network Infrastructure
+      hosts: network_devices
+      gather_facts: no
+      
+      tasks:
+        - name: Configure VLANs
+          ios_config:
+            lines:
+              - vlan 10
+              - name web
+              - vlan 20
+              - name app
+              - vlan 30
+              - name db
+            parents: interface vlan 10
+          when: ansible_network_os == "ios"
+        
+        - name: Configure Interfaces
+          ios_config:
+            lines:
+              - description "Web Server Interface"
+              - switchport mode access
+              - switchport access vlan 10
+            parents: interface GigabitEthernet1/0/1
+          when: ansible_network_os == "ios"
+        
+        - name: Configure Routing
+          ios_config:
+            lines:
+              - ip route 0.0.0.0 0.0.0.0 192.168.1.1
+            parents: router ospf 1
+          when: ansible_network_os == "ios"
+        
+        - name: Configure Access Lists
+          ios_config:
+            lines:
+              - access-list 100 permit tcp any any eq 80
+              - access-list 100 permit tcp any any eq 443
+              - access-list 100 deny ip any any
+            parents: interface GigabitEthernet1/0/1
+          when: ansible_network_os == "ios"
+```
+
+### Network Monitoring Automation
+
+```python
+# Network Monitoring Automation
+import paramiko
+import yaml
+import json
+from typing import Dict, List
+from dataclasses import dataclass
+from datetime import datetime
+
+@dataclass
+class NetworkDevice:
+    hostname: str
+    ip_address: str
+    device_type: str
+    username: str
+    password: str
+
+class NetworkAutomation:
+    def __init__(self, config_file: str):
+        self.devices = self.load_devices(config_file)
+        self.ssh_clients = {}
+
+    def load_devices(self, config_file: str) -> List[NetworkDevice]:
+        """Load network devices from configuration file"""
+        with open(config_file, 'r') as f:
+            config = yaml.safe_load(f)
+
+        devices = []
+        for device_config in config['devices']:
+            device = NetworkDevice(
+                hostname=device_config['hostname'],
+                ip_address=device_config['ip_address'],
+                device_type=device_config['device_type'],
+                username=device_config['username'],
+                password=device_config['password']
+            )
+            devices.append(device)
+
+        return devices
+
+    def connect_device(self, device: NetworkDevice) -> paramiko.SSHClient:
+        """Establish SSH connection to network device"""
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            ssh.connect(
+                device.ip_address,
+                username=device.username,
+                password=device.password,
+                timeout=10
+            )
+            return ssh
+        except Exception as e:
+            print(f"Failed to connect to {device.hostname}: {e}")
+            return None
+
+    def execute_command(self, device: NetworkDevice, command: str) -> str:
+        """Execute command on network device"""
+        ssh = self.connect_device(device)
+        if not ssh:
+            return ""
+
+        try:
+            stdin, stdout, stderr = ssh.exec_command(command)
+            output = stdout.read().decode('utf-8')
+            ssh.close()
+            return output
+        except Exception as e:
+            print(f"Error executing command on {device.hostname}: {e}")
+            ssh.close()
+            return ""
+
+    def get_interface_status(self, device: NetworkDevice) -> Dict:
+        """Get interface status from network device"""
+        if device.device_type == "cisco_ios":
+            command = "show interfaces"
+        elif device.device_type == "juniper":
+            command = "show interfaces"
+        else:
+            command = "ip link show"
+
+        output = self.execute_command(device, command)
+        return self.parse_interface_status(output, device.device_type)
+
+    def parse_interface_status(self, output: str, device_type: str) -> Dict:
+        """Parse interface status output"""
+        interfaces = {}
+
+        if device_type == "cisco_ios":
+            # Parse Cisco IOS interface output
+            lines = output.split('\n')
+            current_interface = None
+
+            for line in lines:
+                if line.startswith('Interface'):
+                    parts = line.split()
+                    current_interface = parts[0]
+                    interfaces[current_interface] = {
+                        'status': 'up' if 'up' in line else 'down',
+                        'protocol': 'up' if 'up' in line else 'down'
+                    }
+
+        return interfaces
+
+    def configure_interface(self, device: NetworkDevice, interface: str, config: Dict) -> bool:
+        """Configure network interface"""
+        if device.device_type == "cisco_ios":
+            commands = [
+                f"interface {interface}",
+                f"description {config.get('description', '')}",
+                f"ip address {config.get('ip_address', '')} {config.get('subnet_mask', '')}",
+                "no shutdown"
+            ]
+        else:
+            commands = [
+                f"ip addr add {config.get('ip_address', '')}/{config.get('subnet_mask', '')} dev {interface}"
+            ]
+
+        for command in commands:
+            output = self.execute_command(device, command)
+            if "error" in output.lower():
+                print(f"Error configuring {interface} on {device.hostname}")
+                return False
+
+        return True
+
+    def backup_configuration(self, device: NetworkDevice) -> str:
+        """Backup device configuration"""
+        if device.device_type == "cisco_ios":
+            command = "show running-config"
+        elif device.device_type == "juniper":
+            command = "show configuration"
+        else:
+            command = "cat /etc/network/interfaces"
+
+        config = self.execute_command(device, command)
+
+        # Save configuration to file
+        filename = f"backup_{device.hostname}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.cfg"
+        with open(filename, 'w') as f:
+            f.write(config)
+
+        return filename
+
+# Usage
+automation = NetworkAutomation('network_devices.yml')
+
+# Get interface status for all devices
+for device in automation.devices:
+    interfaces = automation.get_interface_status(device)
+    print(f"Device: {device.hostname}")
+    for interface, status in interfaces.items():
+        print(f"  {interface}: {status['status']}")
+
+# Backup configurations
+for device in automation.devices:
+    backup_file = automation.backup_configuration(device)
+    print(f"Backup created: {backup_file}")
+```
+
+## Hands-on Exercises
+
+### Exercise 1: Network Security Setup
+
+```bash
+# Create network security configuration
+cat > network-security.sh << 'EOF'
+#!/bin/bash
+
+# Configure firewall rules
+echo "Configuring firewall rules..."
+
+# Allow SSH
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+
+# Allow HTTP/HTTPS
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+# Allow DNS
+iptables -A INPUT -p udp --dport 53 -j ACCEPT
+
+# Allow ICMP (ping)
+iptables -A INPUT -p icmp -j ACCEPT
+
+# Allow established connections
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Drop all other incoming traffic
+iptables -A INPUT -j DROP
+
+# Save rules
+iptables-save > /etc/iptables/rules.v4
+
+echo "Firewall rules configured successfully"
+EOF
+
+chmod +x network-security.sh
+sudo ./network-security.sh
+```
+
+### Exercise 2: Network Monitoring Setup
+
+```bash
+# Create network monitoring script
+cat > network-monitor.sh << 'EOF'
+#!/bin/bash
+
+# Network monitoring script
+echo "=== Network Monitoring ==="
+
+# Check network interfaces
+echo "Network Interfaces:"
+ip addr show
+
+# Check routing table
+echo "Routing Table:"
+ip route show
+
+# Check network connectivity
+echo "Network Connectivity:"
+ping -c 3 8.8.8.8
+
+# Check DNS resolution
+echo "DNS Resolution:"
+nslookup google.com
+
+# Check open ports
+echo "Open Ports:"
+ss -tuln
+
+# Check network statistics
+echo "Network Statistics:"
+cat /proc/net/dev
+
+# Check firewall status
+echo "Firewall Status:"
+iptables -L -n -v
+EOF
+
+chmod +x network-monitor.sh
+./network-monitor.sh
+```
+
+### Exercise 3: VPN Setup
+
+```bash
+# Create OpenVPN configuration
+cat > openvpn-setup.sh << 'EOF'
+#!/bin/bash
+
+# Install OpenVPN
+sudo apt update
+sudo apt install openvpn easy-rsa
+
+# Create CA directory
+make-cadir ~/openvpn-ca
+cd ~/openvpn-ca
+
+# Configure CA
+cat > vars << 'CA_CONFIG'
+export KEY_COUNTRY="US"
+export KEY_PROVINCE="CA"
+export KEY_CITY="SanFrancisco"
+export KEY_ORG="MyOrganization"
+export KEY_EMAIL="admin@example.com"
+export KEY_OU="MyOrganizationalUnit"
+export KEY_NAME="server"
+CA_CONFIG
+
+# Build CA
+source vars
+./clean-all
+./build-ca
+
+# Build server certificate
+./build-key-server server
+
+# Generate Diffie-Hellman parameters
+./build-dh
+
+# Generate HMAC key
+openvpn --genkey --secret keys/ta.key
+
+# Create server configuration
+sudo cp ~/openvpn-ca/keys/{server.crt,server.key,ca.crt,dh2048.pem,ta.key} /etc/openvpn/
+
+cat > /etc/openvpn/server.conf << 'SERVER_CONFIG'
+port 1194
+proto udp
+dev tun
+ca ca.crt
+cert server.crt
+key server.key
+dh dh2048.pem
+server 10.8.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+keepalive 10 120
+tls-auth ta.key 0
+cipher AES-256-GCM
+auth SHA256
+key-direction 0
+user nobody
+group nogroup
+persist-key
+persist-tun
+status openvpn-status.log
+verb 3
+explicit-exit-notify 1
+SERVER_CONFIG
+
+# Enable IP forwarding
+echo 'net.ipv4.ip_forward=1' | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+
+# Start OpenVPN
+sudo systemctl enable openvpn@server
+sudo systemctl start openvpn@server
+
+echo "OpenVPN server configured successfully"
+EOF
+
+chmod +x openvpn-setup.sh
+sudo ./openvpn-setup.sh
+```
+
+## Assessment Questions
+
+1. **What are the key principles of zero trust networking?**
+
+   - Never trust, always verify, assume breach, verify explicitly, least privilege
+
+2. **How do you implement network segmentation?**
+
+   - VLANs, subnets, firewalls, network policies, micro-segmentation
+
+3. **What are the best practices for network monitoring?**
+
+   - Comprehensive monitoring, real-time alerts, performance metrics, security monitoring
+
+4. **How do you troubleshoot network connectivity issues?**
+
+   - Ping, traceroute, DNS checks, port scanning, packet capture
+
+5. **What are the key components of cloud networking?**
+   - VPCs, subnets, security groups, load balancers, NAT gateways
+
+## Additional Resources
+
+- [Cisco Networking Academy](https://www.netacad.com/)
+- [Juniper Networks Learning](https://learningportal.juniper.net/)
+- [AWS Networking](https://aws.amazon.com/networking/)
+- [Azure Networking](https://docs.microsoft.com/en-us/azure/networking/)
+- [Google Cloud Networking](https://cloud.google.com/network)
+
+## Next Steps
+
+Tomorrow we'll explore **Advanced Database Management**, covering:
+
+- Database architecture and design patterns
+- Performance optimization and tuning
+- High availability and disaster recovery
+- Database security and compliance
+- Database automation and orchestration
