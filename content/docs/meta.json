@@ -1,0 +1,28 @@
+{
+  "pages": [
+    "index",
+    "foundations",
+    "cicd-infrastructure",
+    "advanced-tools",
+    "expert-devops",
+    "tools-comparison",
+    "practical-examples",
+    "career-guide",
+    "test"
+  ],
+  "groups": [
+    {
+      "title": "Learning Path",
+      "pages": [
+        "foundations",
+        "cicd-infrastructure",
+        "advanced-tools",
+        "expert-devops"
+      ]
+    },
+    {
+      "title": "Resources",
+      "pages": ["tools-comparison", "practical-examples", "career-guide"]
+    }
+  ]
+}

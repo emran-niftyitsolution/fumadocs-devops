@@ -1,0 +1,308 @@
+---
+title: "Phase 3: Advanced Tools & Practices"
+description: "Monitoring, security, and advanced DevOps practices"
+---
+
+# 🔧 Phase 3: Advanced Tools & Practices (Day 46–70)
+
+**Goal:** Master advanced DevOps tools, security practices, and monitoring solutions.
+
+This phase builds upon the foundation established in Phase 2, focusing on advanced concepts that are essential for production-ready DevOps environments.
+
+## 📋 Learning Objectives
+
+By the end of Phase 3, you will be able to:
+
+- Implement comprehensive monitoring and logging solutions
+- Design and implement advanced CI/CD pipelines
+- Integrate security practices into DevOps workflows
+- Master advanced Kubernetes concepts
+- Implement GitOps practices
+- Work with serverless architectures
+- Optimize cloud infrastructure
+
+## 🗓️ Daily Breakdown
+
+### 🔹 Day 46–49: Monitoring & Logging
+
+- Prometheus, Grafana setup and configuration
+- ELK/EFK stack implementation
+- Application performance monitoring
+- Alerting and notification systems
+
+### 🔹 Day 50–53: Advanced CI/CD
+
+- Parallel stages and pipeline optimization
+- Blue-green and canary deployments
+- Multi-environment deployments
+- Pipeline security and compliance
+
+### 🔹 Day 54–56: DevSecOps
+
+- Security scanning tools integration
+- Secrets management and encryption
+- Vulnerability assessment
+- Compliance automation
+
+### 🔹 Day 57–60: Advanced Kubernetes
+
+- StatefulSets, DaemonSets, Jobs
+- ConfigMaps, Secrets, RBAC
+- Custom Resource Definitions (CRDs)
+- Kubernetes operators
+
+### 🔹 Day 61–63: GitOps
+
+- ArgoCD and Flux implementation
+- GitOps workflow design
+- Multi-cluster management
+- Deployment strategies
+
+### 🔹 Day 64–66: Cloud Deep Dive
+
+- Advanced cloud services
+- Multi-cloud strategies
+- Cost optimization techniques
+- Cloud-native architectures
+
+### 🔹 Day 67–70: Serverless
+
+- AWS Lambda, Azure Functions
+- Serverless architecture patterns
+- Event-driven programming
+- Serverless monitoring and debugging
+
+## 📚 Detailed Topics
+
+<Cards>
+  <Card
+    title="Monitoring & Logging"
+    href="/docs/advanced-tools/monitoring-logging"
+    description="Implement comprehensive monitoring and logging solutions"
+  />
+  <Card
+    title="Advanced CI/CD"
+    href="/docs/advanced-tools/advanced-cicd"
+    description="Master advanced pipeline techniques and deployment strategies"
+  />
+  <Card
+    title="DevSecOps"
+    href="/docs/advanced-tools/devsecops"
+    description="Integrate security into DevOps workflows"
+  />
+  <Card
+    title="Advanced Kubernetes"
+    href="/docs/advanced-tools/advanced-kubernetes"
+    description="Master advanced Kubernetes concepts and patterns"
+  />
+  <Card
+    title="GitOps"
+    href="/docs/advanced-tools/gitops"
+    description="Implement GitOps practices with ArgoCD and Flux"
+  />
+  <Card
+    title="Cloud Deep Dive"
+    href="/docs/advanced-tools/cloud-deep-dive"
+    description="Advanced cloud services and multi-cloud strategies"
+  />
+  <Card
+    title="Serverless Architecture"
+    href="/docs/advanced-tools/serverless-architecture"
+    description="Build serverless applications and architectures"
+  />
+</Cards>
+
+## 🎯 Phase 3 Deliverables
+
+By the end of this phase, you should have:
+
+1. **Monitoring Dashboard**: Complete monitoring solution with Prometheus and Grafana
+2. **Logging Infrastructure**: Centralized logging with ELK/EFK stack
+3. **Advanced Pipeline**: Multi-stage CI/CD pipeline with security scanning
+4. **Secure Infrastructure**: DevSecOps implementation with security tools
+5. **GitOps Workflow**: Automated deployment using GitOps principles
+6. **Serverless Application**: Function-based application with monitoring
+
+## 🛠️ Advanced Tools You'll Master
+
+- **Prometheus & Grafana**: Monitoring and alerting
+- **ELK Stack**: Log aggregation and analysis
+- **SonarQube**: Code quality and security
+- **Vault**: Secrets management
+- **ArgoCD/Flux**: GitOps deployment
+- **AWS Lambda/Azure Functions**: Serverless computing
+- **Advanced Kubernetes**: Operators, CRDs, RBAC
+
+## 📊 Monitoring & Observability
+
+### **Three Pillars of Observability**
+
+- **Logs**: Structured logging for debugging and auditing
+- **Metrics**: Time-series data for performance monitoring
+- **Traces**: Distributed tracing for request flow analysis
+
+### **Monitoring Stack**
+
+```
+Application → Prometheus → Grafana → Alerting
+     ↓
+   Logs → Elasticsearch → Kibana → Log Analysis
+     ↓
+  Traces → Jaeger → Distributed Tracing
+```
+
+### **Key Metrics to Monitor**
+
+- **Application Metrics**: Response time, error rate, throughput
+- **Infrastructure Metrics**: CPU, memory, disk, network
+- **Business Metrics**: User engagement, revenue, conversions
+- **Security Metrics**: Failed logins, suspicious activities
+
+## 🔒 DevSecOps Integration
+
+### **Security in CI/CD Pipeline**
+
+```
+Code → Static Analysis → Build → Security Scan → Test → Deploy → Runtime Protection
+```
+
+### **Security Tools Integration**
+
+- **SAST**: Static Application Security Testing
+- **DAST**: Dynamic Application Security Testing
+- **SCA**: Software Composition Analysis
+- **Container Scanning**: Image vulnerability scanning
+- **Infrastructure Scanning**: IaC security validation
+
+### **Secrets Management**
+
+- **HashiCorp Vault**: Centralized secrets management
+- **AWS Secrets Manager**: Cloud-native secrets storage
+- **Azure Key Vault**: Microsoft's secrets management
+- **Kubernetes Secrets**: Native K8s secrets (basic)
+
+## 🚀 Advanced Deployment Strategies
+
+### **Blue-Green Deployment**
+
+```yaml
+# Kubernetes Blue-Green example
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: myapp
+        version: blue
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:blue
+          ports:
+            - containerPort: 8080
+```
+
+### **Canary Deployment**
+
+```yaml
+# Canary deployment with traffic splitting
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "10"
+spec:
+  rules:
+    - host: myapp.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp-canary
+                port:
+                  number: 80
+```
+
+## ☸️ Advanced Kubernetes
+
+### **Custom Resource Definitions (CRDs)**
+
+```yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: applications.example.com
+spec:
+  group: example.com
+  names:
+    kind: Application
+    plural: applications
+    singular: application
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                replicas:
+                  type: integer
+```
+
+### **Kubernetes Operators**
+
+- **Operator Pattern**: Extend Kubernetes with custom controllers
+- **Helm Charts**: Package and deploy applications
+- **StatefulSets**: Stateful applications with persistent storage
+- **DaemonSets**: Run pods on all nodes
+- **Jobs & CronJobs**: Batch processing and scheduled tasks
+
+## 🔄 GitOps Workflow
+
+### **ArgoCD Example**
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/myorg/myapp
+    targetRevision: HEAD
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+
+## 🚀 Next Steps
+
+After completing Phase 3, you'll be ready to move on to [Phase 4: Expert & Real-world DevOps](/docs/expert-devops), where you'll learn about SRE practices, scalability, and building your DevOps career.
+
+---
+
+**Ready to advance?** Start with [Monitoring & Logging](/docs/advanced-tools/monitoring-logging) and build your observability foundation!

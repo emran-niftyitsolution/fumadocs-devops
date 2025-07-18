@@ -1,0 +1,421 @@
+---
+title: Phase 2 CI/CD Infrastructure
+description: Jenkins Docker Kubernetes and Terraform fundamentals
+---
+
+# 🚀 Phase 2: CI/CD & Infrastructure as Code (Day 21–45)
+
+**Goal:** Master CI/CD pipelines, containerization, orchestration, and infrastructure automation.
+
+This phase focuses on the core tools and practices that define modern DevOps. You'll learn how to automate the entire software delivery pipeline from code commit to production deployment.
+
+## 📋 Learning Objectives
+
+By the end of Phase 2, you will be able to:
+
+- Design and implement CI/CD pipelines
+- Containerize applications with Docker
+- Orchestrate containers with Kubernetes
+- Automate infrastructure with Terraform
+- Implement monitoring and logging
+- Manage configuration and secrets
+- Deploy applications to cloud platforms
+
+## 🗓️ Daily Breakdown
+
+### 🔹 Day 21–24: CI/CD Fundamentals
+
+- Continuous Integration concepts
+- Jenkins installation and configuration
+- Pipeline as Code (Jenkinsfile)
+- Webhook integration with Git
+
+### 🔹 Day 25–28: Docker & Containerization
+
+- Container fundamentals
+- Docker installation and basic commands
+- Dockerfile best practices
+- Multi-stage builds
+- Docker Compose
+
+### 🔹 Day 29–32: Kubernetes Basics
+
+- Container orchestration concepts
+- Kubernetes architecture
+- Pods, Services, Deployments
+- kubectl commands and YAML manifests
+
+### 🔹 Day 33–36: Advanced Kubernetes
+
+- ConfigMaps and Secrets
+- Persistent Volumes
+- Ingress controllers
+- Helm charts and package management
+
+### 🔹 Day 37–40: Infrastructure as Code
+
+- Terraform fundamentals
+- Provider configuration
+- Resource management
+- State management and remote state
+
+### 🔹 Day 41–45: Advanced IaC & Cloud
+
+- Multi-cloud deployments
+- Advanced Terraform patterns
+- Cloud provider integration
+- Cost optimization strategies
+
+## 📚 Detailed Topics
+
+<Cards>
+  <Card
+    title="CI/CD Fundamentals"
+    href="/docs/cicd-infrastructure/cicd-fundamentals"
+    description="Learn continuous integration and deployment concepts"
+  />
+  <Card
+    title="Jenkins Mastery"
+    href="/docs/cicd-infrastructure/jenkins-mastery"
+    description="Master Jenkins for CI/CD pipeline automation"
+  />
+  <Card
+    title="Docker & Containerization"
+    href="/docs/cicd-infrastructure/docker-containerization"
+    description="Containerize applications with Docker"
+  />
+  <Card
+    title="Kubernetes Basics"
+    href="/docs/cicd-infrastructure/kubernetes-basics"
+    description="Learn Kubernetes container orchestration"
+  />
+  <Card
+    title="Advanced Kubernetes"
+    href="/docs/cicd-infrastructure/advanced-kubernetes"
+    description="Master advanced Kubernetes concepts"
+  />
+  <Card
+    title="Terraform & IaC"
+    href="/docs/cicd-infrastructure/terraform-iac"
+    description="Automate infrastructure with Terraform"
+  />
+  <Card
+    title="Cloud Integration"
+    href="/docs/cicd-infrastructure/cloud-integration"
+    description="Deploy to cloud platforms effectively"
+  />
+</Cards>
+
+## 🎯 Phase 2 Deliverables
+
+By the end of this phase, you should have:
+
+1. **CI/CD Pipeline**: Complete Jenkins pipeline with automated testing and deployment
+2. **Containerized Application**: Docker image with multi-stage build
+3. **Kubernetes Cluster**: Working cluster with deployed applications
+4. **Infrastructure Code**: Terraform modules for cloud resources
+5. **Monitoring Setup**: Basic monitoring and logging infrastructure
+6. **Cloud Deployment**: Applications running on cloud platforms
+
+## 🛠️ Tools You'll Master
+
+- **Jenkins**: CI/CD pipeline automation
+- **Docker**: Containerization and image management
+- **Kubernetes**: Container orchestration
+- **Terraform**: Infrastructure as Code
+- **Helm**: Kubernetes package manager
+- **Docker Compose**: Multi-container applications
+- **kubectl**: Kubernetes command-line tool
+
+## 🔄 CI/CD Pipeline Architecture
+
+### **Basic Pipeline Flow**
+
+```
+Code Commit → Git Hook → Jenkins → Build → Test → Package → Deploy → Monitor
+```
+
+### **Pipeline Stages**
+
+1. **Build**: Compile code and create artifacts
+2. **Test**: Run unit, integration, and security tests
+3. **Package**: Create Docker images or deployment packages
+4. **Deploy**: Deploy to staging/production environments
+5. **Monitor**: Verify deployment and monitor application health
+
+### **Jenkins Pipeline Example**
+
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+        stage('Package') {
+            steps {
+                sh 'docker build -t myapp .'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh 'kubectl apply -f k8s/'
+            }
+        }
+    }
+}
+```
+
+## 🐳 Docker Best Practices
+
+### **Dockerfile Optimization**
+
+- Use multi-stage builds
+- Minimize layer count
+- Use specific base images
+- Copy only necessary files
+- Set proper user permissions
+
+### **Security Considerations**
+
+- Scan images for vulnerabilities
+- Use non-root users
+- Minimize attack surface
+- Keep base images updated
+- Use secrets management
+
+### **Docker Compose Example**
+
+```yaml
+version: "3.8"
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - db
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=myapp
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+```
+
+## ☸️ Kubernetes Fundamentals
+
+### **Core Concepts**
+
+- **Pods**: Smallest deployable units
+- **Services**: Network abstraction for pods
+- **Deployments**: Declarative updates for pods
+- **ConfigMaps**: Configuration data
+- **Secrets**: Sensitive data storage
+
+### **Basic Kubernetes Manifest**
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: url
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  selector:
+    app: myapp
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: LoadBalancer
+```
+
+## 🏗️ Infrastructure as Code with Terraform
+
+### **Terraform Basics**
+
+```hcl
+# main.tf
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "us-west-2"
+}
+
+resource "aws_instance" "web" {
+  ami           = "ami-12345678"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = "WebServer"
+  }
+}
+```
+
+### **Terraform Best Practices**
+
+- Use remote state storage
+- Implement proper state locking
+- Use workspaces for environments
+- Follow naming conventions
+- Implement proper error handling
+
+## 🔧 Advanced CI/CD Patterns
+
+### **Blue-Green Deployment**
+
+```yaml
+# Blue deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: myapp
+        version: blue
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:blue
+          ports:
+            - containerPort: 8080
+```
+
+### **Canary Deployment**
+
+```yaml
+# Canary deployment with traffic splitting
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "10"
+spec:
+  rules:
+    - host: myapp.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp-canary
+                port:
+                  number: 80
+```
+
+## 📊 Monitoring and Logging
+
+### **Application Monitoring**
+
+- **Metrics**: CPU, memory, disk usage
+- **Logs**: Application and system logs
+- **Traces**: Distributed request tracing
+- **Alerts**: Proactive issue detection
+
+### **Monitoring Stack**
+
+```
+Application → Prometheus → Grafana → Alerting
+     ↓
+   Logs → Elasticsearch → Kibana → Log Analysis
+```
+
+## 🚀 Cloud Integration
+
+### **Multi-Cloud Strategy**
+
+- **AWS**: EC2, EKS, Lambda, CloudFormation
+- **Azure**: VMs, AKS, Functions, ARM templates
+- **GCP**: Compute Engine, GKE, Cloud Functions, Deployment Manager
+
+### **Cost Optimization**
+
+- Use spot/preemptible instances
+- Implement auto-scaling
+- Monitor resource usage
+- Right-size instances
+- Use reserved instances
+
+## 📚 Resources
+
+### **Documentation**
+
+- Jenkins User Documentation
+- Docker Official Documentation
+- Kubernetes Documentation
+- Terraform Documentation
+
+### **Practice Platforms**
+
+- Katacoda Kubernetes Scenarios
+- Play with Docker
+- Terraform Cloud
+- AWS Free Tier
+
+### **Community**
+
+- Jenkins Community
+- Docker Community
+- Kubernetes Slack
+- HashiCorp Community
+
+---
+
+**Ready to automate everything?** Start with [CI/CD Fundamentals](/docs/cicd-infrastructure/cicd-fundamentals) and build your first pipeline!

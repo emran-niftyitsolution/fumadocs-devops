@@ -1,0 +1,502 @@
+---
+title: "Networking Basics"
+description: "Essential networking concepts for DevOps engineering"
+---
+
+# 🌐 Networking Basics for DevOps
+
+## Introduction
+
+Networking is fundamental to DevOps. Understanding how systems communicate, how to troubleshoot connectivity issues, and how to configure network services is essential for any DevOps engineer.
+
+## 🏗️ OSI Model
+
+The Open Systems Interconnection (OSI) model describes seven layers of network communication:
+
+### **Layer 7: Application**
+
+- HTTP, HTTPS, FTP, SSH, DNS
+- User applications and protocols
+
+### **Layer 6: Presentation**
+
+- Data formatting, encryption, compression
+- SSL/TLS, JPEG, MPEG
+
+### **Layer 5: Session**
+
+- Session management, authentication
+- NetBIOS, RPC
+
+### **Layer 4: Transport**
+
+- End-to-end communication
+- TCP, UDP
+
+### **Layer 3: Network**
+
+- Logical addressing and routing
+- IP, ICMP, OSPF, BGP
+
+### **Layer 2: Data Link**
+
+- Physical addressing, error detection
+- Ethernet, MAC addresses
+
+### **Layer 1: Physical**
+
+- Physical transmission of bits
+- Cables, switches, hubs
+
+## 🌍 TCP/IP Fundamentals
+
+### **TCP/IP Model**
+
+```
+Application Layer    (HTTP, FTP, SSH)
+Transport Layer     (TCP, UDP)
+Internet Layer      (IP, ICMP)
+Network Access Layer (Ethernet, WiFi)
+```
+
+### **IP Addressing**
+
+#### **IPv4**
+
+- 32-bit addresses (4 bytes)
+- Format: xxx.xxx.xxx.xxx
+- Example: 192.168.1.100
+
+#### **IPv6**
+
+- 128-bit addresses (16 bytes)
+- Format: xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx
+- Example: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+
+### **IP Address Classes**
+
+```
+Class A: 1.0.0.0 - 126.255.255.255
+Class B: 128.0.0.0 - 191.255.255.255
+Class C: 192.0.0.0 - 223.255.255.255
+Class D: 224.0.0.0 - 239.255.255.255 (Multicast)
+Class E: 240.0.0.0 - 255.255.255.255 (Reserved)
+```
+
+### **Private IP Ranges**
+
+```
+10.0.0.0 - 10.255.255.255
+172.16.0.0 - 172.31.255.255
+192.168.0.0 - 192.168.255.255
+```
+
+## 🔌 Common Ports
+
+### **Well-Known Ports (0-1023)**
+
+```
+20, 21    FTP
+22         SSH
+23         Telnet
+25         SMTP
+53         DNS
+80         HTTP
+110        POP3
+143        IMAP
+443        HTTPS
+3306       MySQL
+5432       PostgreSQL
+8080       HTTP (Alternative)
+```
+
+### **Registered Ports (1024-49151)**
+
+```
+27017      MongoDB
+6379        Redis
+9200        Elasticsearch
+15672      RabbitMQ Management
+```
+
+## 🌐 DNS (Domain Name System)
+
+### **DNS Hierarchy**
+
+```
+Root (.)
+├── Top Level Domains (.com, .org, .net)
+├── Second Level Domains (google.com)
+└── Subdomains (mail.google.com)
+```
+
+### **DNS Record Types**
+
+```
+A          IPv4 address
+AAAA       IPv6 address
+CNAME      Canonical name (alias)
+MX         Mail exchange
+NS         Name server
+PTR        Pointer (reverse DNS)
+TXT        Text record
+```
+
+### **DNS Commands**
+
+```bash
+nslookup google.com          # Basic DNS lookup
+dig google.com              # Detailed DNS info
+host google.com             # Simple DNS lookup
+whois google.com            # Domain registration info
+```
+
+## 🔄 HTTP/HTTPS
+
+### **HTTP Methods**
+
+```
+GET        Retrieve data
+POST       Submit data
+PUT        Update resource
+DELETE     Remove resource
+PATCH      Partial update
+HEAD       Get headers only
+OPTIONS    Get allowed methods
+```
+
+### **HTTP Status Codes**
+
+```
+1xx        Informational
+2xx        Success (200 OK)
+3xx        Redirection (301, 302)
+4xx        Client Error (404, 403)
+5xx        Server Error (500, 502)
+```
+
+### **HTTPS**
+
+- HTTP over SSL/TLS
+- Encrypted communication
+- Port 443 (default)
+- Certificate-based authentication
+
+## 🛠️ Network Tools
+
+### **Connectivity Testing**
+
+```bash
+ping google.com              # Test connectivity
+ping -c 4 google.com        # Send 4 packets
+ping -i 0.2 google.com      # Send every 0.2 seconds
+```
+
+### **Route Tracing**
+
+```bash
+traceroute google.com        # Show route to destination
+traceroute -n google.com     # Don't resolve hostnames
+mtr google.com              # Real-time traceroute
+```
+
+### **Network Information**
+
+```bash
+ip addr show                # Show IP addresses
+ip route show               # Show routing table
+netstat -tuln               # Show listening ports
+ss -tuln                    # Modern netstat
+```
+
+### **File Transfer**
+
+```bash
+curl -O http://example.com/file.zip    # Download file
+wget http://example.com/file.zip       # Download file
+scp file.txt user@host:/path/          # Secure copy
+rsync -avz /local/ user@host:/remote/  # Sync files
+```
+
+## 🔧 Network Configuration
+
+### **Linux Network Configuration**
+
+```bash
+# Ubuntu/Debian
+sudo nano /etc/netplan/01-netcfg.yaml
+
+# CentOS/RHEL
+sudo nano /etc/sysconfig/network-scripts/ifcfg-eth0
+```
+
+### **Static IP Configuration**
+
+```yaml
+# Ubuntu netplan example
+network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses:
+        - 192.168.1.100/24
+      gateway4: 192.168.1.1
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+```
+
+### **Network Interface Management**
+
+```bash
+ip link show                # Show interfaces
+ip link set eth0 up         # Bring interface up
+ip link set eth0 down       # Bring interface down
+ip addr add 192.168.1.100/24 dev eth0  # Add IP
+```
+
+## 🔒 Network Security
+
+### **Firewall Basics**
+
+```bash
+# UFW (Ubuntu)
+sudo ufw enable             # Enable firewall
+sudo ufw allow 22           # Allow SSH
+sudo ufw allow 80           # Allow HTTP
+sudo ufw allow 443          # Allow HTTPS
+sudo ufw status             # Check status
+
+# iptables (Advanced)
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+```
+
+### **SSH Security**
+
+```bash
+# Generate SSH key
+ssh-keygen -t rsa -b 4096
+
+# Copy key to server
+ssh-copy-id user@hostname
+
+# Secure SSH configuration
+sudo nano /etc/ssh/sshd_config
+# Disable root login
+# Change default port
+# Use key-based authentication
+```
+
+## 🐳 Docker Networking
+
+### **Docker Network Types**
+
+```bash
+# Bridge network (default)
+docker run --network bridge nginx
+
+# Host network
+docker run --network host nginx
+
+# None network
+docker run --network none nginx
+
+# Custom network
+docker network create mynetwork
+docker run --network mynetwork nginx
+```
+
+### **Docker Network Commands**
+
+```bash
+docker network ls            # List networks
+docker network inspect bridge # Inspect network
+docker network create --driver bridge mynet
+docker network connect mynet container
+```
+
+## ☁️ Cloud Networking
+
+### **AWS VPC**
+
+```bash
+# Create VPC
+aws ec2 create-vpc --cidr-block 10.0.0.0/16
+
+# Create subnet
+aws ec2 create-subnet --vpc-id vpc-123 --cidr-block 10.0.1.0/24
+
+# Create security group
+aws ec2 create-security-group --group-name my-sg --description "My security group"
+```
+
+### **Azure Virtual Network**
+
+```bash
+# Create virtual network
+az network vnet create --name myVnet --resource-group myRG --subnet-name default
+
+# Create subnet
+az network vnet subnet create --name mySubnet --resource-group myRG --vnet-name myVnet
+```
+
+## 📊 Network Monitoring
+
+### **Bandwidth Monitoring**
+
+```bash
+iftop                        # Real-time bandwidth
+nethogs                      # Per-process bandwidth
+speedtest-cli               # Internet speed test
+```
+
+### **Packet Analysis**
+
+```bash
+tcpdump -i eth0             # Capture packets
+tcpdump -i eth0 port 80     # HTTP traffic
+tcpdump -i eth0 host 192.168.1.100  # Specific host
+wireshark                   # GUI packet analyzer
+```
+
+### **Network Performance**
+
+```bash
+iperf3 -s                   # Start server
+iperf3 -c server-ip         # Test bandwidth
+iperf3 -c server-ip -t 30   # Test for 30 seconds
+```
+
+## 🚨 Troubleshooting
+
+### **Common Network Issues**
+
+#### **Connectivity Problems**
+
+```bash
+# Check if interface is up
+ip link show
+
+# Check IP configuration
+ip addr show
+
+# Test connectivity
+ping google.com
+
+# Check DNS resolution
+nslookup google.com
+```
+
+#### **Port Issues**
+
+```bash
+# Check if port is listening
+netstat -tuln | grep 80
+
+# Test port connectivity
+telnet hostname 80
+nc -zv hostname 80
+
+# Check firewall rules
+sudo ufw status
+sudo iptables -L
+```
+
+#### **DNS Issues**
+
+```bash
+# Check DNS resolution
+dig google.com
+
+# Test with different DNS servers
+dig @8.8.8.8 google.com
+
+# Check local DNS configuration
+cat /etc/resolv.conf
+```
+
+## 📚 Practice Exercises
+
+### **Exercise 1: Basic Network Commands**
+
+```bash
+# Check your network configuration
+ip addr show
+ip route show
+
+# Test connectivity
+ping -c 4 google.com
+traceroute google.com
+
+# Check DNS resolution
+nslookup google.com
+dig google.com
+```
+
+### **Exercise 2: Port Scanning**
+
+```bash
+# Check listening ports
+netstat -tuln
+ss -tuln
+
+# Scan for open ports (if nmap is installed)
+nmap localhost
+nmap -p 80,443 google.com
+```
+
+### **Exercise 3: Network Configuration**
+
+```bash
+# Create a simple network setup
+# Configure static IP
+# Set up firewall rules
+# Test connectivity
+```
+
+## 🎯 Day 6-8 Learning Objectives
+
+### **Day 6: TCP/IP Fundamentals**
+
+- Understand OSI model
+- Learn IP addressing
+- Understand routing basics
+- Practice with network tools
+
+### **Day 7: DNS and HTTP**
+
+- Learn DNS hierarchy
+- Understand HTTP methods
+- Practice with DNS tools
+- Learn about HTTPS
+
+### **Day 8: Network Security**
+
+- Configure firewalls
+- Secure SSH access
+- Monitor network traffic
+- Troubleshoot common issues
+
+## 📖 Additional Resources
+
+### **Books**
+
+- "Computer Networks" by Andrew Tanenbaum
+- "TCP/IP Illustrated" by W. Richard Stevens
+- "Network Security Essentials" by William Stallings
+
+### **Online Courses**
+
+- Cisco CCNA
+- CompTIA Network+
+- AWS Networking Fundamentals
+
+### **Practice Platforms**
+
+- GNS3 (Network simulation)
+- Packet Tracer
+- TryHackMe Networking rooms
+
+---
+
+**Next**: Learn about [Git Version Control](/docs/foundations/git-version-control) to manage your code and collaborate effectively!

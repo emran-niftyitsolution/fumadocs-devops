@@ -1,0 +1,437 @@
+---
+title: "Linux Essentials"
+description: "Master Linux fundamentals for DevOps engineering"
+---
+
+# 🐧 Linux Essentials for DevOps
+
+## Introduction
+
+Linux is the foundation of modern DevOps. Most cloud infrastructure, containers, and DevOps tools run on Linux systems. Understanding Linux fundamentals is essential for any DevOps engineer.
+
+## 🏗️ Linux Architecture
+
+### **Kernel**
+
+- Core of the operating system
+- Manages hardware resources
+- Provides system calls to applications
+
+### **Shell**
+
+- Command-line interface
+- Bash, Zsh, Fish, etc.
+- Scripting and automation
+
+### **File System**
+
+- Hierarchical directory structure
+- Everything is a file
+- Permissions and ownership
+
+## 📁 Filesystem Hierarchy
+
+```
+/                    # Root directory
+├── bin/            # Essential user commands
+├── boot/           # Boot loader files
+├── dev/            # Device files
+├── etc/            # Configuration files
+├── home/           # User home directories
+├── lib/            # Shared libraries
+├── media/          # Removable media
+├── mnt/            # Mount points
+├── opt/            # Optional applications
+├── proc/           # Process information
+├── root/           # Root user home
+├── run/            # Runtime data
+├── sbin/           # System binaries
+├── srv/            # Service data
+├── sys/            # System information
+├── tmp/            # Temporary files
+├── usr/            # User programs
+└── var/            # Variable data
+```
+
+## 🖥️ Essential Commands
+
+### **Navigation**
+
+```bash
+pwd                 # Print working directory
+ls                  # List files
+cd                  # Change directory
+mkdir               # Create directory
+rmdir               # Remove directory
+```
+
+### **File Operations**
+
+```bash
+cp                  # Copy files
+mv                  # Move/rename files
+rm                  # Remove files
+touch               # Create empty file
+cat                 # Display file content
+less                # View file page by page
+head                # Show first lines
+tail                # Show last lines
+```
+
+### **File Permissions**
+
+```bash
+chmod               # Change permissions
+chown               # Change ownership
+chgrp               # Change group
+ls -la              # List with permissions
+```
+
+### **Text Processing**
+
+```bash
+grep                # Search patterns
+sed                 # Stream editor
+awk                 # Text processing
+sort                # Sort lines
+uniq                # Remove duplicates
+wc                  # Word count
+```
+
+## 🔐 File Permissions & Ownership
+
+### **Permission Types**
+
+- **Read (r)**: View file contents
+- **Write (w)**: Modify file contents
+- **Execute (x)**: Run file as program
+
+### **Permission Groups**
+
+- **Owner**: File creator
+- **Group**: Group members
+- **Others**: Everyone else
+
+### **Permission Examples**
+
+```bash
+-rw-r--r-- 1 user group 1024 Jan 1 12:00 file.txt
+# Owner: read, write
+# Group: read
+# Others: read
+```
+
+### **Common Permission Commands**
+
+```bash
+chmod 755 file      # rwxr-xr-x
+chmod 644 file      # rw-r--r--
+chmod +x script.sh  # Add execute permission
+chown user:group file
+```
+
+## 📊 System Monitoring
+
+### **Process Management**
+
+```bash
+ps                  # Process status
+top                 # Real-time process monitor
+htop                # Enhanced top
+kill                # Terminate process
+pkill               # Kill by name
+nice                # Set process priority
+renice              # Change priority
+```
+
+### **System Resources**
+
+```bash
+free                # Memory usage
+df                  # Disk usage
+du                  # Directory usage
+iostat              # I/O statistics
+vmstat              # Virtual memory stats
+```
+
+### **Network Monitoring**
+
+```bash
+netstat             # Network statistics
+ss                  # Socket statistics
+ip                  # IP configuration
+ping                # Test connectivity
+traceroute          # Route tracing
+```
+
+## 🔧 Package Management
+
+### **Ubuntu/Debian (apt)**
+
+```bash
+apt update          # Update package list
+apt upgrade         # Upgrade packages
+apt install package # Install package
+apt remove package  # Remove package
+apt search package  # Search packages
+```
+
+### **CentOS/RHEL (yum/dnf)**
+
+```bash
+yum update          # Update packages
+yum install package # Install package
+yum remove package  # Remove package
+yum search package  # Search packages
+```
+
+## 🔌 SSH Basics
+
+### **SSH Connection**
+
+```bash
+ssh user@hostname   # Connect to remote host
+ssh -p 2222 user@hostname  # Custom port
+ssh -i key.pem user@hostname  # Use key file
+```
+
+### **SSH Key Management**
+
+```bash
+ssh-keygen          # Generate key pair
+ssh-copy-id user@hostname  # Copy public key
+ssh-add key.pem     # Add key to agent
+```
+
+### **SSH Configuration**
+
+```bash
+# ~/.ssh/config
+Host myserver
+    HostName 192.168.1.100
+    User ubuntu
+    Port 22
+    IdentityFile ~/.ssh/mykey.pem
+```
+
+## 📝 Shell Scripting Basics
+
+### **Variables**
+
+```bash
+#!/bin/bash
+NAME="DevOps Engineer"
+echo "Hello, $NAME"
+```
+
+### **Conditionals**
+
+```bash
+if [ -f "file.txt" ]; then
+    echo "File exists"
+else
+    echo "File not found"
+fi
+```
+
+### **Loops**
+
+```bash
+# For loop
+for i in {1..5}; do
+    echo "Number: $i"
+done
+
+# While loop
+while [ $count -lt 10 ]; do
+    echo $count
+    ((count++))
+done
+```
+
+### **Functions**
+
+```bash
+function backup() {
+    local source=$1
+    local dest=$2
+    cp -r "$source" "$dest"
+    echo "Backup completed"
+}
+```
+
+## 🛠️ DevOps-Specific Linux Skills
+
+### **Service Management**
+
+```bash
+systemctl start service    # Start service
+systemctl stop service     # Stop service
+systemctl restart service  # Restart service
+systemctl status service   # Check status
+systemctl enable service   # Enable at boot
+```
+
+### **Log Management**
+
+```bash
+journalctl               # System logs
+tail -f /var/log/syslog  # Follow log file
+grep ERROR /var/log/app.log  # Search for errors
+```
+
+### **Network Configuration**
+
+```bash
+ip addr show             # Show IP addresses
+ip route show            # Show routing table
+nslookup domain.com      # DNS lookup
+dig domain.com           # Detailed DNS info
+```
+
+### **Firewall Management**
+
+```bash
+ufw status              # Check firewall status
+ufw allow 22            # Allow SSH
+ufw allow 80            # Allow HTTP
+ufw enable              # Enable firewall
+```
+
+## 🐳 Docker & Linux
+
+### **Container Basics**
+
+```bash
+docker run ubuntu        # Run Ubuntu container
+docker ps               # List running containers
+docker images           # List images
+docker exec -it container bash  # Enter container
+```
+
+### **Linux Namespaces**
+
+- **PID**: Process isolation
+- **Network**: Network isolation
+- **Mount**: File system isolation
+- **UTS**: Hostname isolation
+- **IPC**: Inter-process communication isolation
+- **User**: User ID isolation
+
+## ☁️ Cloud Linux Instances
+
+### **AWS EC2**
+
+```bash
+# Connect to EC2 instance
+ssh -i key.pem ubuntu@public-ip
+
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install common tools
+sudo apt install -y curl wget git vim htop
+```
+
+### **Azure VM**
+
+```bash
+# Connect to Azure VM
+ssh username@public-ip
+
+# Update system
+sudo yum update -y
+
+# Install tools
+sudo yum install -y curl wget git vim htop
+```
+
+## 📚 Practice Exercises
+
+### **Exercise 1: File Management**
+
+```bash
+# Create directory structure
+mkdir -p ~/devops-practice/{scripts,logs,backups}
+
+# Create sample files
+echo "Hello DevOps" > ~/devops-practice/hello.txt
+cp ~/devops-practice/hello.txt ~/devops-practice/backups/
+
+# Set permissions
+chmod 644 ~/devops-practice/hello.txt
+```
+
+### **Exercise 2: Process Management**
+
+```bash
+# Start a process
+sleep 100 &
+
+# Find and kill the process
+ps aux | grep sleep
+kill $(pgrep sleep)
+
+# Monitor system resources
+top -n 1
+```
+
+### **Exercise 3: Network Troubleshooting**
+
+```bash
+# Check network connectivity
+ping -c 4 google.com
+
+# Check DNS resolution
+nslookup google.com
+
+# Check routing
+traceroute google.com
+```
+
+## 🎯 Day 3-5 Learning Objectives
+
+### **Day 3: Basic Commands**
+
+- Navigate the filesystem
+- Create, copy, move, delete files
+- Understand file permissions
+- Use basic text processing tools
+
+### **Day 4: System Administration**
+
+- Monitor system resources
+- Manage processes
+- Configure network settings
+- Use package managers
+
+### **Day 5: Automation & Scripting**
+
+- Write basic shell scripts
+- Use SSH for remote access
+- Understand service management
+- Practice with real-world scenarios
+
+## 📖 Additional Resources
+
+### **Books**
+
+- "The Linux Command Line" by William Shotts
+- "Linux System Administration" by Tom Adelstein
+- "Bash Cookbook" by Carl Albing
+
+### **Online Courses**
+
+- Linux Academy
+- Red Hat Training
+- Ubuntu Tutorials
+
+### **Practice Platforms**
+
+- Katacoda Linux Scenarios
+- OverTheWire Bandit
+- Linux Academy Labs
+
+---
+
+**Next**: Learn about [Networking Basics](/docs/foundations/networking-basics) to understand how systems communicate!

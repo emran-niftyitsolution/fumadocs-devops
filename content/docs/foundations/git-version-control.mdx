@@ -1,0 +1,554 @@
+---
+title: "Git Version Control"
+description: "Learn Git for collaborative development and version control"
+---
+
+# 📚 Git Version Control for DevOps
+
+## Introduction
+
+Git is the most widely used version control system in the world. It's essential for DevOps engineers to understand Git for collaborative development, code management, and deployment automation.
+
+## 🏗️ What is Version Control?
+
+Version control is a system that tracks changes to files over time, allowing you to:
+
+- Track who made what changes and when
+- Revert to previous versions
+- Compare changes between versions
+- Collaborate with others without conflicts
+
+## 📦 Git Architecture
+
+### **Three Areas of Git**
+
+```
+Working Directory    Staging Area    Repository
+     (Files)         (Index)        (.git folder)
+```
+
+### **Git States**
+
+- **Modified**: File has been changed but not staged
+- **Staged**: File is ready to be committed
+- **Committed**: File is safely stored in the repository
+
+## 🚀 Getting Started with Git
+
+### **Initial Setup**
+
+```bash
+# Configure Git
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+
+# Initialize a repository
+git init
+
+# Clone an existing repository
+git clone https://github.com/username/repository.git
+```
+
+### **Basic Commands**
+
+```bash
+# Check status
+git status
+
+# Add files to staging
+git add filename
+git add .                    # Add all files
+
+# Commit changes
+git commit -m "Initial commit"
+
+# View commit history
+git log
+git log --oneline           # Compact view
+```
+
+## 🌿 Branching and Merging
+
+### **Branch Management**
+
+```bash
+# List branches
+git branch
+
+# Create new branch
+git branch feature-branch
+
+# Switch to branch
+git checkout feature-branch
+git checkout -b new-branch  # Create and switch
+
+# Delete branch
+git branch -d feature-branch
+```
+
+### **Merging**
+
+```bash
+# Merge branch into current branch
+git merge feature-branch
+
+# Merge with no fast-forward
+git merge --no-ff feature-branch
+
+# Abort merge if conflicts
+git merge --abort
+```
+
+### **Rebasing**
+
+```bash
+# Rebase current branch onto main
+git rebase main
+
+# Interactive rebase
+git rebase -i HEAD~3
+
+# Abort rebase
+git rebase --abort
+```
+
+## 🔄 Remote Repositories
+
+### **Working with Remotes**
+
+```bash
+# Add remote repository
+git remote add origin https://github.com/username/repo.git
+
+# List remotes
+git remote -v
+
+# Fetch from remote
+git fetch origin
+
+# Pull changes
+git pull origin main
+
+# Push changes
+git push origin main
+```
+
+### **Remote Branch Management**
+
+```bash
+# Push new branch to remote
+git push -u origin feature-branch
+
+# Delete remote branch
+git push origin --delete feature-branch
+
+# Track remote branch
+git checkout -b local-branch origin/remote-branch
+```
+
+## 🔧 Advanced Git Features
+
+### **Stashing**
+
+```bash
+# Save changes temporarily
+git stash
+
+# List stashes
+git stash list
+
+# Apply stash
+git stash apply
+git stash pop              # Apply and remove
+
+# Create stash with message
+git stash push -m "WIP: feature implementation"
+```
+
+### **Cherry-picking**
+
+```bash
+# Apply specific commit to current branch
+git cherry-pick commit-hash
+
+# Cherry-pick range
+git cherry-pick start-commit..end-commit
+```
+
+### **Reset and Revert**
+
+```bash
+# Soft reset (keep changes staged)
+git reset --soft HEAD~1
+
+# Mixed reset (unstage changes)
+git reset HEAD~1
+
+# Hard reset (discard changes)
+git reset --hard HEAD~1
+
+# Revert commit (create new commit)
+git revert commit-hash
+```
+
+## 🔍 Git History and Inspection
+
+### **Viewing History**
+
+```bash
+# Detailed log
+git log
+
+# Graph view
+git log --graph --oneline --all
+
+# Show changes in commit
+git show commit-hash
+
+# Show file history
+git log --follow filename
+```
+
+### **Comparing Changes**
+
+```bash
+# Compare working directory with staging
+git diff
+
+# Compare staging with last commit
+git diff --staged
+
+# Compare with specific commit
+git diff commit-hash
+
+# Compare branches
+git diff branch1..branch2
+```
+
+## 🏷️ Tags and Releases
+
+### **Creating Tags**
+
+```bash
+# Lightweight tag
+git tag v1.0.0
+
+# Annotated tag
+git tag -a v1.0.0 -m "Release version 1.0.0"
+
+# Tag specific commit
+git tag -a v1.0.0 commit-hash -m "Release version 1.0.0"
+```
+
+### **Working with Tags**
+
+```bash
+# List tags
+git tag
+
+# Show tag details
+git show v1.0.0
+
+# Push tags to remote
+git push origin v1.0.0
+git push origin --tags
+
+# Delete tag
+git tag -d v1.0.0
+git push origin --delete v1.0.0
+```
+
+## 🔧 Git Configuration
+
+### **Global Configuration**
+
+```bash
+# Set user information
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+
+# Set default editor
+git config --global core.editor "vim"
+
+# Set default branch name
+git config --global init.defaultBranch main
+
+# Configure line ending handling
+git config --global core.autocrlf input  # Linux/Mac
+git config --global core.autocrlf true   # Windows
+```
+
+### **Repository Configuration**
+
+```bash
+# Set repository-specific config
+git config user.name "Your Name"
+git config user.email "your.email@example.com"
+
+# Configure merge strategy
+git config merge.ff false
+```
+
+## 🚨 Conflict Resolution
+
+### **Understanding Conflicts**
+
+When Git can't automatically merge changes, it creates conflict markers:
+
+```bash
+<<<<<<< HEAD
+Changes from current branch
+=======
+Changes from branch being merged
+>>>>>>> feature-branch
+```
+
+### **Resolving Conflicts**
+
+```bash
+# 1. Identify conflicted files
+git status
+
+# 2. Edit files to resolve conflicts
+# Remove conflict markers and keep desired changes
+
+# 3. Add resolved files
+git add filename
+
+# 4. Complete merge
+git commit
+```
+
+## 🔄 Git Workflows
+
+### **Feature Branch Workflow**
+
+```bash
+# 1. Create feature branch
+git checkout -b feature/new-feature
+
+# 2. Make changes and commit
+git add .
+git commit -m "Add new feature"
+
+# 3. Push to remote
+git push -u origin feature/new-feature
+
+# 4. Create pull request (GitHub/GitLab)
+
+# 5. Merge to main
+git checkout main
+git pull origin main
+git merge feature/new-feature
+git push origin main
+```
+
+### **GitFlow Workflow**
+
+```bash
+# Main branches
+main                    # Production code
+develop                 # Development integration
+
+# Supporting branches
+feature/feature-name    # New features
+release/version         # Release preparation
+hotfix/bug-fix         # Production fixes
+```
+
+## 🛠️ Git Hooks
+
+### **Pre-commit Hook Example**
+
+```bash
+#!/bin/sh
+# .git/hooks/pre-commit
+
+# Run tests
+npm test
+
+# Check code style
+npm run lint
+
+# Exit with error if any command fails
+if [ $? -ne 0 ]; then
+    echo "Pre-commit checks failed"
+    exit 1
+fi
+```
+
+### **Post-commit Hook Example**
+
+```bash
+#!/bin/sh
+# .git/hooks/post-commit
+
+# Send notification
+echo "Commit $(git rev-parse HEAD) was created"
+
+# Update deployment status
+curl -X POST https://api.example.com/deploy/status
+```
+
+## 🔍 Git Bisect
+
+### **Finding Bug Introduction**
+
+```bash
+# Start bisect
+git bisect start
+
+# Mark current version as bad
+git bisect bad
+
+# Mark known good version
+git bisect good v1.0.0
+
+# Git will checkout commits for testing
+# Mark each as good or bad
+git bisect good
+git bisect bad
+
+# Reset when done
+git bisect reset
+```
+
+## 📊 Git Statistics
+
+### **Repository Statistics**
+
+```bash
+# Count commits by author
+git shortlog -sn
+
+# Show commit frequency
+git log --pretty=format:"%ad" --date=short | sort | uniq -c
+
+# Show file change statistics
+git log --stat
+
+# Show line changes
+git log --numstat
+```
+
+## 🐳 Git in DevOps
+
+### **CI/CD Integration**
+
+```bash
+# GitHub Actions example
+name: CI/CD Pipeline
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        run: npm test
+```
+
+### **Infrastructure as Code**
+
+```bash
+# Terraform with Git
+git add terraform/
+git commit -m "Update infrastructure configuration"
+git push origin main
+
+# Trigger deployment
+curl -X POST https://api.example.com/deploy
+```
+
+## 📚 Practice Exercises
+
+### **Exercise 1: Basic Git Operations**
+
+```bash
+# Initialize repository
+git init
+echo "Hello World" > README.md
+git add README.md
+git commit -m "Initial commit"
+
+# Make changes
+echo "Updated content" >> README.md
+git add README.md
+git commit -m "Update README"
+```
+
+### **Exercise 2: Branching and Merging**
+
+```bash
+# Create feature branch
+git checkout -b feature/login
+
+# Make changes
+echo "Login functionality" > login.js
+git add login.js
+git commit -m "Add login feature"
+
+# Merge to main
+git checkout main
+git merge feature/login
+```
+
+### **Exercise 3: Remote Repository**
+
+```bash
+# Add remote
+git remote add origin https://github.com/username/repo.git
+
+# Push to remote
+git push -u origin main
+
+# Clone repository
+git clone https://github.com/username/repo.git
+```
+
+## 🎯 Day 9-11 Learning Objectives
+
+### **Day 9: Git Basics**
+
+- Understand version control concepts
+- Learn basic Git commands
+- Set up Git configuration
+- Create first repository
+
+### **Day 10: Branching and Collaboration**
+
+- Master branching strategies
+- Learn merging and conflict resolution
+- Work with remote repositories
+- Understand collaborative workflows
+
+### **Day 11: Advanced Git**
+
+- Learn advanced Git features
+- Understand Git hooks
+- Practice with real-world scenarios
+- Integrate Git with DevOps tools
+
+## 📖 Additional Resources
+
+### **Books**
+
+- "Pro Git" by Scott Chacon and Ben Straub
+- "Git for Humans" by David Demaree
+- "Git Pocket Guide" by Richard E. Silverman
+
+### **Online Courses**
+
+- GitHub Learning Lab
+- Atlassian Git Tutorials
+- Git Immersion
+
+### **Practice Platforms**
+
+- GitHub
+- GitLab
+- Bitbucket
+
+---
+
+**Next**: Learn about [Bash Scripting](/docs/foundations/bash-scripting) to automate tasks and processes!
