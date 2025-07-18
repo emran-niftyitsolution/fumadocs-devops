@@ -175,7 +175,7 @@ scrape_configs:
 
 ### PromQL Query Language
 
-```promql
+```yaml
 # Basic queries
 up{job="node-exporter"}
 rate(http_requests_total[5m])
@@ -819,7 +819,7 @@ slo:
 
 ### Error Budget Tracking
 
-```promql
+```yaml
 # Error budget calculation
 # Error budget = 1 - SLO target
 # Burn rate = error rate / error budget
