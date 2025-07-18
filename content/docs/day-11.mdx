@@ -1,8 +1,887 @@
 ---
-title: "Day 11: Title"
-description: "DevOps 100 Days - Day 11"
+title: "Day 11: Containerization Fundamentals"
+description: "Master container concepts, Docker basics, and container orchestration principles"
 ---
 
-# Day 11
+# Day 11: Containerization Fundamentals
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Understand containerization concepts and benefits
+- Master Docker fundamentals and commands
+- Learn container image creation and management
+- Understand container networking and storage
+- Master container security best practices
+- Learn container orchestration concepts
+
+## 📦 Containerization Concepts
+
+### What are Containers?
+
+**Container Definition:**
+
+```bash
+# Containers are lightweight, isolated environments that package applications
+# with their dependencies, libraries, and configuration files
+
+# Key Characteristics:
+# - Lightweight (shares host OS kernel)
+# - Portable (runs consistently across environments)
+# - Isolated (processes and resources are separated)
+# - Fast startup (no OS boot required)
+# - Efficient resource usage
+```
+
+**Container vs Virtual Machine:**
+
+```bash
+# Virtual Machine:
+# - Full OS (Guest OS)
+# - Heavy resource usage
+# - Slow startup
+# - Complete isolation
+# - Hypervisor layer
+
+# Container:
+# - Shared OS kernel
+# - Lightweight
+# - Fast startup
+# - Process-level isolation
+# - Container runtime
+```
+
+**Container Benefits:**
+
+```bash
+# Development Benefits:
+# - Consistent environments
+# - "Works on my machine" solved
+# - Easy dependency management
+# - Fast iteration cycles
+
+# Operations Benefits:
+# - Simplified deployment
+# - Resource efficiency
+# - Easy scaling
+# - Version control for infrastructure
+
+# Business Benefits:
+# - Faster time to market
+# - Reduced infrastructure costs
+# - Better resource utilization
+# - Improved reliability
+```
+
+### Container Architecture
+
+**Container Components:**
+
+```bash
+# Container Runtime:
+# - Docker Engine
+# - containerd
+# - CRI-O
+# - Podman
+
+# Container Image:
+# - Layered filesystem
+# - Application code
+# - Dependencies
+# - Configuration
+
+# Container Registry:
+# - Docker Hub
+# - AWS ECR
+# - Azure Container Registry
+# - Google Container Registry
+# - Harbor (self-hosted)
+```
+
+## 🐳 Docker Fundamentals
+
+### Docker Installation
+
+**Install Docker on Ubuntu:**
+
+```bash
+# Update package index
+sudo apt update
+
+# Install prerequisites
+sudo apt install apt-transport-https ca-certificates curl gnupg lsb-release
+
+# Add Docker's official GPG key
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+# Add Docker repository
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker Engine
+sudo apt update
+sudo apt install docker-ce docker-ce-cli containerd.io
+
+# Start Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+
+# Verify installation
+docker --version
+docker run hello-world
+```
+
+**Install Docker Compose:**
+
+```bash
+# Install Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Verify installation
+docker-compose --version
+```
+
+### Docker Basic Commands
+
+**Container Lifecycle:**
+
+```bash
+# Run a container
+docker run ubuntu:20.04 echo "Hello World"
+
+# Run container in background
+docker run -d --name my-container nginx:latest
+
+# List running containers
+docker ps
+
+# List all containers
+docker ps -a
+
+# Stop a container
+docker stop my-container
+
+# Start a stopped container
+docker start my-container
+
+# Remove a container
+docker rm my-container
+
+# Force remove running container
+docker rm -f my-container
+```
+
+**Image Management:**
+
+```bash
+# Pull an image
+docker pull ubuntu:20.04
+
+# List images
+docker images
+
+# Remove an image
+docker rmi ubuntu:20.04
+
+# Remove unused images
+docker image prune
+
+# Remove all unused images
+docker image prune -a
+
+# Search for images
+docker search nginx
+
+# Inspect an image
+docker inspect ubuntu:20.04
+```
+
+**Container Interaction:**
+
+```bash
+# Execute command in running container
+docker exec -it my-container bash
+
+# View container logs
+docker logs my-container
+
+# Follow container logs
+docker logs -f my-container
+
+# Copy files to/from container
+docker cp local_file.txt my-container:/app/
+docker cp my-container:/app/output.txt ./
+
+# View container resource usage
+docker stats my-container
+```
+
+### Dockerfile Basics
+
+**Simple Dockerfile:**
+
+```dockerfile
+# Use official Python runtime as base image
+FROM python:3.9-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 8000
+
+# Define command to run
+CMD ["python", "app.py"]
+```
+
+**Multi-stage Dockerfile:**
+
+```dockerfile
+# Build stage
+FROM node:16 AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+**Advanced Dockerfile:**
+
+```dockerfile
+# Use specific base image
+FROM ubuntu:20.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV APP_HOME=/app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    python3 \
+    python3-pip \
+    nginx \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -s /bin/bash appuser
+
+# Set working directory
+WORKDIR $APP_HOME
+
+# Copy application files
+COPY --chown=appuser:appuser . .
+
+# Install Python dependencies
+RUN pip3 install -r requirements.txt
+
+# Change ownership
+RUN chown -R appuser:appuser $APP_HOME
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Define entrypoint
+ENTRYPOINT ["python3"]
+CMD ["app.py"]
+```
+
+## 🏗️ Container Image Creation
+
+### Building Images
+
+**Basic Image Build:**
+
+```bash
+# Build image from Dockerfile
+docker build -t my-app:latest .
+
+# Build with specific tag
+docker build -t my-app:v1.0.0 .
+
+# Build with build arguments
+docker build --build-arg VERSION=1.0.0 -t my-app:$VERSION .
+
+# Build without cache
+docker build --no-cache -t my-app:latest .
+
+# Build with specific Dockerfile
+docker build -f Dockerfile.prod -t my-app:prod .
+```
+
+**Multi-platform Build:**
+
+```bash
+# Enable buildx
+docker buildx create --use
+
+# Build for multiple platforms
+docker buildx build --platform linux/amd64,linux/arm64 -t my-app:latest .
+
+# Push multi-platform image
+docker buildx build --platform linux/amd64,linux/arm64 -t my-app:latest --push .
+```
+
+### Image Optimization
+
+**Optimization Techniques:**
+
+```bash
+# Use .dockerignore file
+cat > .dockerignore << EOF
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.nyc_output
+coverage
+.DS_Store
+EOF
+
+# Multi-stage builds for smaller images
+# Use specific base image tags
+# Combine RUN commands
+# Remove unnecessary files
+# Use non-root user
+```
+
+**Optimized Dockerfile Example:**
+
+```dockerfile
+# Use specific base image
+FROM python:3.9-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -s /bin/bash appuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first (for better caching)
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY --chown=appuser:appuser . .
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
+
+# Run application
+CMD ["python", "app.py"]
+```
+
+## 🌐 Container Networking
+
+### Docker Network Types
+
+**Default Networks:**
+
+```bash
+# Bridge network (default)
+docker run --network bridge nginx
+
+# Host network
+docker run --network host nginx
+
+# None network (no networking)
+docker run --network none nginx
+
+# List networks
+docker network ls
+
+# Inspect network
+docker network inspect bridge
+```
+
+**Custom Networks:**
+
+```bash
+# Create custom network
+docker network create my-network
+
+# Run container on custom network
+docker run --network my-network --name web nginx
+
+# Connect container to network
+docker network connect my-network existing-container
+
+# Disconnect container from network
+docker network disconnect my-network container-name
+
+# Remove network
+docker network rm my-network
+```
+
+**Network Configuration:**
+
+```bash
+# Create network with specific driver
+docker network create --driver bridge my-bridge
+
+# Create network with subnet
+docker network create --subnet=172.18.0.0/16 my-network
+
+# Create network with gateway
+docker network create --gateway=172.18.0.1 my-network
+
+# Create overlay network (for swarm)
+docker network create --driver overlay my-overlay
+```
+
+### Container Communication
+
+**Container-to-Container:**
+
+```bash
+# Run containers on same network
+docker run -d --name web --network my-network nginx
+docker run -d --name app --network my-network my-app
+
+# Container can reach each other by name
+# web container can reach app container at "app:8000"
+```
+
+**Port Mapping:**
+
+```bash
+# Map host port to container port
+docker run -p 8080:80 nginx
+
+# Map specific host IP
+docker run -p 127.0.0.1:8080:80 nginx
+
+# Map random host port
+docker run -P nginx
+
+# Map multiple ports
+docker run -p 8080:80 -p 8443:443 nginx
+```
+
+## 💾 Container Storage
+
+### Docker Volumes
+
+**Volume Management:**
+
+```bash
+# Create volume
+docker volume create my-volume
+
+# List volumes
+docker volume ls
+
+# Inspect volume
+docker volume inspect my-volume
+
+# Remove volume
+docker volume rm my-volume
+
+# Remove unused volumes
+docker volume prune
+```
+
+**Using Volumes:**
+
+```bash
+# Mount volume to container
+docker run -v my-volume:/app/data nginx
+
+# Mount host directory
+docker run -v /host/path:/container/path nginx
+
+# Mount with read-only
+docker run -v my-volume:/app/data:ro nginx
+
+# Use volume in docker-compose
+version: '3.8'
+services:
+  app:
+    image: my-app
+    volumes:
+      - my-volume:/app/data
+volumes:
+  my-volume:
+```
+
+### Bind Mounts
+
+**Host Directory Mounting:**
+
+```bash
+# Mount current directory
+docker run -v $(pwd):/app nginx
+
+# Mount specific directory
+docker run -v /home/user/data:/app/data nginx
+
+# Mount with permissions
+docker run -v /host/path:/container/path:rw nginx
+
+# Mount single file
+docker run -v /host/file.txt:/app/config.txt nginx
+```
+
+## 🔒 Container Security
+
+### Security Best Practices
+
+**Image Security:**
+
+```bash
+# Use specific image tags (not latest)
+FROM ubuntu:20.04
+
+# Scan images for vulnerabilities
+docker scan nginx:latest
+
+# Use minimal base images
+FROM alpine:3.14
+
+# Remove unnecessary packages
+RUN apk add --no-cache package-name
+
+# Use non-root user
+USER appuser
+
+# Sign images
+docker trust signer add my-signer my-key.pub
+docker trust sign my-app:latest
+```
+
+**Runtime Security:**
+
+```bash
+# Run container with read-only filesystem
+docker run --read-only nginx
+
+# Limit container capabilities
+docker run --cap-drop=ALL --cap-add=NET_BIND_SERVICE nginx
+
+# Set resource limits
+docker run --memory=512m --cpus=1.0 nginx
+
+# Use security profiles
+docker run --security-opt=no-new-privileges nginx
+
+# Enable seccomp
+docker run --security-opt=seccomp=profile.json nginx
+```
+
+**Network Security:**
+
+```bash
+# Use custom networks for isolation
+docker network create --internal internal-network
+
+# Limit container network access
+docker run --network=none nginx
+
+# Use network policies
+# (Kubernetes-specific)
+```
+
+## 🚀 Container Orchestration Concepts
+
+### Orchestration Benefits
+
+**Why Container Orchestration:**
+
+```bash
+# Scalability:
+# - Auto-scaling based on load
+# - Load balancing across containers
+# - Rolling updates
+
+# High Availability:
+# - Automatic failover
+# - Health checks
+# - Self-healing
+
+# Resource Management:
+# - Efficient resource allocation
+# - Resource quotas
+# - Scheduling algorithms
+
+# Service Discovery:
+# - Automatic service registration
+# - Load balancing
+# - Health monitoring
+```
+
+### Orchestration Tools
+
+**Popular Orchestration Platforms:**
+
+```bash
+# Kubernetes:
+# - Industry standard
+# - Rich ecosystem
+# - Complex but powerful
+# - Self-hosted or managed
+
+# Docker Swarm:
+# - Simple to use
+# - Docker-native
+# - Good for small to medium deployments
+# - Built into Docker
+
+# Apache Mesos:
+# - Resource management
+# - Multiple frameworks
+# - Large-scale deployments
+# - Complex setup
+
+# HashiCorp Nomad:
+# - Simple and flexible
+# - Multi-datacenter
+# - Application and infrastructure
+# - Easy to learn
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: Basic Docker Setup
+
+**Objective:** Set up Docker and run first container
+
+**Tasks:**
+
+```bash
+# 1. Install Docker
+sudo apt update
+sudo apt install docker.io
+
+# 2. Start Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# 3. Add user to docker group
+sudo usermod -aG docker $USER
+newgrp docker
+
+# 4. Test Docker installation
+docker run hello-world
+
+# 5. Run nginx container
+docker run -d --name my-nginx -p 8080:80 nginx
+
+# 6. Verify container is running
+docker ps
+curl http://localhost:8080
+```
+
+### Exercise 2: Create Custom Image
+
+**Objective:** Build and run custom Docker image
+
+**Tasks:**
+
+```bash
+# 1. Create simple Python app
+cat > app.py << 'EOF'
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return 'Hello from Docker!'
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000)
+EOF
+
+# 2. Create requirements.txt
+echo "flask==2.0.1" > requirements.txt
+
+# 3. Create Dockerfile
+cat > Dockerfile << 'EOF'
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["python", "app.py"]
+EOF
+
+# 4. Build image
+docker build -t my-flask-app .
+
+# 5. Run container
+docker run -d --name flask-app -p 8000:8000 my-flask-app
+
+# 6. Test application
+curl http://localhost:8000
+```
+
+### Exercise 3: Docker Compose Setup
+
+**Objective:** Create multi-container application
+
+**Tasks:**
+
+```bash
+# 1. Create docker-compose.yml
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/myapp
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=myapp
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
+EOF
+
+# 2. Start services
+docker-compose up -d
+
+# 3. Check services
+docker-compose ps
+
+# 4. View logs
+docker-compose logs
+
+# 5. Stop services
+docker-compose down
+```
+
+## 📊 Assessment Questions
+
+**Day 11 Quiz:**
+
+1. **What is the main advantage of containers over VMs?**
+
+   - Answer: Lightweight and faster startup
+
+2. **What command builds a Docker image?**
+
+   - Answer: `docker build`
+
+3. **What is the default Docker network driver?**
+
+   - Answer: Bridge
+
+4. **What command runs a container in detached mode?**
+
+   - Answer: `docker run -d`
+
+5. **What is a Dockerfile?**
+
+   - Answer: Instructions to build a Docker image
+
+6. **What is the purpose of EXPOSE in Dockerfile?**
+
+   - Answer: Document which ports the container listens on
+
+7. **What is Docker Compose used for?**
+
+   - Answer: Define and run multi-container applications
+
+8. **What is the best practice for running containers?**
+   - Answer: Use non-root user and minimal base images
+
+## 📚 Additional Resources
+
+### Books
+
+- **"Docker in Action"** by Jeff Nickoloff
+- **"Kubernetes in Action"** by Marko Lukša
+- **"The Docker Book"** by James Turnbull
+
+### Online Resources
+
+- [Docker Documentation](https://docs.docker.com/)
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [Container Security Best Practices](https://docs.docker.com/develop/dev-best-practices/)
+
+### Tools
+
+- **Container Runtimes**: Docker, containerd, CRI-O
+- **Orchestration**: Kubernetes, Docker Swarm, Nomad
+- **Security**: Trivy, Clair, Anchore
+- **Monitoring**: Prometheus, Grafana, Jaeger
+
+## 🎉 Day 11 Summary
+
+**What You've Learned:**
+
+- ✅ Containerization concepts and benefits
+- ✅ Docker fundamentals and commands
+- ✅ Container image creation and management
+- ✅ Container networking and storage
+- ✅ Container security best practices
+- ✅ Container orchestration concepts
+
+**Key Takeaways:**
+
+- Containers provide consistency and portability
+- Docker is the most popular container platform
+- Security is crucial in containerized environments
+- Orchestration tools manage container complexity
+- Best practices ensure reliable deployments
+
+**Tomorrow:** We'll continue with Kubernetes fundamentals, building on today's container knowledge.
+
+**Remember:** Containers are the foundation of modern application deployment. Master Docker first, then move to orchestration!

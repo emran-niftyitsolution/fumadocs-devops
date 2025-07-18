@@ -1,8 +1,1230 @@
 ---
-title: "Day 15: Title"
-description: "DevOps 100 Days - Day 15"
+title: "Day 15: Monitoring and Observability"
+description: "Master monitoring concepts, tools, and observability practices"
 ---
 
-# Day 15
+# Day 15: Monitoring and Observability
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Understand monitoring concepts and observability pillars
+- Master monitoring tools (Prometheus, Grafana, Nagios)
+- Learn log aggregation and analysis (ELK Stack, Fluentd)
+- Understand distributed tracing and APM
+- Master alerting and incident management
+- Learn SRE practices and SLIs/SLOs
+
+## 📊 Monitoring Fundamentals
+
+### What is Monitoring?
+
+**Monitoring Definition:**
+
+```bash
+# Monitoring is the process of collecting, analyzing, and using information
+# to track the performance and health of systems and applications
+
+# Key Components:
+# - Metrics collection
+# - Data visualization
+# - Alerting
+# - Incident response
+# - Performance analysis
+```
+
+**Observability Pillars:**
+
+```bash
+# Metrics:
+# - Quantitative measurements
+# - Time-series data
+# - Performance indicators
+# - Business metrics
+
+# Logs:
+# - Event records
+# - Structured data
+# - Debugging information
+# - Audit trails
+
+# Traces:
+# - Request flows
+# - Distributed systems
+# - Performance bottlenecks
+# - Service dependencies
+```
+
+**Monitoring Benefits:**
+
+```bash
+# Operational Benefits:
+# - Proactive issue detection
+# - Faster incident response
+# - Performance optimization
+# - Capacity planning
+
+# Business Benefits:
+# - Improved user experience
+# - Reduced downtime
+# - Cost optimization
+# - SLA compliance
+
+# Development Benefits:
+# - Debugging assistance
+# - Performance insights
+# - Feature optimization
+# - Release validation
+```
+
+### Monitoring Types
+
+**Infrastructure Monitoring:**
+
+```bash
+# System Metrics:
+# - CPU utilization
+# - Memory usage
+# - Disk I/O
+# - Network traffic
+
+# Resource Monitoring:
+# - Server health
+# - Storage capacity
+# - Network connectivity
+# - Power consumption
+
+# Container Monitoring:
+# - Container metrics
+# - Pod health
+# - Resource limits
+# - Orchestration status
+```
+
+**Application Monitoring:**
+
+```bash
+# Performance Metrics:
+# - Response time
+# - Throughput
+# - Error rates
+# - Availability
+
+# Business Metrics:
+# - User engagement
+# - Conversion rates
+# - Revenue impact
+# - Feature usage
+
+# Custom Metrics:
+# - Application-specific
+# - Business KPIs
+# - User behavior
+# - Operational metrics
+```
+
+## 🔍 Monitoring Tools
+
+### Prometheus
+
+**Prometheus Installation:**
+
+```bash
+# Download Prometheus
+wget https://github.com/prometheus/prometheus/releases/download/v2.45.0/prometheus-2.45.0.linux-amd64.tar.gz
+tar xvf prometheus-2.45.0.linux-amd64.tar.gz
+cd prometheus-2.45.0
+
+# Create configuration
+cat > prometheus.yml << 'EOF'
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert.rules"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - localhost:9093
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  - job_name: 'application'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+EOF
+
+# Start Prometheus
+./prometheus --config.file=prometheus.yml
+```
+
+**Prometheus Configuration:**
+
+```yaml
+# prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "kubernetes-pods"
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels:
+          [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+
+  - job_name: "kubernetes-service-endpoints"
+    kubernetes_sd_configs:
+      - role: endpoints
+    relabel_configs:
+      - source_labels:
+          [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels:
+          [__meta_kubernetes_service_annotation_prometheus_io_scheme]
+        action: replace
+        target_label: __scheme__
+        regex: (https?)
+      - source_labels:
+          [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+rule_files:
+  - "alert.rules"
+```
+
+**Prometheus Alert Rules:**
+
+```yaml
+# alert.rules
+groups:
+  - name: node_alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for 5 minutes"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85% for 5 minutes"
+
+      - alert: DiskSpaceFilling
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space filling up on {{ $labels.instance }}"
+          description: "Disk usage is above 90%"
+
+  - name: application_alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for 2 minutes"
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is above 1 second"
+```
+
+### Grafana
+
+**Grafana Installation:**
+
+```bash
+# Install Grafana
+sudo apt-get install -y apt-transport-https
+sudo apt-get install -y software-properties-common wget
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+sudo apt-get update
+sudo apt-get install grafana
+
+# Start Grafana
+sudo systemctl start grafana-server
+sudo systemctl enable grafana-server
+
+# Access Grafana
+# http://localhost:3000
+# Default credentials: admin/admin
+```
+
+**Grafana Dashboard Configuration:**
+
+```json
+{
+  "dashboard": {
+    "id": null,
+    "title": "System Overview",
+    "tags": ["system", "overview"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "CPU Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "HTTP Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{status}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps"
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s"
+  }
+}
+```
+
+### Node Exporter
+
+**Node Exporter Setup:**
+
+```bash
+# Download Node Exporter
+wget https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
+tar xvf node_exporter-1.6.1.linux-amd64.tar.gz
+cd node_exporter-1.6.1.linux-amd64
+
+# Start Node Exporter
+./node_exporter
+
+# Create systemd service
+sudo tee /etc/systemd/system/node_exporter.service << 'EOF'
+[Unit]
+Description=Node Exporter
+After=network.target
+
+[Service]
+Type=simple
+User=node_exporter
+ExecStart=/usr/local/bin/node_exporter
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create user and install
+sudo useradd -rs /bin/false node_exporter
+sudo cp node_exporter /usr/local/bin/
+sudo systemctl daemon-reload
+sudo systemctl enable node_exporter
+sudo systemctl start node_exporter
+```
+
+## 📝 Log Aggregation
+
+### ELK Stack (Elasticsearch, Logstash, Kibana)
+
+**Elasticsearch Installation:**
+
+```bash
+# Install Elasticsearch
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
+sudo apt update
+sudo apt install elasticsearch
+
+# Configure Elasticsearch
+sudo nano /etc/elasticsearch/elasticsearch.yml
+
+# Add configuration:
+cluster.name: my-cluster
+node.name: node-1
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+network.host: localhost
+http.port: 9200
+
+# Start Elasticsearch
+sudo systemctl start elasticsearch
+sudo systemctl enable elasticsearch
+
+# Verify installation
+curl -X GET "localhost:9200/?pretty"
+```
+
+**Logstash Configuration:**
+
+```ruby
+# /etc/logstash/conf.d/logstash.conf
+input {
+  beats {
+    port => 5044
+  }
+  file {
+    path => "/var/log/nginx/access.log"
+    type => "nginx-access"
+    start_position => "beginning"
+  }
+  file {
+    path => "/var/log/application/*.log"
+    type => "application"
+    start_position => "beginning"
+  }
+}
+
+filter {
+  if [type] == "nginx-access" {
+    grok {
+      match => { "message" => "%{COMBINEDAPACHELOG}" }
+    }
+    date {
+      match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
+    }
+  }
+
+  if [type] == "application" {
+    json {
+      source => "message"
+    }
+    date {
+      match => [ "timestamp", "ISO8601" ]
+    }
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+    index => "logs-%{+YYYY.MM.dd}"
+  }
+  stdout {
+    codec => rubydebug
+  }
+}
+```
+
+**Filebeat Configuration:**
+
+```yaml
+# /etc/filebeat/filebeat.yml
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/nginx/access.log
+    fields:
+      type: nginx-access
+    fields_under_root: true
+
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/application/*.log
+    fields:
+      type: application
+    fields_under_root: true
+
+output.logstash:
+  hosts: ["localhost:5044"]
+
+logging.level: info
+```
+
+**Kibana Dashboard:**
+
+```json
+{
+  "dashboard": {
+    "title": "Application Logs Dashboard",
+    "panels": [
+      {
+        "id": "1",
+        "title": "Log Volume Over Time",
+        "type": "visualization",
+        "visState": {
+          "type": "line",
+          "aggs": [
+            {
+              "id": "1",
+              "enabled": true,
+              "type": "count",
+              "schema": "metric",
+              "params": {}
+            },
+            {
+              "id": "2",
+              "enabled": true,
+              "type": "date_histogram",
+              "schema": "segment",
+              "params": {
+                "field": "@timestamp",
+                "timeRange": {
+                  "from": "now-1h",
+                  "to": "now"
+                },
+                "interval": "auto"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "2",
+        "title": "Error Rate by Type",
+        "type": "visualization",
+        "visState": {
+          "type": "pie",
+          "aggs": [
+            {
+              "id": "1",
+              "enabled": true,
+              "type": "count",
+              "schema": "metric",
+              "params": {}
+            },
+            {
+              "id": "2",
+              "enabled": true,
+              "type": "terms",
+              "schema": "segment",
+              "params": {
+                "field": "level",
+                "size": 5
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
+### Fluentd
+
+**Fluentd Installation:**
+
+```bash
+# Install Fluentd
+curl -L https://toolbelt.treasuredata.com/sh/install-ubuntu-focal-td-agent4.sh | sh
+
+# Start Fluentd
+sudo systemctl start td-agent
+sudo systemctl enable td-agent
+
+# Verify installation
+sudo td-agent --version
+```
+
+**Fluentd Configuration:**
+
+```xml
+<!-- /etc/td-agent/td-agent.conf -->
+<source>
+  @type tail
+  path /var/log/nginx/access.log
+  pos_file /var/log/td-agent/nginx.access.log.pos
+  tag nginx.access
+  <parse>
+    @type nginx
+  </parse>
+</source>
+
+<source>
+  @type tail
+  path /var/log/application/*.log
+  pos_file /var/log/td-agent/application.log.pos
+  tag application
+  <parse>
+    @type json
+  </parse>
+</source>
+
+<filter nginx.access>
+  @type record_transformer
+  <record>
+    hostname "#{Socket.gethostname}"
+    environment production
+  </record>
+</filter>
+
+<match nginx.access>
+  @type elasticsearch
+  host localhost
+  port 9200
+  index_name nginx-access-%Y.%m.%d
+  type_name nginx_access
+  logstash_format true
+  logstash_prefix nginx-access
+  <buffer>
+    @type file
+    path /var/log/td-agent/buffer/nginx
+    flush_interval 5s
+    chunk_limit_size 2M
+    queue_limit_length 8
+  </buffer>
+</match>
+
+<match application>
+  @type elasticsearch
+  host localhost
+  port 9200
+  index_name application-%Y.%m.%d
+  type_name application_log
+  logstash_format true
+  logstash_prefix application
+  <buffer>
+    @type file
+    path /var/log/td-agent/buffer/application
+    flush_interval 5s
+    chunk_limit_size 2M
+    queue_limit_length 8
+  </buffer>
+</match>
+```
+
+## 🔍 Distributed Tracing
+
+### Jaeger
+
+**Jaeger Installation:**
+
+```bash
+# Install Jaeger
+docker run -d --name jaeger \
+  -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
+  -p 5775:5775/udp \
+  -p 6831:6831/udp \
+  -p 6832:6832/udp \
+  -p 5778:5778 \
+  -p 16686:16686 \
+  -p 14250:14250 \
+  -p 14268:14268 \
+  -p 14269:14269 \
+  -p 9411:9411 \
+  jaegertracing/all-in-one:1.42
+
+# Access Jaeger UI
+# http://localhost:16686
+```
+
+**Jaeger Configuration:**
+
+```yaml
+# jaeger-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jaeger-config
+data:
+  jaeger.yaml: |
+    sampling:
+      default_strategy:
+        type: probabilistic
+        param: 0.1
+    storage:
+      type: elasticsearch
+      options:
+        es:
+          server-urls: http://elasticsearch:9200
+          index-prefix: jaeger
+    ingester:
+      kafka:
+        topic: jaeger-spans
+        brokers: kafka:9092
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger
+  template:
+    metadata:
+      labels:
+        app: jaeger
+    spec:
+      containers:
+        - name: jaeger
+          image: jaegertracing/all-in-one:1.42
+          ports:
+            - containerPort: 16686
+            - containerPort: 14268
+          env:
+            - name: COLLECTOR_ZIPKIN_HOST_PORT
+              value: ":9411"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger
+spec:
+  selector:
+    app: jaeger
+  ports:
+    - port: 16686
+      targetPort: 16686
+      name: ui
+    - port: 14268
+      targetPort: 14268
+      name: collector
+```
+
+### OpenTelemetry
+
+**OpenTelemetry Setup:**
+
+```python
+# Python application with OpenTelemetry
+from opentelemetry import trace
+from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from flask import Flask
+
+# Initialize tracing
+trace.set_tracer_provider(TracerProvider())
+tracer = trace.get_tracer(__name__)
+
+# Configure Jaeger exporter
+jaeger_exporter = JaegerExporter(
+    agent_host_name="localhost",
+    agent_port=6831,
+)
+
+# Add BatchSpanProcessor to the tracer
+trace.get_tracer_provider().add_span_processor(
+    BatchSpanProcessor(jaeger_exporter)
+)
+
+# Create Flask app
+app = Flask(__name__)
+FlaskInstrumentor().instrument_app(app)
+
+@app.route('/')
+def hello():
+    with tracer.start_as_current_span("hello_operation") as span:
+        span.set_attribute("custom.attribute", "hello_value")
+        return "Hello, World!"
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+## 🚨 Alerting and Incident Management
+
+### Alertmanager
+
+**Alertmanager Configuration:**
+
+```yaml
+# alertmanager.yml
+global:
+  resolve_timeout: 5m
+  slack_api_url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+
+route:
+  group_by: ["alertname"]
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: "web.hook"
+  routes:
+    - match:
+        severity: critical
+      receiver: "slack-notifications"
+      continue: true
+    - match:
+        severity: warning
+      receiver: "email-notifications"
+
+receivers:
+  - name: "web.hook"
+    webhook_configs:
+      - url: "http://127.0.0.1:5001/"
+
+  - name: "slack-notifications"
+    slack_configs:
+      - channel: "#alerts"
+        title: "{{ .GroupLabels.alertname }}"
+        text: "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}"
+
+  - name: "email-notifications"
+    email_configs:
+      - to: "admin@example.com"
+        from: "alertmanager@example.com"
+        smarthost: "localhost:587"
+        auth_username: "alertmanager"
+        auth_password: "password"
+```
+
+**Alertmanager Installation:**
+
+```bash
+# Download Alertmanager
+wget https://github.com/prometheus/alertmanager/releases/download/v0.25.0/alertmanager-0.25.0.linux-amd64.tar.gz
+tar xvf alertmanager-0.25.0.linux-amd64.tar.gz
+cd alertmanager-0.25.0
+
+# Create configuration
+cat > alertmanager.yml << 'EOF'
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'web.hook'
+
+receivers:
+- name: 'web.hook'
+  webhook_configs:
+  - url: 'http://127.0.0.1:5001/'
+EOF
+
+# Start Alertmanager
+./alertmanager --config.file=alertmanager.yml
+```
+
+### PagerDuty Integration
+
+**PagerDuty Configuration:**
+
+```yaml
+# pagerduty.yml
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ["alertname"]
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: "pagerduty-critical"
+  routes:
+    - match:
+        severity: critical
+      receiver: "pagerduty-critical"
+    - match:
+        severity: warning
+      receiver: "pagerduty-warning"
+
+receivers:
+  - name: "pagerduty-critical"
+    pagerduty_configs:
+      - routing_key: YOUR_PAGERDUTY_ROUTING_KEY
+        description: "{{ .GroupLabels.alertname }}"
+        client: "Alertmanager"
+        client_url: '{{ template "pagerduty.default.clientURL" . }}'
+        severity: '{{ if eq .GroupLabels.severity "critical" }}critical{{ else }}warning{{ end }}'
+
+  - name: "pagerduty-warning"
+    pagerduty_configs:
+      - routing_key: YOUR_PAGERDUTY_ROUTING_KEY
+        description: "{{ .GroupLabels.alertname }}"
+        client: "Alertmanager"
+        client_url: '{{ template "pagerduty.default.clientURL" . }}'
+        severity: "warning"
+```
+
+## 📈 SRE Practices
+
+### SLIs and SLOs
+
+**Service Level Indicators (SLIs):**
+
+```yaml
+# slis.yaml
+api:
+  availability:
+    description: "Percentage of successful requests"
+    measurement: "request_success_rate"
+    target: 99.9%
+    window: "30d"
+
+  latency:
+    description: "95th percentile response time"
+    measurement: "request_duration_p95"
+    target: "< 200ms"
+    window: "30d"
+
+  throughput:
+    description: "Requests per second"
+    measurement: "request_rate"
+    target: "> 1000 rps"
+    window: "30d"
+
+database:
+  availability:
+    description: "Database uptime"
+    measurement: "database_uptime"
+    target: 99.99%
+    window: "30d"
+
+  latency:
+    description: "Query response time"
+    measurement: "query_duration_p95"
+    target: "< 50ms"
+    window: "30d"
+```
+
+**Service Level Objectives (SLOs):**
+
+```yaml
+# slos.yaml
+api:
+  slos:
+    - name: "High Availability"
+      description: "API should be available 99.9% of the time"
+      sli: "api.availability"
+      target: 99.9%
+      window: "30d"
+
+    - name: "Low Latency"
+      description: "95th percentile response time should be under 200ms"
+      sli: "api.latency"
+      target: "< 200ms"
+      window: "30d"
+
+    - name: "High Throughput"
+      description: "API should handle at least 1000 requests per second"
+      sli: "api.throughput"
+      target: "> 1000 rps"
+      window: "30d"
+
+database:
+  slos:
+    - name: "Database Availability"
+      description: "Database should be available 99.99% of the time"
+      sli: "database.availability"
+      target: 99.99%
+      window: "30d"
+
+    - name: "Fast Queries"
+      description: "95th percentile query time should be under 50ms"
+      sli: "database.latency"
+      target: "< 50ms"
+      window: "30d"
+```
+
+### Error Budgets
+
+**Error Budget Calculation:**
+
+```python
+# error_budget.py
+import datetime
+
+class ErrorBudget:
+    def __init__(self, slo_target, measurement_period=30):
+        self.slo_target = slo_target
+        self.measurement_period = measurement_period
+        self.error_budget = 100 - slo_target
+
+    def calculate_error_budget_remaining(self, current_uptime):
+        """Calculate remaining error budget"""
+        error_rate = 100 - current_uptime
+        error_budget_used = error_rate
+        error_budget_remaining = self.error_budget - error_budget_used
+        return max(0, error_budget_remaining)
+
+    def calculate_time_to_exhaustion(self, current_uptime, days_elapsed):
+        """Calculate time until error budget is exhausted"""
+        error_rate = 100 - current_uptime
+        if error_rate <= 0:
+            return float('inf')
+
+        error_budget_remaining = self.calculate_error_budget_remaining(current_uptime)
+        days_to_exhaustion = (error_budget_remaining / error_rate) * days_elapsed
+        return days_to_exhaustion
+
+# Example usage
+slo = ErrorBudget(99.9)  # 99.9% uptime target
+current_uptime = 99.5    # Current uptime
+days_elapsed = 15        # Days into measurement period
+
+remaining_budget = slo.calculate_error_budget_remaining(current_uptime)
+time_to_exhaustion = slo.calculate_time_to_exhaustion(current_uptime, days_elapsed)
+
+print(f"Error budget remaining: {remaining_budget:.2f}%")
+print(f"Days until exhaustion: {time_to_exhaustion:.1f}")
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: Prometheus Setup
+
+**Objective:** Set up basic Prometheus monitoring
+
+**Tasks:**
+
+```bash
+# 1. Download and install Prometheus
+wget https://github.com/prometheus/prometheus/releases/download/v2.45.0/prometheus-2.45.0.linux-amd64.tar.gz
+tar xvf prometheus-2.45.0.linux-amd64.tar.gz
+cd prometheus-2.45.0
+
+# 2. Create basic configuration
+cat > prometheus.yml << 'EOF'
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+EOF
+
+# 3. Start Prometheus
+./prometheus --config.file=prometheus.yml
+
+# 4. Access Prometheus UI
+# http://localhost:9090
+```
+
+### Exercise 2: Grafana Dashboard
+
+**Objective:** Create monitoring dashboard
+
+**Tasks:**
+
+```bash
+# 1. Install Grafana
+sudo apt-get install -y apt-transport-https
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+sudo apt-get update
+sudo apt-get install grafana
+
+# 2. Start Grafana
+sudo systemctl start grafana-server
+sudo systemctl enable grafana-server
+
+# 3. Access Grafana
+# http://localhost:3000
+# Default: admin/admin
+
+# 4. Add Prometheus data source
+# URL: http://localhost:9090
+
+# 5. Create dashboard with:
+# - CPU usage
+# - Memory usage
+# - Disk usage
+# - Network traffic
+```
+
+### Exercise 3: Log Aggregation
+
+**Objective:** Set up ELK stack for log analysis
+
+**Tasks:**
+
+```bash
+# 1. Install Elasticsearch
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
+sudo apt update
+sudo apt install elasticsearch
+
+# 2. Configure Elasticsearch
+sudo nano /etc/elasticsearch/elasticsearch.yml
+# Add: network.host: localhost
+
+# 3. Start Elasticsearch
+sudo systemctl start elasticsearch
+sudo systemctl enable elasticsearch
+
+# 4. Install Kibana
+sudo apt install kibana
+
+# 5. Configure Kibana
+sudo nano /etc/kibana/kibana.yml
+# Add: server.host: "localhost"
+
+# 6. Start Kibana
+sudo systemctl start kibana
+sudo systemctl enable kibana
+
+# 7. Access Kibana
+# http://localhost:5601
+```
+
+## 📊 Assessment Questions
+
+**Day 15 Quiz:**
+
+1. **What are the three pillars of observability?**
+
+   - Answer: Metrics, Logs, and Traces
+
+2. **What is Prometheus used for?**
+
+   - Answer: Time-series monitoring and alerting
+
+3. **What is the purpose of Grafana?**
+
+   - Answer: Data visualization and dashboard creation
+
+4. **What is the ELK stack?**
+
+   - Answer: Elasticsearch, Logstash, Kibana
+
+5. **What is distributed tracing used for?**
+
+   - Answer: Tracking request flows across services
+
+6. **What is an SLI?**
+
+   - Answer: Service Level Indicator
+
+7. **What is an SLO?**
+
+   - Answer: Service Level Objective
+
+8. **What is an error budget?**
+   - Answer: Allowable downtime within SLO targets
+
+## 📚 Additional Resources
+
+### Books
+
+- **"Site Reliability Engineering"** by Google
+- **"The Art of Monitoring"** by James Turnbull
+- **"Observability Engineering"** by Charity Majors
+
+### Online Resources
+
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/)
+- [Elastic Documentation](https://www.elastic.co/guide/)
+
+### Tools
+
+- **Monitoring**: Prometheus, Grafana, Nagios, Zabbix
+- **Logging**: ELK Stack, Fluentd, Splunk
+- **Tracing**: Jaeger, Zipkin, OpenTelemetry
+- **APM**: New Relic, Datadog, AppDynamics
+
+## 🎉 Day 15 Summary
+
+**What You've Learned:**
+
+- ✅ Monitoring concepts and observability pillars
+- ✅ Monitoring tools (Prometheus, Grafana, Nagios)
+- ✅ Log aggregation and analysis (ELK Stack, Fluentd)
+- ✅ Distributed tracing and APM
+- ✅ Alerting and incident management
+- ✅ SRE practices and SLIs/SLOs
+
+**Key Takeaways:**
+
+- Monitoring is essential for system reliability
+- Observability provides deep insights into system behavior
+- Alerting should be actionable and meaningful
+- SRE practices help balance reliability and velocity
+- Error budgets provide operational flexibility
+
+**Tomorrow:** We'll continue with security in DevOps, building on today's monitoring knowledge.
+
+**Remember:** Good monitoring is the foundation of reliable systems. Start with the basics and iterate!

@@ -1,8 +1,851 @@
 ---
-title: "Day 23: Title"
-description: "DevOps 100 Days - Day 23"
+title: "Day 23: Cloud-Native Security"
+description: "Master cloud security fundamentals, IAM, security posture management, container security, and multi-cloud security strategies"
 ---
 
-# Day 23
+# Day 23: Cloud-Native Security
 
-Content coming soon.
+## Learning Objectives
+
+- Understand cloud security fundamentals and shared responsibility model
+- Master identity and access management (IAM) in cloud environments
+- Learn cloud security posture management and compliance
+- Explore container and Kubernetes security best practices
+- Implement serverless security considerations
+- Understand multi-cloud security strategies
+
+## Cloud Security Fundamentals
+
+### Shared Responsibility Model
+
+```bash
+# AWS Shared Responsibility Model
+AWS Responsibility:
+- Global infrastructure (regions, AZs, edge locations)
+- Compute, storage, database, networking
+- Hardware and software for managed services
+- Security configuration of managed services
+
+Customer Responsibility:
+- Security groups and network ACLs
+- IAM users, groups, and policies
+- Operating system configuration
+- Application security and data
+- Client-side encryption
+- Server-side encryption
+```
+
+```bash
+# Azure Shared Responsibility Model
+Microsoft Responsibility:
+- Physical infrastructure
+- Host operating system
+- Network controls
+- Application platform
+
+Customer Responsibility:
+- Data and information
+- Applications
+- Operating system
+- Network and firewall configuration
+- Account and access management
+```
+
+```bash
+# Google Cloud Shared Responsibility Model
+Google Responsibility:
+- Infrastructure security
+- Compute, storage, and networking
+- Managed services security
+- Compliance certifications
+
+Customer Responsibility:
+- Identity and access management
+- Data security and encryption
+- Application security
+- Network security configuration
+```
+
+### Cloud Security Threats
+
+```bash
+# Common Cloud Security Threats
+Data Breaches:
+- Unauthorized access to sensitive data
+- Misconfigured storage buckets
+- Weak access controls
+
+Account Hijacking:
+- Compromised credentials
+- Phishing attacks
+- Weak authentication
+
+Insecure APIs:
+- Unprotected API endpoints
+- Missing authentication
+- Insufficient input validation
+
+Denial of Service:
+- DDoS attacks
+- Resource exhaustion
+- Service unavailability
+
+Malicious Insiders:
+- Privileged user abuse
+- Data exfiltration
+- Sabotage
+
+Advanced Persistent Threats:
+- Long-term infiltration
+- Stealthy data theft
+- Infrastructure compromise
+```
+
+## Identity and Access Management (IAM)
+
+### AWS IAM Best Practices
+
+```json
+// AWS IAM Policy Example
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3ReadAccess",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::123456789012:user/developer"
+      },
+      "Action": ["s3:GetObject", "s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::my-bucket", "arn:aws:s3:::my-bucket/*"],
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/Environment": "production"
+        },
+        "IpAddress": {
+          "aws:SourceIp": "192.168.1.0/24"
+        }
+      }
+    }
+  ]
+}
+```
+
+```yaml
+# AWS IAM Role for EKS
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-service-account
+  namespace: default
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/app-role
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+spec:
+  serviceAccountName: app-service-account
+  containers:
+    - name: app
+      image: my-app:latest
+```
+
+### Azure Active Directory (AAD)
+
+```yaml
+# Azure AD Application Registration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure-ad-secret
+type: Opaque
+data:
+  client-id: <base64-encoded-client-id>
+  client-secret: <base64-encoded-client-secret>
+  tenant-id: <base64-encoded-tenant-id>
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: azure-app
+spec:
+  containers:
+    - name: app
+      image: my-app:latest
+      env:
+        - name: AZURE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: azure-ad-secret
+              key: client-id
+        - name: AZURE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: azure-ad-secret
+              key: client-secret
+        - name: AZURE_TENANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: azure-ad-secret
+              key: tenant-id
+```
+
+### Google Cloud IAM
+
+```yaml
+# Google Cloud IAM Policy
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicy
+metadata:
+  name: storage-policy
+spec:
+  version: 3
+  bindings:
+    - role: roles/storage.objectViewer
+      members:
+        - user:user@example.com
+        - serviceAccount:app@project.iam.gserviceaccount.com
+    - role: roles/storage.objectAdmin
+      members:
+        - user:admin@example.com
+  condition:
+    title: "expires_after_2021_12_31"
+    description: "Expires at midnight of 2021-12-31"
+    expression: 'request.time < timestamp("2022-01-01T00:00:00Z")'
+```
+
+## Cloud Security Posture Management
+
+### AWS Security Hub
+
+```yaml
+# AWS Security Hub Configuration
+apiVersion: securityhub.aws.amazon.com/v1
+kind: SecurityHub
+metadata:
+  name: security-hub
+spec:
+  enableDefaultStandards: true
+  standards:
+    - arn: arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark/v/1.2.0
+    - arn: arn:aws:securityhub:us-east-1::standards/pci-dss/v/3.2.1
+  findings:
+    - id: "arn:aws:securityhub:us-east-1:123456789012:subscription/cis-aws-foundations-benchmark/v/1.2.0/1.1/finding/12345678-1234-1234-1234-123456789012"
+      status: "RESOLVED"
+      note:
+        text: "Issue has been resolved"
+        updatedBy: "security-team"
+```
+
+### Azure Security Center
+
+```yaml
+# Azure Security Center Policy
+apiVersion: security.azure.com/v1
+kind: SecurityPolicy
+metadata:
+  name: security-policy
+spec:
+  policyDefinitions:
+    - name: "Audit VMs that do not use managed disks"
+      type: "Microsoft.Compute/virtualMachines"
+      parameters:
+        effect:
+          type: "string"
+          defaultValue: "Audit"
+      policyRule:
+        if:
+          field: "type"
+          equals: "Microsoft.Compute/virtualMachines"
+        then:
+          effect: "[parameters('effect')]"
+          details:
+            auditIfNotExists:
+              type: "Microsoft.Compute/virtualMachines/extensions"
+              name: "AzureDiskEncryption"
+```
+
+### Google Cloud Security Command Center
+
+```yaml
+# Google Cloud Security Command Center
+apiVersion: securitycenter.googleapis.com/v1
+kind: SecurityMarks
+metadata:
+  name: security-marks
+spec:
+  marks:
+    security_center_marks:
+      key1: "value1"
+      key2: "value2"
+  canonicalName: "organizations/123456789012/sources/123456789012/findings/123456789012"
+```
+
+## Container and Kubernetes Security
+
+### Pod Security Standards
+
+```yaml
+# Pod Security Standards
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-pod
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 2000
+  containers:
+    - name: app
+      image: my-app:latest
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+  volumes:
+    - name: tmp
+      emptyDir: {}
+```
+
+### Network Policies
+
+```yaml
+# Network Policy for Microservices
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: database
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+```
+
+### Container Image Security
+
+```yaml
+# Container Image Scanning
+apiVersion: v1
+kind: Pod
+metadata:
+  name: scanned-pod
+spec:
+  containers:
+    - name: app
+      image: my-app:latest
+      imagePullPolicy: Always
+      securityContext:
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 1000
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /var/log
+  volumes:
+    - name: tmp
+      emptyDir: {}
+    - name: logs
+      persistentVolumeClaim:
+        claimName: logs-pvc
+```
+
+## Serverless Security
+
+### AWS Lambda Security
+
+```python
+# AWS Lambda Security Example
+import boto3
+import json
+import os
+from aws_lambda_powertools import Logger
+from aws_lambda_powertools.utilities.typing import LambdaContext
+
+logger = Logger()
+
+def lambda_handler(event: dict, context: LambdaContext) -> dict:
+    # Input validation
+    if not event.get('user_id'):
+        raise ValueError("user_id is required")
+
+    # Sanitize input
+    user_id = str(event['user_id']).strip()
+
+    # Use least privilege IAM role
+    dynamodb = boto3.client('dynamodb')
+
+    try:
+        response = dynamodb.get_item(
+            TableName=os.environ['USER_TABLE'],
+            Key={'user_id': {'S': user_id}}
+        )
+
+        # Log security events
+        logger.info("User data accessed", extra={
+            "user_id": user_id,
+            "request_id": context.aws_request_id
+        })
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps(response.get('Item', {}))
+        }
+
+    except Exception as e:
+        logger.error("Error accessing user data", extra={
+            "error": str(e),
+            "user_id": user_id
+        })
+        raise
+```
+
+```yaml
+# AWS Lambda IAM Role
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lambda-iam-policy
+data:
+  policy: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem"
+          ],
+          "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/user-table"
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Resource": "arn:aws:logs:us-east-1:123456789012:*"
+        }
+      ]
+    }
+```
+
+### Azure Functions Security
+
+```csharp
+// Azure Functions Security Example
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
+
+public class SecureFunction
+{
+    [FunctionName("SecureFunction")]
+    public async Task<IActionResult> Run(
+        [HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req,
+        ILogger log)
+    {
+        // Validate JWT token
+        var token = req.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        if (string.IsNullOrEmpty(token))
+        {
+            return new UnauthorizedResult();
+        }
+
+        // Verify token and extract claims
+        var principal = await ValidateTokenAsync(token);
+        if (principal == null)
+        {
+            return new UnauthorizedResult();
+        }
+
+        // Check user permissions
+        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return new ForbidResult();
+        }
+
+        // Sanitize input
+        var input = req.Query["input"].ToString();
+        if (string.IsNullOrEmpty(input))
+        {
+            return new BadRequestResult();
+        }
+
+        // Process request securely
+        var result = await ProcessRequestAsync(input, userId);
+
+        log.LogInformation("Request processed for user {UserId}", userId);
+
+        return new OkObjectResult(result);
+    }
+}
+```
+
+## Multi-Cloud Security
+
+### Cross-Cloud Identity Federation
+
+```yaml
+# AWS-Azure Federation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cross-cloud-federation
+data:
+  aws-azure-federation: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Federated": "arn:aws:iam::123456789012:saml-provider/AzureAD"
+          },
+          "Action": "sts:AssumeRoleWithSAML",
+          "Condition": {
+            "StringEquals": {
+              "SAML:aud": "https://signin.aws.amazon.com/saml"
+            }
+          }
+        }
+      ]
+    }
+```
+
+### Multi-Cloud Security Monitoring
+
+```yaml
+# Multi-Cloud Security Dashboard
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-dashboard
+data:
+  dashboard-config: |
+    {
+      "title": "Multi-Cloud Security Dashboard",
+      "panels": [
+        {
+          "title": "AWS Security Score",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "aws_security_score",
+              "legendFormat": "AWS"
+            }
+          ]
+        },
+        {
+          "title": "Azure Security Score",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "azure_security_score",
+              "legendFormat": "Azure"
+            }
+          ]
+        },
+        {
+          "title": "GCP Security Score",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "gcp_security_score",
+              "legendFormat": "GCP"
+            }
+          ]
+        }
+      ]
+    }
+```
+
+### Cloud-Native Security Tools
+
+```yaml
+# Falco Configuration for Multi-Cloud
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-config
+data:
+  falco.yaml: |
+    rules:
+      - macro: suspicious_containers
+        condition: container.image.repository contains "malicious"
+      
+      - rule: Suspicious Container
+        desc: Detect suspicious containers
+        condition: suspicious_containers
+        output: "Suspicious container detected (user=%user.name container=%container.name image=%container.image.repository)"
+        priority: WARNING
+        tags: [container, security]
+      
+      - rule: Unauthorized Process
+        desc: Detect unauthorized processes
+        condition: spawned_process and not proc.name in (authorized_processes)
+        output: "Unauthorized process started (user=%user.name command=%proc.cmdline container=%container.name)"
+        priority: CRITICAL
+        tags: [process, security]
+```
+
+## Hands-on Exercises
+
+### Exercise 1: AWS IAM Policy Creation
+
+```bash
+# Create IAM policy for S3 access
+cat > s3-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3ReadAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::my-bucket",
+        "arn:aws:s3:::my-bucket/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/Environment": "production"
+        }
+      }
+    }
+  ]
+}
+EOF
+
+# Create IAM policy
+aws iam create-policy \
+  --policy-name S3ReadAccess \
+  --policy-document file://s3-policy.json
+
+# Create IAM user and attach policy
+aws iam create-user --user-name developer
+aws iam attach-user-policy \
+  --user-name developer \
+  --policy-arn arn:aws:iam::123456789012:policy/S3ReadAccess
+```
+
+### Exercise 2: Azure Security Center Setup
+
+```bash
+# Enable Azure Security Center
+az security center set --name "default" --tier "standard"
+
+# Enable security recommendations
+az security center auto-provisioning-setting update \
+  --auto-provision "On"
+
+# Enable threat protection
+az security center threat-protection update \
+  --enable "true"
+
+# Configure security policies
+az policy definition create \
+  --name "audit-vm-managed-disks" \
+  --display-name "Audit VMs that do not use managed disks" \
+  --description "This policy audits VMs that do not use managed disks" \
+  --rules '{"if":{"allOf":[{"field":"type","equals":"Microsoft.Compute/virtualMachines"}]},"then":{"effect":"audit"}}'
+```
+
+### Exercise 3: Kubernetes Security Configuration
+
+```bash
+# Create Pod Security Policy
+cat > psp.yaml << 'EOF'
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: restricted
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: true
+EOF
+
+kubectl apply -f psp.yaml
+
+# Create Network Policy
+cat > network-policy.yaml << 'EOF'
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+EOF
+
+kubectl apply -f network-policy.yaml
+```
+
+### Exercise 4: Multi-Cloud Security Monitoring
+
+```bash
+# Install Cloud Custodian
+pip install c7n
+
+# Create AWS security policy
+cat > aws-security-policy.yml << 'EOF'
+policies:
+  - name: s3-bucket-encryption
+    resource: s3
+    filters:
+      - type: missing-statement
+        statement_ids:
+          - RequireEncryption
+    actions:
+      - type: set-bucket-encryption
+        encryption: AES256
+
+  - name: ec2-public-access
+    resource: ec2
+    filters:
+      - type: value
+        key: "State.Name"
+        value: running
+      - type: network-location
+        key: PublicIpAddress
+        present: true
+    actions:
+      - type: tag
+        key: PublicAccess
+        value: true
+EOF
+
+# Run Cloud Custodian
+custodian run aws-security-policy.yml --output-dir=./output
+```
+
+## Assessment Questions
+
+1. **What is the shared responsibility model in cloud security?**
+
+   - Cloud provider responsible for infrastructure security
+   - Customer responsible for application and data security
+   - Varies by service type and cloud provider
+
+2. **How do you implement least privilege access in cloud environments?**
+
+   - Use IAM roles with minimal required permissions
+   - Implement just-in-time access
+   - Regular access reviews and cleanup
+
+3. **What are the key security considerations for containers?**
+
+   - Image scanning and vulnerability management
+   - Pod security policies and network policies
+   - Runtime security monitoring
+
+4. **How do you secure serverless functions?**
+
+   - Input validation and sanitization
+   - Least privilege IAM roles
+   - Secure environment variables and secrets
+
+5. **What are the challenges of multi-cloud security?**
+   - Consistent security policies across clouds
+   - Identity federation and access management
+   - Centralized monitoring and compliance
+
+## Additional Resources
+
+- [AWS Security Best Practices](https://aws.amazon.com/security/security-learning/)
+- [Azure Security Documentation](https://docs.microsoft.com/en-us/azure/security/)
+- [Google Cloud Security](https://cloud.google.com/security)
+- [CIS Cloud Security Benchmarks](https://www.cisecurity.org/benchmark/)
+- [Cloud Security Alliance](https://cloudsecurityalliance.org/)
+
+## Next Steps
+
+Tomorrow we'll explore **Advanced CI/CD Pipelines**, covering:
+
+- Pipeline optimization and performance
+- Advanced deployment strategies
+- Feature flags and canary deployments
+- Pipeline security and compliance
+- Multi-environment management
+- Pipeline monitoring and observability

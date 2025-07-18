@@ -1,8 +1,1208 @@
 ---
-title: "Day 24: Title"
-description: "DevOps 100 Days - Day 24"
+title: "Day 24: Advanced CI/CD Pipelines"
+description: "Master advanced CI/CD pipeline optimization, deployment strategies, feature flags, security, and monitoring best practices"
 ---
 
-# Day 24
+# Day 24: Advanced CI/CD Pipelines
 
-Content coming soon.
+## Learning Objectives
+
+- Understand advanced CI/CD pipeline optimization techniques
+- Master advanced deployment strategies and patterns
+- Learn feature flags and canary deployment implementation
+- Explore pipeline security and compliance automation
+- Implement multi-environment pipeline management
+- Understand pipeline monitoring and observability
+
+## Pipeline Optimization and Performance
+
+### Pipeline Performance Metrics
+
+```yaml
+# Pipeline Performance Dashboard
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipeline-metrics
+data:
+  metrics: |
+    # Key Performance Indicators
+    - name: "Build Time"
+      query: "avg(build_duration_seconds)"
+      target: "< 10 minutes"
+
+    - name: "Deployment Frequency"
+      query: "rate(deployments_total[1h])"
+      target: "> 10 deployments/day"
+
+    - name: "Lead Time"
+      query: "avg(lead_time_seconds)"
+      target: "< 1 hour"
+
+    - name: "Mean Time to Recovery"
+      query: "avg(mttr_seconds)"
+      target: "< 1 hour"
+
+    - name: "Change Failure Rate"
+      query: "rate(failed_deployments_total[1h]) / rate(deployments_total[1h])"
+      target: "< 5%"
+```
+
+### Pipeline Caching Strategies
+
+```yaml
+# GitHub Actions Cache Configuration
+name: Optimized Build Pipeline
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Cache Docker Layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: my-app:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+```
+
+```yaml
+# GitLab CI Cache Configuration
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - node_modules/
+    - .npm/
+    - .cache/
+
+build:
+  stage: build
+  image: node:18
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+
+test:
+  stage: test
+  image: node:18
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run test
+  dependencies:
+    - build
+```
+
+### Parallel Pipeline Execution
+
+```yaml
+# Parallel Job Execution
+name: Parallel Pipeline
+on:
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Linting
+        run: npm run lint
+
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Unit Tests
+        run: npm run test:unit
+
+  test-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Integration Tests
+        run: npm run test:integration
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Security Scan
+        run: npm run security:scan
+
+  build:
+    needs: [lint, test-unit, test-integration, security-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Application
+        run: npm run build
+```
+
+## Advanced Deployment Strategies
+
+### Blue-Green Deployment
+
+```yaml
+# Blue-Green Deployment with Kubernetes
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-blue
+  labels:
+    app: my-app
+    version: blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: blue
+    spec:
+      containers:
+        - name: app
+          image: my-app:blue
+          ports:
+            - containerPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-green
+  labels:
+    app: my-app
+    version: green
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: my-app
+      version: green
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: green
+    spec:
+      containers:
+        - name: app
+          image: my-app:green
+          ports:
+            - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+spec:
+  selector:
+    app: my-app
+    version: blue # Points to blue by default
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+```
+
+```bash
+# Blue-Green Deployment Script
+#!/bin/bash
+
+# Deploy new version to green environment
+kubectl set image deployment/app-green app=my-app:green
+kubectl scale deployment app-green --replicas=3
+
+# Wait for green deployment to be ready
+kubectl rollout status deployment/app-green
+
+# Run health checks on green deployment
+if curl -f http://app-green-service/health; then
+    echo "Green deployment is healthy"
+
+    # Switch traffic to green
+    kubectl patch service app-service -p '{"spec":{"selector":{"version":"green"}}}'
+
+    # Scale down blue deployment
+    kubectl scale deployment app-blue --replicas=0
+
+    echo "Successfully switched to green deployment"
+else
+    echo "Green deployment failed health checks"
+    kubectl scale deployment app-green --replicas=0
+    exit 1
+fi
+```
+
+### Canary Deployment
+
+```yaml
+# Canary Deployment with Istio
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-stable
+  labels:
+    app: my-app
+    version: stable
+spec:
+  replicas: 9
+  selector:
+    matchLabels:
+      app: my-app
+      version: stable
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: stable
+    spec:
+      containers:
+        - name: app
+          image: my-app:stable
+          ports:
+            - containerPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-canary
+  labels:
+    app: my-app
+    version: canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+      version: canary
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: canary
+    spec:
+      containers:
+        - name: app
+          image: my-app:canary
+          ports:
+            - containerPort: 8080
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: app-virtualservice
+spec:
+  hosts:
+    - app-service
+  http:
+    - route:
+        - destination:
+            host: app-service
+            subset: stable
+          weight: 90
+        - destination:
+            host: app-service
+            subset: canary
+          weight: 10
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: app-destinationrule
+spec:
+  host: app-service
+  subsets:
+    - name: stable
+      labels:
+        version: stable
+    - name: canary
+      labels:
+        version: canary
+```
+
+### Rolling Update with Rollback
+
+```yaml
+# Rolling Update Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+spec:
+  replicas: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: app
+          image: my-app:latest
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+```
+
+```bash
+# Deployment with Rollback
+#!/bin/bash
+
+# Deploy new version
+kubectl set image deployment/app-deployment app=my-app:new-version
+
+# Monitor deployment
+kubectl rollout status deployment/app-deployment
+
+# Check application health
+if curl -f http://app-service/health; then
+    echo "Deployment successful"
+else
+    echo "Deployment failed, rolling back"
+    kubectl rollout undo deployment/app-deployment
+    kubectl rollout status deployment/app-deployment
+fi
+```
+
+## Feature Flags and Canary Deployments
+
+### Feature Flag Implementation
+
+```typescript
+// Feature Flag Service
+interface FeatureFlag {
+  name: string;
+  enabled: boolean;
+  rolloutPercentage: number;
+  targetUsers: string[];
+  targetEnvironments: string[];
+}
+
+class FeatureFlagService {
+  private flags: Map<string, FeatureFlag> = new Map();
+
+  constructor() {
+    this.loadFlags();
+  }
+
+  async loadFlags(): Promise<void> {
+    // Load flags from configuration or API
+    const response = await fetch("/api/feature-flags");
+    const flags = await response.json();
+
+    flags.forEach((flag: FeatureFlag) => {
+      this.flags.set(flag.name, flag);
+    });
+  }
+
+  isEnabled(flagName: string, userId?: string, environment?: string): boolean {
+    const flag = this.flags.get(flagName);
+
+    if (!flag) {
+      return false;
+    }
+
+    if (!flag.enabled) {
+      return false;
+    }
+
+    // Check environment
+    if (flag.targetEnvironments.length > 0) {
+      if (!environment || !flag.targetEnvironments.includes(environment)) {
+        return false;
+      }
+    }
+
+    // Check user targeting
+    if (flag.targetUsers.length > 0) {
+      if (!userId || !flag.targetUsers.includes(userId)) {
+        return false;
+      }
+    }
+
+    // Check rollout percentage
+    if (flag.rolloutPercentage < 100) {
+      const hash = this.hashUserId(userId || "anonymous");
+      return hash % 100 < flag.rolloutPercentage;
+    }
+
+    return true;
+  }
+
+  private hashUserId(userId: string): number {
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      const char = userId.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
+  }
+}
+
+// Usage in application
+const featureFlags = new FeatureFlagService();
+
+if (featureFlags.isEnabled("new-ui", userId, environment)) {
+  // Show new UI
+  renderNewUI();
+} else {
+  // Show old UI
+  renderOldUI();
+}
+```
+
+```yaml
+# Feature Flag Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: feature-flags
+data:
+  flags: |
+    {
+      "new-ui": {
+        "enabled": true,
+        "rolloutPercentage": 25,
+        "targetUsers": ["beta-testers"],
+        "targetEnvironments": ["staging", "production"]
+      },
+      "new-payment-system": {
+        "enabled": false,
+        "rolloutPercentage": 0,
+        "targetUsers": [],
+        "targetEnvironments": ["development"]
+      },
+      "performance-optimization": {
+        "enabled": true,
+        "rolloutPercentage": 100,
+        "targetUsers": [],
+        "targetEnvironments": ["production"]
+      }
+    }
+```
+
+### Canary Analysis and Monitoring
+
+```yaml
+# Canary Analysis Configuration
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: app-rollout
+spec:
+  replicas: 10
+  strategy:
+    canary:
+      steps:
+        - setWeight: 10
+        - pause: { duration: 5m }
+        - setWeight: 25
+        - pause: { duration: 5m }
+        - setWeight: 50
+        - pause: { duration: 5m }
+        - setWeight: 100
+      analysis:
+        templates:
+          - templateName: success-rate
+          - templateName: latency
+        args:
+          - name: service-name
+            value: app-service
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: app
+          image: my-app:latest
+          ports:
+            - containerPort: 8080
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+spec:
+  args:
+    - name: service-name
+  metrics:
+    - name: success-rate
+      interval: 30s
+      count: 5
+      successCondition: result[0] >= 0.95
+      failureCondition: result[0] < 0.90
+      provider:
+        prometheus:
+          address: http://prometheus:9090
+          query: |
+            sum(rate(http_requests_total{service="{{args.service-name}}",status!~"5.."}[5m])) /
+            sum(rate(http_requests_total{service="{{args.service-name}}"}[5m]))
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: latency
+spec:
+  args:
+    - name: service-name
+  metrics:
+    - name: latency
+      interval: 30s
+      count: 5
+      successCondition: result[0] <= 0.5
+      failureCondition: result[0] > 1.0
+      provider:
+        prometheus:
+          address: http://prometheus:9090
+          query: |
+            histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{service="{{args.service-name}}"}[5m]))
+```
+
+## Pipeline Security and Compliance
+
+### Security Scanning in Pipeline
+
+```yaml
+# Comprehensive Security Pipeline
+name: Security Pipeline
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  code-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run SonarQube
+        uses: sonarqube-quality-gate-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Run Snyk
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Run OWASP ZAP
+        uses: zaproxy/action-full-scan@v0.7.0
+        with:
+          target: "https://my-app.example.com"
+          rules_file_name: ".zap/rules.tsv"
+          cmd_options: "-a"
+
+  container-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "my-app:latest"
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results.sarif"
+
+  infrastructure-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform/
+          framework: terraform
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+
+      - name: Upload Checkov results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "checkov-results.sarif"
+```
+
+### Compliance Automation
+
+```yaml
+# Compliance Pipeline
+name: Compliance Pipeline
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * *" # Daily at midnight
+
+jobs:
+  license-compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run License Check
+        uses: apache/skywalking-eyes@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Dependency Check
+        run: |
+          npm audit --audit-level=high
+          npm outdated
+
+  security-compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Security Compliance Check
+        run: |
+          # Check for secrets in code
+          git secrets --scan
+
+          # Check for hardcoded credentials
+          grep -r "password\|secret\|key" src/ || true
+
+          # Check for vulnerable dependencies
+          npm audit
+
+  policy-compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run OPA Policy Check
+        run: |
+          opa test policies/
+          opa eval --data policies/ --input . data.policy.violations
+
+      - name: Run Terraform Compliance
+        run: |
+          terraform-compliance -p terraform/ -f compliance/
+```
+
+## Multi-Environment Pipeline Management
+
+### Environment-Specific Configurations
+
+```yaml
+# Multi-Environment Pipeline
+name: Multi-Environment Deployment
+on:
+  push:
+    branches: [main, develop, staging]
+
+jobs:
+  deploy-development:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to Development
+        run: |
+          kubectl config use-context development
+          kubectl apply -f k8s/development/
+
+      - name: Run Smoke Tests
+        run: |
+          ./scripts/smoke-tests.sh development
+
+  deploy-staging:
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    environment: staging
+    needs: [deploy-development]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to Staging
+        run: |
+          kubectl config use-context staging
+          kubectl apply -f k8s/staging/
+
+      - name: Run Integration Tests
+        run: |
+          ./scripts/integration-tests.sh staging
+
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    needs: [deploy-staging]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to Production
+        run: |
+          kubectl config use-context production
+          kubectl apply -f k8s/production/
+
+      - name: Run E2E Tests
+        run: |
+          ./scripts/e2e-tests.sh production
+```
+
+### Environment Configuration Management
+
+```yaml
+# Environment-Specific Configurations
+# k8s/development/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: development
+data:
+  DATABASE_URL: "postgresql://dev:dev@dev-db:5432/dev"
+  REDIS_URL: "redis://dev-redis:6379"
+  LOG_LEVEL: "debug"
+  FEATURE_FLAGS: |
+    {
+      "new-ui": {"enabled": true, "rolloutPercentage": 100},
+      "beta-feature": {"enabled": true, "rolloutPercentage": 50}
+    }
+
+---
+# k8s/staging/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: staging
+data:
+  DATABASE_URL: "postgresql://staging:staging@staging-db:5432/staging"
+  REDIS_URL: "redis://staging-redis:6379"
+  LOG_LEVEL: "info"
+  FEATURE_FLAGS: |
+    {
+      "new-ui": {"enabled": true, "rolloutPercentage": 25},
+      "beta-feature": {"enabled": false, "rolloutPercentage": 0}
+    }
+
+---
+# k8s/production/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: production
+data:
+  DATABASE_URL: "postgresql://prod:prod@prod-db:5432/prod"
+  REDIS_URL: "redis://prod-redis:6379"
+  LOG_LEVEL: "warn"
+  FEATURE_FLAGS: |
+    {
+      "new-ui": {"enabled": false, "rolloutPercentage": 0},
+      "beta-feature": {"enabled": false, "rolloutPercentage": 0}
+    }
+```
+
+## Pipeline Monitoring and Observability
+
+### Pipeline Metrics Collection
+
+```yaml
+# Pipeline Metrics Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipeline-metrics
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+
+    scrape_configs:
+      - job_name: 'jenkins'
+        static_configs:
+          - targets: ['jenkins:8080']
+        metrics_path: /prometheus/
+        
+      - job_name: 'gitlab-ci'
+        static_configs:
+          - targets: ['gitlab:80']
+        metrics_path: /-/metrics
+        
+      - job_name: 'github-actions'
+        static_configs:
+          - targets: ['github-runner:8080']
+        metrics_path: /metrics
+```
+
+```yaml
+# Pipeline Alerting Rules
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pipeline-alerts
+spec:
+  groups:
+    - name: pipeline.rules
+      rules:
+        - alert: PipelineFailure
+          expr: increase(pipeline_failures_total[5m]) > 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pipeline failure detected"
+            description: "Pipeline has failed in the last 5 minutes"
+
+        - alert: SlowBuildTime
+          expr: histogram_quantile(0.95, build_duration_seconds_bucket) > 1800
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Slow build time detected"
+            description: "95th percentile build time is over 30 minutes"
+
+        - alert: HighDeploymentFailureRate
+          expr: rate(deployment_failures_total[1h]) / rate(deployments_total[1h]) > 0.1
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High deployment failure rate"
+            description: "Deployment failure rate is above 10%"
+```
+
+### Pipeline Observability Dashboard
+
+```json
+{
+  "dashboard": {
+    "title": "CI/CD Pipeline Dashboard",
+    "panels": [
+      {
+        "title": "Build Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(build_successes_total[1h]) / (rate(build_successes_total[1h]) + rate(build_failures_total[1h])) * 100",
+            "legendFormat": "Success Rate"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                { "color": "red", "value": null },
+                { "color": "yellow", "value": 80 },
+                { "color": "green", "value": 95 }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Deployment Frequency",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(deployments_total[1h])",
+            "legendFormat": "Deployments/Hour"
+          }
+        ]
+      },
+      {
+        "title": "Lead Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, lead_time_seconds_bucket)",
+            "legendFormat": "95th Percentile Lead Time"
+          }
+        ]
+      },
+      {
+        "title": "Pipeline Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, pipeline_duration_seconds_bucket)",
+            "legendFormat": "95th Percentile Duration"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Hands-on Exercises
+
+### Exercise 1: Optimized Pipeline Setup
+
+```bash
+# Create optimized GitHub Actions pipeline
+cat > .github/workflows/optimized-pipeline.yml << 'EOF'
+name: Optimized Pipeline
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Cache Dependencies
+      uses: actions/cache@v3
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+    - name: Run Linting
+      run: npm ci && npm run lint
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16, 18]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Cache Dependencies
+      uses: actions/cache@v3
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+    - name: Run Tests
+      run: npm ci && npm run test
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build Application
+      run: npm ci && npm run build
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts
+        path: dist/
+EOF
+```
+
+### Exercise 2: Canary Deployment Setup
+
+```bash
+# Create canary deployment with Argo Rollouts
+cat > canary-deployment.yaml << 'EOF'
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: app-rollout
+spec:
+  replicas: 10
+  strategy:
+    canary:
+      steps:
+      - setWeight: 10
+      - pause: {duration: 5m}
+      - setWeight: 25
+      - pause: {duration: 5m}
+      - setWeight: 50
+      - pause: {duration: 5m}
+      - setWeight: 100
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: app
+        image: my-app:latest
+        ports:
+        - containerPort: 8080
+EOF
+
+kubectl apply -f canary-deployment.yaml
+```
+
+### Exercise 3: Feature Flag Implementation
+
+```bash
+# Create feature flag service
+cat > feature-flags.js << 'EOF'
+class FeatureFlagService {
+  constructor() {
+    this.flags = new Map();
+    this.loadFlags();
+  }
+
+  async loadFlags() {
+    const response = await fetch('/api/feature-flags');
+    const flags = await response.json();
+    flags.forEach(flag => this.flags.set(flag.name, flag));
+  }
+
+  isEnabled(flagName, userId, environment) {
+    const flag = this.flags.get(flagName);
+    if (!flag || !flag.enabled) return false;
+
+    if (flag.targetEnvironments.length > 0 &&
+        !flag.targetEnvironments.includes(environment)) {
+      return false;
+    }
+
+    if (flag.rolloutPercentage < 100) {
+      const hash = this.hashUserId(userId || 'anonymous');
+      return hash % 100 < flag.rolloutPercentage;
+    }
+
+    return true;
+  }
+
+  hashUserId(userId) {
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      const char = userId.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash);
+  }
+}
+
+export default FeatureFlagService;
+EOF
+```
+
+## Assessment Questions
+
+1. **What are the key metrics for pipeline performance?**
+
+   - Build time, deployment frequency, lead time, MTTR, change failure rate
+
+2. **How do you implement canary deployments?**
+
+   - Gradual traffic shifting, health monitoring, automatic rollback on failure
+
+3. **What are the benefits of feature flags?**
+
+   - Risk mitigation, gradual rollouts, A/B testing, quick rollbacks
+
+4. **How do you ensure pipeline security?**
+
+   - Security scanning, compliance checks, secrets management, access controls
+
+5. **What are the challenges of multi-environment pipelines?**
+   - Configuration management, environment consistency, deployment coordination
+
+## Additional Resources
+
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [GitLab CI/CD Documentation](https://docs.gitlab.com/ee/ci/)
+- [Jenkins Pipeline Documentation](https://www.jenkins.io/doc/book/pipeline/)
+- [Argo Rollouts Documentation](https://argoproj.github.io/argo-rollouts/)
+- [Feature Flag Best Practices](https://featureflags.io/)
+
+## Next Steps
+
+Tomorrow we'll explore **Site Reliability Engineering (SRE)**, covering:
+
+- SRE fundamentals and principles
+- Service level objectives (SLOs) and indicators (SLIs)
+- Error budget management
+- Incident response and post-mortems
+- Toil reduction and automation
+- SRE culture and practices

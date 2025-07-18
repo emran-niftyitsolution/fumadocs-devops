@@ -1,8 +1,548 @@
 ---
-title: "Day 17: Title"
-description: "DevOps 100 Days - Day 17"
+title: "Day 17: Git and Version Control Mastery"
+description: "Master Git fundamentals, branching strategies, collaboration workflows, and advanced version control techniques"
 ---
 
-# Day 17
+# Day 17: Git and Version Control Mastery
 
-Content coming soon.
+## Learning Objectives
+
+- Understand Git fundamentals and version control concepts
+- Master Git branching strategies and workflows
+- Learn collaboration techniques and conflict resolution
+- Explore advanced Git features and best practices
+- Implement Git hooks and automation
+- Understand Git security and access control
+
+## Git Fundamentals
+
+### What is Version Control?
+
+Version control is a system that tracks changes to files over time, allowing you to:
+
+- Revert files to previous states
+- Compare changes between versions
+- Collaborate with others safely
+- Maintain project history
+
+### Git Architecture
+
+```bash
+# Git has three main areas
+Working Directory  # Your project files
+Staging Area      # Files ready to commit
+Repository        # Committed history
+```
+
+### Basic Git Commands
+
+```bash
+# Initialize a repository
+git init
+
+# Check repository status
+git status
+
+# Add files to staging
+git add filename
+git add .  # Add all files
+
+# Commit changes
+git commit -m "Descriptive commit message"
+
+# View commit history
+git log
+git log --oneline
+git log --graph --oneline --all
+
+# View file changes
+git diff
+git diff --staged
+```
+
+### Git Configuration
+
+```bash
+# Set user identity
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+
+# Set default editor
+git config --global core.editor "code --wait"
+
+# Set default branch name
+git config --global init.defaultBranch main
+
+# View configuration
+git config --list
+```
+
+## Branching Strategies
+
+### Git Flow
+
+A popular branching model for release management:
+
+```bash
+# Main branches
+main        # Production-ready code
+develop     # Integration branch
+
+# Supporting branches
+feature/*   # New features
+release/*   # Release preparation
+hotfix/*    # Production fixes
+```
+
+### Git Flow Workflow
+
+```bash
+# Start a new feature
+git checkout develop
+git checkout -b feature/new-feature
+
+# Work on feature
+git add .
+git commit -m "Add new feature"
+
+# Finish feature
+git checkout develop
+git merge feature/new-feature
+git branch -d feature/new-feature
+
+# Create release
+git checkout -b release/1.0.0
+# Make release adjustments
+git checkout main
+git merge release/1.0.0
+git tag -a v1.0.0 -m "Release 1.0.0"
+git checkout develop
+git merge release/1.0.0
+git branch -d release/1.0.0
+```
+
+### GitHub Flow
+
+Simpler workflow for continuous deployment:
+
+```bash
+# Create feature branch from main
+git checkout main
+git pull origin main
+git checkout -b feature-name
+
+# Make changes and commit
+git add .
+git commit -m "Add feature"
+
+# Push and create pull request
+git push origin feature-name
+# Create PR on GitHub
+
+# After review, merge to main
+git checkout main
+git pull origin main
+git branch -d feature-name
+```
+
+### Trunk-Based Development
+
+For teams with strong CI/CD:
+
+```bash
+# Work directly on main branch
+git checkout main
+git pull origin main
+
+# Make small, frequent commits
+git add .
+git commit -m "Small, focused change"
+git push origin main
+```
+
+## Collaboration Workflows
+
+### Remote Repositories
+
+```bash
+# Add remote repository
+git remote add origin https://github.com/user/repo.git
+
+# List remotes
+git remote -v
+
+# Fetch from remote
+git fetch origin
+
+# Pull changes
+git pull origin main
+
+# Push changes
+git push origin main
+```
+
+### Fork and Pull Request Workflow
+
+```bash
+# Fork repository on GitHub
+# Clone your fork
+git clone https://github.com/your-username/repo.git
+
+# Add upstream remote
+git remote add upstream https://github.com/original-owner/repo.git
+
+# Keep fork updated
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+
+# Create feature branch
+git checkout -b feature-branch
+# Make changes
+git push origin feature-branch
+# Create PR on GitHub
+```
+
+### Conflict Resolution
+
+```bash
+# When merge conflicts occur
+git status  # See conflicted files
+
+# Edit conflicted files manually
+# Look for conflict markers:
+# <<<<<<< HEAD
+# Your changes
+# =======
+# Their changes
+# >>>>>>> branch-name
+
+# After resolving conflicts
+git add resolved-file
+git commit -m "Resolve merge conflicts"
+```
+
+## Advanced Git Features
+
+### Git Stash
+
+```bash
+# Save work in progress
+git stash
+git stash push -m "WIP: working on feature"
+
+# List stashes
+git stash list
+
+# Apply stash
+git stash pop
+git stash apply stash@{0}
+
+# Drop stash
+git stash drop stash@{0}
+git stash clear
+```
+
+### Git Rebase
+
+```bash
+# Rebase feature branch on main
+git checkout feature-branch
+git rebase main
+
+# Interactive rebase
+git rebase -i HEAD~3
+
+# Commands in interactive rebase:
+# pick   - use commit
+# reword - use commit, edit message
+# edit   - use commit, stop for amending
+# squash - use commit, meld into previous
+# fixup  - use commit, meld into previous, discard message
+# drop   - remove commit
+```
+
+### Git Cherry-pick
+
+```bash
+# Apply specific commit to current branch
+git cherry-pick commit-hash
+
+# Cherry-pick multiple commits
+git cherry-pick commit1 commit2 commit3
+
+# Cherry-pick range
+git cherry-pick commit1^..commit2
+```
+
+### Git Bisect
+
+```bash
+# Find commit that introduced a bug
+git bisect start
+git bisect bad HEAD
+git bisect good v1.0.0
+
+# Test current commit
+# If bug exists:
+git bisect bad
+# If bug doesn't exist:
+git bisect good
+
+# Git will find the problematic commit
+git bisect reset
+```
+
+## Git Hooks and Automation
+
+### Pre-commit Hook
+
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+
+# Run tests
+npm test
+
+# Run linting
+npm run lint
+
+# Check for TODO comments
+if git diff --cached | grep -i "TODO"; then
+    echo "Warning: TODO comments found in staged files"
+    exit 1
+fi
+```
+
+### Post-commit Hook
+
+```bash
+#!/bin/bash
+# .git/hooks/post-commit
+
+# Send notification
+echo "Commit $(git rev-parse HEAD) created by $(git config user.name)"
+
+# Update deployment status
+curl -X POST https://api.example.com/deploy/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": "committed", "commit": "'$(git rev-parse HEAD)'"}'
+```
+
+### Husky Integration
+
+```json
+// package.json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts}": ["eslint --fix", "prettier --write"],
+    "*.{json,md}": ["prettier --write"]
+  }
+}
+```
+
+## Git Security and Access Control
+
+### SSH Key Authentication
+
+```bash
+# Generate SSH key
+ssh-keygen -t ed25519 -C "your.email@example.com"
+
+# Add to SSH agent
+ssh-add ~/.ssh/id_ed25519
+
+# Add public key to GitHub
+cat ~/.ssh/id_ed25519.pub
+# Copy to GitHub Settings > SSH and GPG keys
+```
+
+### GPG Signing
+
+```bash
+# Generate GPG key
+gpg --full-generate-key
+
+# List GPG keys
+gpg --list-secret-keys --keyid-format LONG
+
+# Configure Git to use GPG
+git config --global user.signingkey YOUR_GPG_KEY_ID
+git config --global commit.gpgsign true
+
+# Sign commits
+git commit -S -m "Signed commit message"
+```
+
+### Branch Protection Rules
+
+```yaml
+# GitHub branch protection example
+name: Branch Protection
+on:
+  push:
+    branches: [main]
+
+jobs:
+  protect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Protect branch
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.updateBranchProtection({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: 'main',
+              required_status_checks: {
+                strict: true,
+                contexts: ['ci/tests', 'ci/lint']
+              },
+              enforce_admins: true,
+              required_pull_request_reviews: {
+                required_approving_review_count: 2
+              },
+              restrictions: null
+            })
+```
+
+## Hands-on Exercises
+
+### Exercise 1: Git Workflow Practice
+
+```bash
+# Create a new repository
+mkdir git-practice
+cd git-practice
+git init
+
+# Create initial files
+echo "# My Project" > README.md
+echo "console.log('Hello World');" > app.js
+
+# Make initial commit
+git add .
+git commit -m "Initial commit"
+
+# Create feature branch
+git checkout -b feature/user-authentication
+
+# Add authentication feature
+echo "function authenticateUser(username, password) {" >> app.js
+echo "  // Authentication logic" >> app.js
+echo "}" >> app.js
+
+git add app.js
+git commit -m "Add user authentication function"
+
+# Switch back to main and merge
+git checkout main
+git merge feature/user-authentication
+git branch -d feature/user-authentication
+```
+
+### Exercise 2: Conflict Resolution
+
+```bash
+# Create conflicting changes
+git checkout -b feature-a
+echo "Feature A changes" > feature.txt
+git add feature.txt
+git commit -m "Add feature A"
+
+git checkout main
+git checkout -b feature-b
+echo "Feature B changes" > feature.txt
+git add feature.txt
+git commit -m "Add feature B"
+
+# Try to merge and resolve conflict
+git checkout main
+git merge feature-a
+git merge feature-b
+# Resolve conflict manually
+```
+
+### Exercise 3: Git Hooks Setup
+
+```bash
+# Create pre-commit hook
+cat > .git/hooks/pre-commit << 'EOF'
+#!/bin/bash
+echo "Running pre-commit checks..."
+
+# Check for large files
+if git diff --cached --name-only | xargs -I {} find {} -size +10M 2>/dev/null; then
+    echo "Error: Files larger than 10MB detected"
+    exit 1
+fi
+
+# Check for sensitive data
+if git diff --cached | grep -i "password\|secret\|key"; then
+    echo "Warning: Potential sensitive data detected"
+    exit 1
+fi
+
+echo "Pre-commit checks passed"
+EOF
+
+chmod +x .git/hooks/pre-commit
+```
+
+## Assessment Questions
+
+1. **What is the difference between `git merge` and `git rebase`?**
+
+   - Merge creates a merge commit and preserves branch history
+   - Rebase rewrites commit history to create linear history
+
+2. **Explain the Git Flow branching strategy.**
+
+   - Main branches: main (production), develop (integration)
+   - Supporting branches: feature/_, release/_, hotfix/\*
+   - Structured workflow for release management
+
+3. **How do you resolve a merge conflict?**
+
+   - Edit conflicted files manually
+   - Remove conflict markers
+   - Stage resolved files
+   - Complete the merge
+
+4. **What are Git hooks and how are they used?**
+
+   - Scripts that run at specific Git events
+   - Used for automation, validation, and notifications
+   - Common hooks: pre-commit, post-commit, pre-push
+
+5. **How do you secure Git repositories?**
+   - SSH key authentication
+   - GPG commit signing
+   - Branch protection rules
+   - Access control and permissions
+
+## Additional Resources
+
+- [Git Documentation](https://git-scm.com/doc)
+- [GitHub Flow](https://guides.github.com/introduction/flow/)
+- [Git Flow](https://nvie.com/posts/a-successful-git-branching-model/)
+- [Git Hooks](https://git-scm.com/docs/githooks)
+- [Git Security Best Practices](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work)
+
+## Next Steps
+
+Tomorrow we'll explore **Infrastructure as Code (IaC) with Terraform**, covering:
+
+- Terraform fundamentals and syntax
+- Resource management and state
+- Modules and reusable components
+- Terraform Cloud and remote state
+- Best practices and security considerations

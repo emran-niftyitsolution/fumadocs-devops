@@ -1,8 +1,996 @@
 ---
-title: "Day 22: Title"
-description: "DevOps 100 Days - Day 22"
+title: "Day 22: Security in DevOps (DevSecOps)"
+description: "Master DevSecOps fundamentals, vulnerability management, security testing, compliance, and zero trust architecture implementation"
 ---
 
-# Day 22
+# Day 22: Security in DevOps (DevSecOps)
 
-Content coming soon.
+## Learning Objectives
+
+- Understand DevSecOps fundamentals and security principles
+- Master vulnerability management and scanning tools
+- Learn security testing in CI/CD pipelines
+- Explore compliance and governance frameworks
+- Implement security monitoring and incident response
+- Understand zero trust architecture and implementation
+
+## DevSecOps Fundamentals
+
+### What is DevSecOps?
+
+DevSecOps integrates security practices into the DevOps pipeline, ensuring security is built into every stage of the software development lifecycle:
+
+- **Security as Code**: Security policies and controls defined in code
+- **Shift Left**: Security testing early in development
+- **Automated Security**: Security checks integrated into CI/CD
+- **Continuous Security**: Ongoing security monitoring and assessment
+
+### Security Principles
+
+```bash
+# Core Security Principles
+Defense in Depth     # Multiple layers of security controls
+Least Privilege      # Minimal access required for tasks
+Zero Trust           # Never trust, always verify
+Security by Design   # Security built into architecture
+Fail Secure          # System fails to secure state
+```
+
+### DevSecOps Maturity Model
+
+```bash
+# Level 1: Basic Security
+- Manual security reviews
+- Basic vulnerability scanning
+- Ad-hoc security testing
+- Limited security automation
+
+# Level 2: Integrated Security
+- Automated security scanning
+- Security gates in CI/CD
+- Security testing in pipeline
+- Basic compliance checks
+
+# Level 3: Advanced Security
+- Continuous security monitoring
+- Automated threat detection
+- Advanced compliance automation
+- Security incident automation
+
+# Level 4: Security Excellence
+- Predictive security analytics
+- Automated incident response
+- Advanced threat hunting
+- Security culture integration
+```
+
+## Vulnerability Management
+
+### Static Application Security Testing (SAST)
+
+```yaml
+# SonarQube Configuration
+# sonar-project.properties
+sonar.projectKey=my-app
+sonar.projectName=My Application
+sonar.projectVersion=1.0
+
+sonar.sources=src
+sonar.tests=tests
+sonar.java.binaries=target/classes
+sonar.java.test.binaries=target/test-classes
+
+# Security rules
+sonar.security.sources.javasecurity=true
+sonar.security.sources.pythonsecurity=true
+sonar.security.sources.javascriptsecurity=true
+
+# Quality gates
+sonar.qualitygate.wait=true
+sonar.qualitygate.name=Security Gate
+```
+
+```yaml
+# GitHub Actions SAST Workflow
+name: Security Scan
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run SonarQube
+        uses: sonarqube-quality-gate-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Run Snyk
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Run OWASP ZAP
+        uses: zaproxy/action-full-scan@v0.7.0
+        with:
+          target: "https://my-app.example.com"
+          rules_file_name: ".zap/rules.tsv"
+          cmd_options: "-a"
+```
+
+### Dynamic Application Security Testing (DAST)
+
+```yaml
+# OWASP ZAP Configuration
+# zap-baseline.conf
+10016	# Web Browser XSS Protection Not Enabled
+10020	# X-Frame-Options Header
+10021	# X-Content-Type-Options Header Missing
+10022	# Information Disclosure - Debug Error Messages
+10023	# Weak Authentication Method
+10024	# Insecure Random Number Generator
+10025	# HTTP Parameter Pollution
+10026	# HTTP Response Splitting
+10027	# Cross Site Scripting (Reflected)
+10028	# Cross Site Scripting (Persistent)
+10029	# Cross Site Scripting (DOM Based)
+10030	# SQL Injection
+10031	# LDAP Injection
+10032	# OS Command Injection
+10033	# Path Traversal
+10034	# XML External Entity Injection
+10035	# XXE
+10036	# XPath Injection
+10037	# XSLT Injection
+10038	# XQuery Injection
+10039	# Server Side Include
+10040	# Cross Site Request Forgery
+10041	# Server Side Code Injection
+10042	# Source Code Disclosure
+10043	# Directory Browsing
+10044	# Information Disclosure - Sensitive Information in URL
+10045	# Information Disclosure - Sensitive Information in HTTP Comments
+10046	# Information Disclosure - Sensitive Information in HTML Comments
+10047	# Information Disclosure - Sensitive Information in JavaScript Comments
+10048	# Information Disclosure - Sensitive Information in HTML Attributes
+10049	# Information Disclosure - Sensitive Information in JavaScript Variables
+10050	# Information Disclosure - Sensitive Information in HTTP Headers
+10051	# Information Disclosure - Sensitive Information in HTTP Response Body
+10052	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10053	# Information Disclosure - Sensitive Information in HTTP Response Body
+10054	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10055	# Information Disclosure - Sensitive Information in HTTP Response Body
+10056	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10057	# Information Disclosure - Sensitive Information in HTTP Response Body
+10058	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10059	# Information Disclosure - Sensitive Information in HTTP Response Body
+10060	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10061	# Information Disclosure - Sensitive Information in HTTP Response Body
+10062	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10063	# Information Disclosure - Sensitive Information in HTTP Response Body
+10064	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10065	# Information Disclosure - Sensitive Information in HTTP Response Body
+10066	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10067	# Information Disclosure - Sensitive Information in HTTP Response Body
+10068	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10069	# Information Disclosure - Sensitive Information in HTTP Response Body
+10070	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10071	# Information Disclosure - Sensitive Information in HTTP Response Body
+10072	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10073	# Information Disclosure - Sensitive Information in HTTP Response Body
+10074	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10075	# Information Disclosure - Sensitive Information in HTTP Response Body
+10076	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10077	# Information Disclosure - Sensitive Information in HTTP Response Body
+10078	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10079	# Information Disclosure - Sensitive Information in HTTP Response Body
+10080	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10081	# Information Disclosure - Sensitive Information in HTTP Response Body
+10082	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10083	# Information Disclosure - Sensitive Information in HTTP Response Body
+10084	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10085	# Information Disclosure - Sensitive Information in HTTP Response Body
+10086	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10087	# Information Disclosure - Sensitive Information in HTTP Response Body
+10088	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10089	# Information Disclosure - Sensitive Information in HTTP Response Body
+10090	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10091	# Information Disclosure - Sensitive Information in HTTP Response Body
+10092	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10093	# Information Disclosure - Sensitive Information in HTTP Response Body
+10094	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10095	# Information Disclosure - Sensitive Information in HTTP Response Body
+10096	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10097	# Information Disclosure - Sensitive Information in HTTP Response Body
+10098	# Information Disclosure - Sensitive Information in HTTP Response Headers
+10099	# Information Disclosure - Sensitive Information in HTTP Response Body
+10100	# Information Disclosure - Sensitive Information in HTTP Response Headers
+```
+
+### Container Security Scanning
+
+```yaml
+# Trivy Configuration
+# .trivyignore
+CVE-2021-34527
+CVE-2021-34528
+
+# Trivy scan in CI/CD
+name: Container Security Scan
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'my-app:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+```
+
+```yaml
+# Clair Configuration
+# clair-config.yaml
+clair:
+  database:
+    type: pgsql
+    options:
+      source: "host=localhost port=5432 user=clair dbname=clair sslmode=disable"
+
+  api:
+    port: 6060
+    healthport: 6061
+    timeout: 900s
+
+  updater:
+    interval: 12h
+    notifier:
+      type: webhook
+      webhook:
+        url: http://localhost:6060/notifier
+        timeout: 5s
+```
+
+## Security Testing in CI/CD
+
+### Security Gates in Pipeline
+
+```yaml
+# GitLab CI Security Pipeline
+stages:
+  - build
+  - test
+  - security
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+build:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - docker build -t my-app:$CI_COMMIT_SHA .
+    - docker tag my-app:$CI_COMMIT_SHA my-app:latest
+  only:
+    - main
+    - develop
+
+security-scan:
+  stage: security
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image my-app:latest
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy config .
+  allow_failure: false
+  only:
+    - main
+    - develop
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying application..."
+  only:
+    - main
+  when: manual
+```
+
+### Infrastructure Security Scanning
+
+```yaml
+# Checkov Configuration
+# .checkov.yml
+framework:
+  - terraform
+  - kubernetes
+  - dockerfile
+  - helm
+
+skip_path:
+  - "**/vendor/**"
+  - "**/node_modules/**"
+
+output:
+  - cli
+  - junitxml
+  - json
+
+quiet: false
+compact: false
+```
+
+```yaml
+# tfsec Configuration
+# .tfsec.yml
+# Minimum version of tfsec to use
+minimum_version: 1.0.0
+
+# Enable all available checks
+enable_all_checks: true
+
+# Custom check definitions
+custom_checks:
+  - code: CUS001
+    description: "Custom check for required tags"
+    impact: "High"
+    resolution: "Add required tags to resources"
+    required_types:
+      - resource
+    required_labels:
+      - aws_instance
+    severity: "ERROR"
+    match:
+      block: resource
+      attribute: tags
+      value: ".*"
+```
+
+### Secrets Management
+
+```yaml
+# HashiCorp Vault Configuration
+# vault-config.hcl
+storage "file" {
+  path = "/vault/data"
+}
+
+listener "tcp" {
+  address     = "0.0.0.0:8200"
+  tls_disable = 1
+}
+
+api_addr = "http://0.0.0.0:8200"
+cluster_addr = "https://0.0.0.0:8201"
+
+ui = true
+
+# Enable audit logging
+audit "file" {
+  path = "/vault/audit/audit.log"
+}
+```
+
+```yaml
+# Kubernetes Secrets Management
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+type: Opaque
+data:
+  username: YWRtaW4=
+  password: cGFzc3dvcmQ=
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+spec:
+  containers:
+    - name: app
+      image: my-app:latest
+      env:
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: password
+```
+
+## Compliance and Governance
+
+### Policy as Code
+
+```yaml
+# Open Policy Agent (OPA) Policies
+# policies/security.rego
+package kubernetes.admission
+
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    not input.request.object.spec.securityContext.runAsNonRoot
+
+    msg := "Pods must not run as root"
+}
+
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    container := input.request.object.spec.containers[_]
+    not container.securityContext.readOnlyRootFilesystem
+
+    msg := "Pods must have read-only root filesystem"
+}
+
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    container := input.request.object.spec.containers[_]
+    container.securityContext.privileged
+
+    msg := "Pods must not run in privileged mode"
+}
+
+# Network policies
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    not input.request.object.metadata.namespace == "kube-system"
+    not data.network_policies[input.request.object.metadata.namespace]
+
+    msg := "All pods must have network policies"
+}
+```
+
+```yaml
+# Gatekeeper Configuration
+apiVersion: config.gatekeeper.sh/v1alpha1
+kind: Config
+metadata:
+  name: config
+  namespace: gatekeeper-system
+spec:
+  sync:
+    syncOnly:
+      - group: ""
+        version: "v1"
+        kind: "Pod"
+      - group: ""
+        version: "v1"
+        kind: "Service"
+      - group: "apps"
+        version: "v1"
+        kind: "Deployment"
+  validation:
+    - name: security-policies
+      namespace: gatekeeper-system
+      webhook:
+        rules:
+          - apiGroups: [""]
+            apiVersions: ["v1"]
+            operations: ["CREATE", "UPDATE"]
+            resources: ["pods"]
+            scope: "Namespaced"
+```
+
+### Compliance Frameworks
+
+```yaml
+# SOC 2 Compliance
+# soc2-policies.rego
+package soc2
+
+# Access Control
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    not input.request.object.spec.securityContext.runAsUser
+    msg := "SOC 2: Pods must specify non-root user"
+}
+
+# Data Protection
+deny[msg] {
+    input.request.kind.kind == "Secret"
+    not input.request.object.metadata.annotations["encryption"]
+    msg := "SOC 2: Secrets must be encrypted"
+}
+
+# Audit Logging
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    not input.request.object.metadata.annotations["audit-logging"]
+    msg := "SOC 2: Pods must have audit logging enabled"
+}
+```
+
+```yaml
+# GDPR Compliance
+# gdpr-policies.rego
+package gdpr
+
+# Data Minimization
+deny[msg] {
+    input.request.kind.kind == "ConfigMap"
+    contains(input.request.object.data, "personal_data")
+    not input.request.object.metadata.annotations["gdpr-compliant"]
+    msg := "GDPR: Personal data must be marked as GDPR compliant"
+}
+
+# Right to be Forgotten
+deny[msg] {
+    input.request.kind.kind == "PersistentVolumeClaim"
+    not input.request.object.metadata.annotations["data-retention-policy"]
+    msg := "GDPR: Data retention policy must be specified"
+}
+```
+
+## Security Monitoring and Incident Response
+
+### Security Information and Event Management (SIEM)
+
+```yaml
+# ELK Stack Security Configuration
+# elasticsearch-security.yml
+xpack.security.enabled: true
+xpack.security.transport.ssl.enabled: true
+xpack.security.transport.ssl.verification_mode: certificate
+xpack.security.transport.ssl.keystore.path: elastic-certificates.p12
+xpack.security.transport.ssl.truststore.path: elastic-certificates.p12
+
+# Security roles
+xpack.security.authc.realms.native.native1:
+  order: 0
+xpack.security.authc.realms.file.file1:
+  order: 1
+```
+
+```yaml
+# Logstash Security Pipeline
+# security-pipeline.conf
+input {
+  beats {
+    port => 5044
+  }
+  file {
+    path => "/var/log/security/*.log"
+    start_position => "beginning"
+    sincedb_path => "/dev/null"
+  }
+}
+
+filter {
+  if [type] == "security" {
+    grok {
+      match => { "message" => "%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:level} %{GREEDYDATA:message}" }
+    }
+    date {
+      match => [ "timestamp", "yyyy-MM-dd HH:mm:ss" ]
+      target => "@timestamp"
+    }
+
+    # Security event classification
+    if [message] =~ /failed login/i {
+      mutate {
+        add_tag => [ "security", "authentication_failure" ]
+      }
+    }
+
+    if [message] =~ /unauthorized access/i {
+      mutate {
+        add_tag => [ "security", "unauthorized_access" ]
+      }
+    }
+
+    if [message] =~ /sql injection/i {
+      mutate {
+        add_tag => [ "security", "attack_attempt" ]
+      }
+    }
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+    index => "security-logs-%{+YYYY.MM.dd}"
+  }
+
+  # Alert on security events
+  if "security" in [tags] {
+    http {
+      url => "https://security-alerts.example.com/webhook"
+      http_method => "post"
+      format => "json"
+      mapping => {
+        "event" => "%{[@metadata][event]}"
+        "severity" => "%{[@metadata][severity]}"
+        "source" => "%{[@metadata][source]}"
+      }
+    }
+  }
+}
+```
+
+### Incident Response Automation
+
+```yaml
+# Incident Response Playbook
+# incident-response.yml
+incident_types:
+  - name: "Security Breach"
+    severity: "critical"
+    response_time: "5m"
+    escalation_time: "15m"
+
+    steps:
+      - name: "Initial Assessment"
+        description: "Assess the scope and impact of the breach"
+        actions:
+          - "Isolate affected systems"
+          - "Preserve evidence"
+          - "Notify security team"
+
+      - name: "Containment"
+        description: "Stop the breach from spreading"
+        actions:
+          - "Block malicious IPs"
+          - "Disable compromised accounts"
+          - "Update firewall rules"
+
+      - name: "Investigation"
+        description: "Determine root cause and scope"
+        actions:
+          - "Analyze logs and traces"
+          - "Review access patterns"
+          - "Identify affected data"
+
+      - name: "Remediation"
+        description: "Fix vulnerabilities and restore systems"
+        actions:
+          - "Patch vulnerabilities"
+          - "Restore from backups"
+          - "Update security controls"
+
+      - name: "Recovery"
+        description: "Return to normal operations"
+        actions:
+          - "Verify system integrity"
+          - "Monitor for recurrence"
+          - "Update incident documentation"
+
+  - name: "Data Breach"
+    severity: "critical"
+    response_time: "10m"
+    escalation_time: "30m"
+
+    steps:
+      - name: "Immediate Response"
+        description: "Stop data exfiltration"
+        actions:
+          - "Disconnect affected systems"
+          - "Preserve digital evidence"
+          - "Notify legal and compliance"
+
+      - name: "Assessment"
+        description: "Determine scope of breach"
+        actions:
+          - "Identify affected data types"
+          - "Assess regulatory impact"
+          - "Determine notification requirements"
+
+      - name: "Notification"
+        description: "Comply with legal requirements"
+        actions:
+          - "Notify affected individuals"
+          - "Report to regulatory bodies"
+          - "Engage legal counsel"
+```
+
+## Zero Trust Architecture
+
+### Zero Trust Principles
+
+```yaml
+# Zero Trust Configuration
+# zero-trust.yml
+zero_trust:
+  principles:
+    - "Never trust, always verify"
+    - "Assume breach"
+    - "Verify explicitly"
+    - "Use least privilege access"
+    - "Monitor and log everything"
+
+  components:
+    identity:
+      - "Multi-factor authentication"
+      - "Identity providers"
+      - "Single sign-on"
+
+    device:
+      - "Device compliance"
+      - "Endpoint security"
+      - "Device health checks"
+
+    network:
+      - "Micro-segmentation"
+      - "Network policies"
+      - "Encrypted communication"
+
+    application:
+      - "Application security"
+      - "API security"
+      - "Container security"
+
+    data:
+      - "Data encryption"
+      - "Data classification"
+      - "Data loss prevention"
+```
+
+### Service Mesh Security
+
+```yaml
+# Istio Security Configuration
+# istio-security.yml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: default
+spec: {}
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-frontend
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/default/sa/frontend"]
+      to:
+        - operation:
+            methods: ["GET"]
+            paths: ["/api/*"]
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: default
+spec:
+  mtls:
+    mode: STRICT
+```
+
+```yaml
+# Network Policies
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-api
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
+```
+
+## Hands-on Exercises
+
+### Exercise 1: SAST Setup
+
+```bash
+# Install SonarQube
+docker run -d \
+  --name sonarqube \
+  -p 9000:9000 \
+  -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true \
+  sonarqube:latest
+
+# Create sonar-project.properties
+cat > sonar-project.properties << 'EOF'
+sonar.projectKey=my-app
+sonar.projectName=My Application
+sonar.projectVersion=1.0
+
+sonar.sources=src
+sonar.tests=tests
+sonar.java.binaries=target/classes
+sonar.java.test.binaries=target/test-classes
+
+sonar.security.sources.javasecurity=true
+sonar.security.sources.pythonsecurity=true
+sonar.security.sources.javascriptsecurity=true
+EOF
+
+# Run SonarQube analysis
+sonar-scanner
+```
+
+### Exercise 2: Container Security Scan
+
+```bash
+# Install Trivy
+curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+# Scan Docker image
+trivy image my-app:latest
+
+# Scan Dockerfile
+trivy config .
+
+# Scan Kubernetes manifests
+trivy k8s --report summary deployment.yaml
+
+# Generate SARIF report
+trivy image -f sarif -o results.sarif my-app:latest
+```
+
+### Exercise 3: OPA Policy Testing
+
+```bash
+# Install OPA
+curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+chmod +x opa
+
+# Create policy
+cat > policy.rego << 'EOF'
+package kubernetes.admission
+
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    not input.request.object.spec.securityContext.runAsNonRoot
+
+    msg := "Pods must not run as root"
+}
+EOF
+
+# Test policy
+cat > test-pod.json << 'EOF'
+{
+  "request": {
+    "kind": {
+      "kind": "Pod"
+    },
+    "object": {
+      "spec": {
+        "containers": [
+          {
+            "name": "nginx",
+            "image": "nginx:latest"
+          }
+        ]
+      }
+    }
+  }
+}
+EOF
+
+# Evaluate policy
+opa eval --data policy.rego --input test-pod.json "data.kubernetes.admission.deny"
+```
+
+### Exercise 4: Security Monitoring Setup
+
+```bash
+# Install Falco
+curl -s https://falco.org/repo/falcosecurity-3672BA8F.asc | sudo apt-key add -
+echo "deb https://download.falco.org/packages/deb stable main" | sudo tee -a /etc/apt/sources.list.d/falcosecurity.list
+sudo apt-get update
+sudo apt-get install falco
+
+# Start Falco
+sudo systemctl start falco
+sudo systemctl enable falco
+
+# Test Falco rules
+sudo falco -c /etc/falco/falco.yaml -r /etc/falco/rules.d/
+
+# Monitor security events
+sudo journalctl -u falco -f
+```
+
+## Assessment Questions
+
+1. **What are the core principles of DevSecOps?**
+
+   - Security as Code, Shift Left, Automated Security, Continuous Security
+
+2. **Explain the difference between SAST and DAST.**
+
+   - SAST: Static analysis of source code
+   - DAST: Dynamic testing of running applications
+
+3. **What is Policy as Code and why is it important?**
+
+   - Defining security policies in code
+   - Important for automation, consistency, and version control
+
+4. **How does Zero Trust architecture improve security?**
+
+   - Never trust, always verify
+   - Micro-segmentation and least privilege access
+   - Continuous monitoring and verification
+
+5. **What are the key components of incident response?**
+   - Preparation, Detection, Analysis, Containment, Eradication, Recovery, Lessons Learned
+
+## Additional Resources
+
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
+- [CIS Controls](https://www.cisecurity.org/controls/)
+- [Zero Trust Architecture](https://www.nist.gov/publications/zero-trust-architecture)
+- [DevSecOps Best Practices](https://www.devsecops.org/)
+
+## Next Steps
+
+Tomorrow we'll explore **Cloud-Native Security**, covering:
+
+- Cloud security fundamentals and shared responsibility
+- Identity and access management (IAM)
+- Cloud security posture management
+- Container and Kubernetes security
+- Serverless security considerations
+- Multi-cloud security strategies

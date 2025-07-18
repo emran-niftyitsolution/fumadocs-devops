@@ -1,8 +1,965 @@
 ---
-title: "Day 20: Title"
-description: "DevOps 100 Days - Day 20"
+title: "Day 20: Container Orchestration with Kubernetes"
+description: "Master Kubernetes architecture, pod management, deployments, services, networking, and container orchestration best practices"
 ---
 
-# Day 20
+# Day 20: Container Orchestration with Kubernetes
 
-Content coming soon.
+## Learning Objectives
+
+- Understand Kubernetes architecture and core components
+- Master pod management and lifecycle
+- Learn deployment strategies and scaling
+- Explore service discovery and load balancing
+- Implement storage and persistent volumes
+- Understand Kubernetes security and RBAC
+
+## Kubernetes Fundamentals
+
+### What is Kubernetes?
+
+Kubernetes (K8s) is an open-source container orchestration platform that provides:
+
+- **Automated Deployment**: Deploy applications without downtime
+- **Scaling**: Scale applications up or down automatically
+- **Self-healing**: Restart failed containers automatically
+- **Load Balancing**: Distribute traffic across containers
+- **Service Discovery**: Find and communicate with services
+- **Storage Orchestration**: Mount storage systems automatically
+
+### Kubernetes Architecture
+
+```bash
+# Control Plane Components
+API Server        # Kubernetes API endpoint
+etcd             # Distributed key-value store
+Scheduler        # Assigns pods to nodes
+Controller Manager # Runs controller processes
+
+# Worker Node Components
+kubelet          # Node agent
+kube-proxy       # Network proxy
+Container Runtime # Docker, containerd, CRI-O
+```
+
+### Installation and Setup
+
+```bash
+# Install kubectl (macOS)
+brew install kubectl
+
+# Install kubectl (Linux)
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+# Install Minikube for local development
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+# Start Minikube
+minikube start
+
+# Verify installation
+kubectl version --client
+kubectl cluster-info
+```
+
+## Core Kubernetes Concepts
+
+### Pods
+
+Pods are the smallest deployable units in Kubernetes:
+
+```yaml
+# pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  labels:
+    app: nginx
+    tier: frontend
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.21
+      ports:
+        - containerPort: 80
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "250m"
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+      env:
+        - name: NGINX_HOST
+          value: "localhost"
+        - name: NGINX_PORT
+          value: "80"
+      volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+  volumes:
+    - name: nginx-config
+      configMap:
+        name: nginx-config
+```
+
+### Multi-Container Pods
+
+```yaml
+# multi-container-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-app
+spec:
+  containers:
+    - name: web
+      image: nginx:1.21
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: shared-data
+          mountPath: /usr/share/nginx/html
+
+    - name: sidecar
+      image: busybox:1.35
+      command:
+        ["sh", "-c", 'while true; do echo "Sidecar running"; sleep 30; done']
+      volumeMounts:
+        - name: shared-data
+          mountPath: /shared-data
+
+  volumes:
+    - name: shared-data
+      emptyDir: {}
+```
+
+### Pod Lifecycle
+
+```bash
+# Pod states
+Pending     # Pod accepted but not scheduled
+Running     # Pod bound to node and all containers running
+Succeeded   # All containers terminated successfully
+Failed      # At least one container terminated in failure
+Unknown     # Pod state cannot be determined
+
+# Pod lifecycle commands
+kubectl get pods                    # List pods
+kubectl describe pod <pod-name>     # Detailed pod info
+kubectl logs <pod-name>             # View pod logs
+kubectl exec -it <pod-name> -- sh  # Execute command in pod
+kubectl delete pod <pod-name>       # Delete pod
+```
+
+## Deployments and Scaling
+
+### Deployments
+
+```yaml
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.21
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: NGINX_HOST
+              value: "localhost"
+            - name: NGINX_PORT
+              value: "80"
+```
+
+### Deployment Strategies
+
+```yaml
+# Rolling Update Strategy
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+
+# Blue-Green Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: nginx
+        version: blue
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+```
+
+### Scaling and Autoscaling
+
+```bash
+# Manual scaling
+kubectl scale deployment nginx-deployment --replicas=5
+
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+```
+
+## Services and Networking
+
+### Service Types
+
+```yaml
+# ClusterIP Service (default)
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: ClusterIP
+
+# NodePort Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-nodeport
+spec:
+  selector:
+    app: nginx
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30080
+  type: NodePort
+
+# LoadBalancer Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-loadbalancer
+spec:
+  selector:
+    app: nginx
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
+
+# ExternalName Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-service
+spec:
+  type: ExternalName
+  externalName: api.example.com
+```
+
+### Ingress Controllers
+
+```yaml
+# Ingress Resource
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+    - hosts:
+        - example.com
+      secretName: example-tls
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-service
+                port:
+                  number: 80
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 8080
+```
+
+### Network Policies
+
+```yaml
+# Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+# Allow specific traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-web-traffic
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+    ports:
+    - protocol: TCP
+      port: 80
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8080
+```
+
+## Storage and Persistent Volumes
+
+### Persistent Volumes
+
+```yaml
+# Persistent Volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: fast
+  hostPath:
+    path: /mnt/data
+
+# Persistent Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast
+
+# Pod using PVC
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-pod
+spec:
+  containers:
+  - name: mysql
+    image: mysql:8.0
+    env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: "password"
+    volumeMounts:
+    - name: mysql-storage
+      mountPath: /var/lib/mysql
+  volumes:
+  - name: mysql-storage
+    persistentVolumeClaim:
+      claimName: mysql-pvc
+```
+
+### Storage Classes
+
+```yaml
+# Storage Class
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp3
+  iops: "3000"
+  throughput: "125"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+
+# Default Storage Class
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+volumeBindingMode: WaitForFirstConsumer
+```
+
+## ConfigMaps and Secrets
+
+### ConfigMaps
+
+```yaml
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  database_url: "mysql://db:3306/app"
+  redis_url: "redis://redis:6379"
+  log_level: "info"
+  max_connections: "100"
+
+# ConfigMap from file
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+        }
+    }
+
+# Pod using ConfigMap
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    env:
+    - name: DATABASE_URL
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: database_url
+    - name: LOG_LEVEL
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: log_level
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/nginx/conf.d
+  volumes:
+  - name: config-volume
+    configMap:
+      name: nginx-config
+```
+
+### Secrets
+
+```yaml
+# Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+type: Opaque
+data:
+  username: YWRtaW4=  # base64 encoded
+  password: cGFzc3dvcmQ=  # base64 encoded
+
+# Secret from file
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tls-secret
+type: kubernetes.io/tls
+data:
+  tls.crt: <base64-encoded-cert>
+  tls.key: <base64-encoded-key>
+
+# Pod using Secret
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    env:
+    - name: DB_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: app-secret
+          key: username
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: app-secret
+          key: password
+    volumeMounts:
+    - name: tls-certs
+      mountPath: /etc/ssl/certs
+      readOnly: true
+  volumes:
+  - name: tls-certs
+    secret:
+      secretName: tls-secret
+```
+
+## Security and RBAC
+
+### Service Accounts
+
+```yaml
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-service-account
+  namespace: default
+
+# Pod with Service Account
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+spec:
+  serviceAccountName: app-service-account
+  containers:
+  - name: app
+    image: myapp:1.0
+```
+
+### RBAC (Role-Based Access Control)
+
+```yaml
+# Role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+
+# ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: secret-reader
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"]
+
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: app-service-account
+  namespace: default
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: read-secrets-global
+subjects:
+- kind: ServiceAccount
+  name: app-service-account
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+```
+
+### Security Context
+
+```yaml
+# Pod Security Context
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-pod
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 2000
+  containers:
+    - name: app
+      image: myapp:1.0
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+  volumes:
+    - name: tmp
+      emptyDir: {}
+```
+
+## Hands-on Exercises
+
+### Exercise 1: Basic Kubernetes Setup
+
+```bash
+# Start Minikube
+minikube start
+
+# Create namespace
+kubectl create namespace demo
+
+# Create simple pod
+cat > nginx-pod.yaml << 'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  namespace: demo
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.21
+    ports:
+    - containerPort: 80
+EOF
+
+kubectl apply -f nginx-pod.yaml
+
+# Check pod status
+kubectl get pods -n demo
+kubectl describe pod nginx-pod -n demo
+
+# Access pod
+kubectl port-forward nginx-pod 8080:80 -n demo
+```
+
+### Exercise 2: Deployment and Scaling
+
+```bash
+# Create deployment
+cat > nginx-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+EOF
+
+kubectl apply -f nginx-deployment.yaml
+
+# Scale deployment
+kubectl scale deployment nginx-deployment --replicas=5 -n demo
+
+# Update deployment
+kubectl set image deployment/nginx-deployment nginx=nginx:1.22 -n demo
+
+# Check rollout status
+kubectl rollout status deployment/nginx-deployment -n demo
+```
+
+### Exercise 3: Services and Networking
+
+```bash
+# Create service
+cat > nginx-service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: demo
+spec:
+  selector:
+    app: nginx
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: ClusterIP
+EOF
+
+kubectl apply -f nginx-service.yaml
+
+# Create NodePort service
+cat > nginx-nodeport.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-nodeport
+  namespace: demo
+spec:
+  selector:
+    app: nginx
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30080
+  type: NodePort
+EOF
+
+kubectl apply -f nginx-nodeport.yaml
+
+# Access service
+minikube service nginx-nodeport -n demo
+```
+
+### Exercise 4: ConfigMaps and Secrets
+
+```bash
+# Create ConfigMap
+cat > app-config.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: demo
+data:
+  database_url: "mysql://db:3306/app"
+  redis_url: "redis://redis:6379"
+  log_level: "info"
+EOF
+
+kubectl apply -f app-config.yaml
+
+# Create Secret
+cat > app-secret.yaml << 'EOF'
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+  namespace: demo
+type: Opaque
+data:
+  username: YWRtaW4=
+  password: cGFzc3dvcmQ=
+EOF
+
+kubectl apply -f app-secret.yaml
+
+# Create pod using ConfigMap and Secret
+cat > app-pod.yaml << 'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+  namespace: demo
+spec:
+  containers:
+  - name: app
+    image: busybox:1.35
+    command: ['sh', '-c', 'echo "Config: $DATABASE_URL, Secret: $DB_USERNAME"; sleep 3600']
+    env:
+    - name: DATABASE_URL
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: database_url
+    - name: DB_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: app-secret
+          key: username
+EOF
+
+kubectl apply -f app-pod.yaml
+```
+
+## Assessment Questions
+
+1. **What is Kubernetes and what are its main benefits?**
+
+   - Container orchestration platform
+   - Benefits: automated deployment, scaling, self-healing, load balancing, service discovery
+
+2. **Explain the difference between a Pod and a Deployment.**
+
+   - Pod: smallest deployable unit, single instance
+   - Deployment: manages multiple replicas of pods, provides rolling updates
+
+3. **What are the different types of Kubernetes Services?**
+
+   - ClusterIP: internal access only
+   - NodePort: external access via node port
+   - LoadBalancer: external load balancer
+   - ExternalName: DNS alias
+
+4. **How do you handle persistent storage in Kubernetes?**
+
+   - Use PersistentVolumes and PersistentVolumeClaims
+   - Define StorageClasses for dynamic provisioning
+   - Mount volumes in pod specifications
+
+5. **What is RBAC and how is it implemented in Kubernetes?**
+   - Role-Based Access Control
+   - Uses Roles, ClusterRoles, RoleBindings, and ClusterRoleBindings
+   - Controls access to Kubernetes resources
+
+## Additional Resources
+
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [Kubernetes.io Tutorials](https://kubernetes.io/docs/tutorials/)
+- [Kubectl Cheat Sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
+- [Kubernetes Security](https://kubernetes.io/docs/concepts/security/)
+- [Kubernetes Best Practices](https://kubernetes.io/docs/concepts/configuration/overview/)
+
+## Next Steps
+
+Tomorrow we'll explore **Monitoring and Observability**, covering:
+
+- Monitoring fundamentals and metrics
+- Prometheus and Grafana setup
+- Log aggregation with ELK Stack
+- Distributed tracing with Jaeger
+- SRE practices and SLIs/SLOs
+- Alerting and incident management

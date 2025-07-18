@@ -1,8 +1,1093 @@
 ---
-title: "Day 21: Title"
-description: "DevOps 100 Days - Day 21"
+title: "Day 21: Monitoring and Observability"
+description: "Master monitoring fundamentals, Prometheus, Grafana, ELK Stack, distributed tracing, SRE practices, and observability best practices"
 ---
 
-# Day 21
+# Day 21: Monitoring and Observability
 
-Content coming soon.
+## Learning Objectives
+
+- Understand monitoring fundamentals and observability concepts
+- Master Prometheus metrics collection and alerting
+- Learn Grafana dashboard creation and visualization
+- Explore ELK Stack for log aggregation and analysis
+- Implement distributed tracing with Jaeger
+- Understand SRE practices and SLIs/SLOs
+
+## Monitoring Fundamentals
+
+### What is Observability?
+
+Observability is the ability to understand the internal state of a system by examining its outputs, consisting of three pillars:
+
+- **Metrics**: Numerical measurements over time
+- **Logs**: Structured event records
+- **Traces**: Request flow through distributed systems
+
+### Monitoring vs Observability
+
+```bash
+# Traditional Monitoring
+- Predefined metrics and thresholds
+- Reactive approach to issues
+- Limited visibility into system behavior
+- Focus on known failure modes
+
+# Observability
+- Exploratory analysis capabilities
+- Proactive problem detection
+- Deep visibility into system behavior
+- Focus on unknown failure modes
+```
+
+### Observability Maturity Levels
+
+```bash
+# Level 1: Basic Monitoring
+- System metrics (CPU, memory, disk)
+- Application availability
+- Basic alerting
+
+# Level 2: Application Monitoring
+- Application metrics
+- Business metrics
+- Structured logging
+- Dashboard visualization
+
+# Level 3: Distributed Observability
+- Distributed tracing
+- Correlation across signals
+- Predictive analytics
+- Automated remediation
+```
+
+## Prometheus and Metrics Collection
+
+### Prometheus Architecture
+
+```bash
+# Core Components
+Prometheus Server    # Metrics collection and storage
+Targets            # Applications exposing metrics
+Alertmanager       # Alert routing and notification
+Pushgateway        # Batch job metrics
+Service Discovery  # Dynamic target discovery
+```
+
+### Installation and Setup
+
+```bash
+# Install Prometheus
+wget https://github.com/prometheus/prometheus/releases/download/v2.45.0/prometheus-2.45.0.linux-amd64.tar.gz
+tar xvf prometheus-2.45.0.linux-amd64.tar.gz
+cd prometheus-2.45.0
+
+# Create configuration
+cat > prometheus.yml << 'EOF'
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - localhost:9093
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  - job_name: 'application'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+EOF
+
+# Start Prometheus
+./prometheus --config.file=prometheus.yml
+```
+
+### Prometheus Configuration
+
+```yaml
+# prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: "production"
+    datacenter: "us-west-2"
+
+rule_files:
+  - "alert_rules.yml"
+  - "recording_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+      scheme: http
+      timeout: 10s
+      api_version: v1
+
+scrape_configs:
+  - job_name: "kubernetes-pods"
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels:
+          [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+    scrape_interval: 30s
+
+  - job_name: "application"
+    static_configs:
+      - targets: ["app:8080"]
+    metrics_path: "/metrics"
+    scrape_interval: 10s
+    scrape_timeout: 5s
+```
+
+### PromQL Query Language
+
+```promql
+# Basic queries
+up{job="node-exporter"}
+rate(http_requests_total[5m])
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+# Aggregation functions
+sum(rate(http_requests_total[5m])) by (status_code)
+avg(rate(http_request_duration_seconds_sum[5m])) by (endpoint)
+max(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)
+
+# Recording rules
+# recording_rules.yml
+groups:
+  - name: http_requests
+    rules:
+      - record: job:http_requests:rate5m
+        expr: sum(rate(http_requests_total[5m])) by (job)
+
+      - record: job:http_request_duration_seconds:p95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (job, le))
+```
+
+### Alerting Rules
+
+```yaml
+# alert_rules.yml
+groups:
+  - name: node_alerts
+    rules:
+      - alert: HighCpuUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for 5 minutes"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85% for 5 minutes"
+
+      - alert: DiskSpaceFilling
+        expr: (node_filesystem_size_bytes - node_filesystem_avail_bytes) / node_filesystem_size_bytes * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space filling up on {{ $labels.instance }}"
+          description: "Disk usage is above 80% for 10 minutes"
+
+  - name: application_alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for 2 minutes"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency detected"
+          description: "95th percentile latency is above 1 second"
+```
+
+## Grafana Dashboard Creation
+
+### Grafana Installation
+
+```bash
+# Install Grafana (Ubuntu/Debian)
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+sudo apt update
+sudo apt install grafana
+
+# Start Grafana
+sudo systemctl start grafana-server
+sudo systemctl enable grafana-server
+
+# Access Grafana
+# http://localhost:3000
+# Default credentials: admin/admin
+```
+
+### Dashboard Configuration
+
+```json
+{
+  "dashboard": {
+    "id": null,
+    "title": "Application Metrics",
+    "tags": ["application", "monitoring"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "reqps"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "reqps"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": []
+    },
+    "refresh": "5s",
+    "schemaVersion": 27,
+    "version": 0,
+    "links": []
+  }
+}
+```
+
+### Grafana Alerting
+
+```yaml
+# grafana-alerts.yml
+apiVersion: 1
+providers:
+  - name: "default"
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/alerting
+      foldersFromFilesStructure: true
+
+# Alert rule
+groups:
+  - name: application_alerts
+    folder: Application
+    interval: 1m
+    rules:
+      - uid: high_error_rate
+        title: High Error Rate
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100
+              instant: false
+              range: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 5
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    params: []
+                    type: last
+              refId: B
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: High error rate detected
+          description: Error rate is above 5% for 2 minutes
+        labels:
+          severity: critical
+```
+
+## ELK Stack for Log Aggregation
+
+### Elasticsearch Setup
+
+```bash
+# Install Elasticsearch
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt update
+sudo apt install elasticsearch
+
+# Configure Elasticsearch
+sudo nano /etc/elasticsearch/elasticsearch.yml
+
+# Add configuration
+cluster.name: my-cluster
+node.name: node-1
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+network.host: localhost
+http.port: 9200
+discovery.type: single-node
+
+# Start Elasticsearch
+sudo systemctl start elasticsearch
+sudo systemctl enable elasticsearch
+
+# Verify installation
+curl -X GET "localhost:9200/?pretty"
+```
+
+### Logstash Configuration
+
+```ruby
+# /etc/logstash/conf.d/logstash.conf
+input {
+  beats {
+    port => 5044
+  }
+  file {
+    path => "/var/log/application/*.log"
+    start_position => "beginning"
+    sincedb_path => "/dev/null"
+    codec => json
+  }
+}
+
+filter {
+  if [type] == "application" {
+    grok {
+      match => { "message" => "%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:level} %{GREEDYDATA:message}" }
+    }
+    date {
+      match => [ "timestamp", "yyyy-MM-dd HH:mm:ss" ]
+      target => "@timestamp"
+    }
+    mutate {
+      remove_field => [ "timestamp" ]
+    }
+  }
+
+  if [type] == "nginx" {
+    grok {
+      match => { "message" => "%{COMBINEDAPACHELOG}" }
+    }
+    geoip {
+      source => "clientip"
+    }
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+    index => "logs-%{+YYYY.MM.dd}"
+  }
+  stdout {
+    codec => rubydebug
+  }
+}
+```
+
+### Kibana Dashboard
+
+```json
+{
+  "dashboard": {
+    "title": "Application Logs Dashboard",
+    "hits": 0,
+    "description": "Dashboard for application log analysis",
+    "panelsJSON": [
+      {
+        "id": "log-count-panel",
+        "type": "visualization",
+        "title": "Log Count by Level",
+        "visState": {
+          "type": "pie",
+          "aggs": [
+            {
+              "id": "1",
+              "enabled": true,
+              "type": "count",
+              "schema": "metric",
+              "params": {}
+            },
+            {
+              "id": "2",
+              "enabled": true,
+              "type": "terms",
+              "schema": "segment",
+              "params": {
+                "field": "level",
+                "size": 5,
+                "order": "desc",
+                "orderBy": "1"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "error-timeline-panel",
+        "type": "visualization",
+        "title": "Error Timeline",
+        "visState": {
+          "type": "line",
+          "aggs": [
+            {
+              "id": "1",
+              "enabled": true,
+              "type": "count",
+              "schema": "metric",
+              "params": {}
+            },
+            {
+              "id": "2",
+              "enabled": true,
+              "type": "date_histogram",
+              "schema": "segment",
+              "params": {
+                "field": "@timestamp",
+                "timeRange": {
+                  "from": "now-1h",
+                  "to": "now"
+                },
+                "interval": "auto"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "optionsJSON": {
+      "hidePanelTitles": false,
+      "useMargins": true
+    },
+    "version": "1",
+    "timeRestore": false,
+    "kibanaSavedObjectMeta": {
+      "searchSourceJSON": "{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+    }
+  }
+}
+```
+
+## Distributed Tracing with Jaeger
+
+### Jaeger Installation
+
+```bash
+# Install Jaeger
+docker run -d --name jaeger \
+  -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
+  -e COLLECTOR_OTLP_ENABLED=true \
+  -p 5775:5775/udp \
+  -p 6831:6831/udp \
+  -p 6832:6832/udp \
+  -p 5778:5778 \
+  -p 16686:16686 \
+  -p 14250:14250 \
+  -p 14268:14268 \
+  -p 14269:14269 \
+  -p 9411:9411 \
+  jaegertracing/all-in-one:1.42
+
+# Access Jaeger UI
+# http://localhost:16686
+```
+
+### Application Instrumentation
+
+```python
+# Python with OpenTelemetry
+from opentelemetry import trace
+from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+# Configure tracer
+trace.set_tracer_provider(TracerProvider())
+tracer = trace.get_tracer(__name__)
+
+# Configure Jaeger exporter
+jaeger_exporter = JaegerExporter(
+    agent_host_name="localhost",
+    agent_port=6831,
+)
+
+# Add BatchSpanProcessor to the tracer
+trace.get_tracer_provider().add_span_processor(
+    BatchSpanProcessor(jaeger_exporter)
+)
+
+# Instrument your application
+def process_request(request_id):
+    with tracer.start_as_current_span("process_request") as span:
+        span.set_attribute("request.id", request_id)
+        # Your application logic here
+        span.add_event("Request processed successfully")
+```
+
+```javascript
+// Node.js with OpenTelemetry
+const { trace } = require("@opentelemetry/api");
+const { NodeTracerProvider } = require("@opentelemetry/node");
+const { JaegerExporter } = require("@opentelemetry/exporter-jaeger");
+const { BatchSpanProcessor } = require("@opentelemetry/tracing");
+
+// Configure tracer
+const provider = new NodeTracerProvider();
+const tracer = trace.getTracer("my-app");
+
+// Configure Jaeger exporter
+const jaegerExporter = new JaegerExporter({
+  endpoint: "http://localhost:14268/api/traces",
+});
+
+// Add BatchSpanProcessor to the tracer
+provider.addSpanProcessor(new BatchSpanProcessor(jaegerExporter));
+
+// Register the tracer
+provider.register();
+
+// Instrument your application
+function processRequest(requestId) {
+  const span = tracer.startSpan("process_request");
+  span.setAttribute("request.id", requestId);
+
+  try {
+    // Your application logic here
+    span.addEvent("Request processed successfully");
+  } finally {
+    span.end();
+  }
+}
+```
+
+## SRE Practices and SLIs/SLOs
+
+### Service Level Indicators (SLIs)
+
+```yaml
+# SLI Definitions
+availability:
+  description: "Percentage of successful requests"
+  measurement: "successful_requests / total_requests * 100"
+  target: 99.9%
+
+latency:
+  description: "95th percentile response time"
+  measurement: "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
+  target: "< 200ms"
+
+throughput:
+  description: "Requests per second"
+  measurement: "rate(http_requests_total[5m])"
+  target: "> 1000 rps"
+
+error_rate:
+  description: "Percentage of error responses"
+  measurement: 'rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100'
+  target: "< 0.1%"
+```
+
+### Service Level Objectives (SLOs)
+
+```yaml
+# SLO Configuration
+slo:
+  name: "web-service-slo"
+  description: "SLO for web service"
+  objectives:
+    - name: "availability"
+      target: 99.9
+      window: 30d
+      indicator: "availability"
+
+    - name: "latency"
+      target: 200
+      window: 30d
+      indicator: "latency"
+      unit: "ms"
+
+    - name: "error_rate"
+      target: 0.1
+      window: 30d
+      indicator: "error_rate"
+      unit: "%"
+
+  error_budget:
+    target: 0.1
+    window: 30d
+    burn_rate: 1.0
+```
+
+### Error Budget Tracking
+
+```promql
+# Error budget calculation
+# Error budget = 1 - SLO target
+# Burn rate = error rate / error budget
+
+# Example: 99.9% availability SLO
+# Error budget = 0.1%
+# Burn rate = error_rate / 0.001
+
+# Burn rate query
+rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) / 0.001
+
+# Error budget remaining
+# 1 - (burn_rate * time_window / error_budget_window)
+1 - (rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 5m / 30d)
+```
+
+## Alerting and Incident Management
+
+### Alertmanager Configuration
+
+```yaml
+# alertmanager.yml
+global:
+  resolve_timeout: 5m
+  slack_api_url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+
+route:
+  group_by: ["alertname", "cluster", "service"]
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: "web.hook"
+  routes:
+    - match:
+        severity: critical
+      receiver: "pager-duty-critical"
+      continue: true
+    - match:
+        severity: warning
+      receiver: "slack-warning"
+
+receivers:
+  - name: "web.hook"
+    webhook_configs:
+      - url: "http://127.0.0.1:5001/"
+
+  - name: "slack-warning"
+    slack_configs:
+      - channel: "#alerts"
+        title: '{{ template "slack.title" . }}'
+        text: '{{ template "slack.text" . }}'
+        send_resolved: true
+
+  - name: "pager-duty-critical"
+    pagerduty_configs:
+      - service_key: "YOUR_PAGERDUTY_SERVICE_KEY"
+        send_resolved: true
+
+templates:
+  - "/etc/alertmanager/template/*.tmpl"
+```
+
+### Incident Response Playbook
+
+```yaml
+# incident-playbook.yml
+incident_types:
+  - name: "High Error Rate"
+    severity: "critical"
+    response_time: "5m"
+    escalation_time: "15m"
+
+    steps:
+      - name: "Initial Assessment"
+        description: "Verify the alert and assess impact"
+        actions:
+          - "Check error rate in Grafana"
+          - "Verify affected services"
+          - "Assess user impact"
+
+      - name: "Immediate Mitigation"
+        description: "Implement immediate fixes"
+        actions:
+          - "Scale up affected services"
+          - "Check recent deployments"
+          - "Review recent changes"
+
+      - name: "Root Cause Analysis"
+        description: "Identify and fix root cause"
+        actions:
+          - "Analyze logs and traces"
+          - "Check infrastructure health"
+          - "Review application metrics"
+
+      - name: "Resolution and Follow-up"
+        description: "Resolve and document"
+        actions:
+          - "Implement permanent fix"
+          - "Update runbooks"
+          - "Schedule post-mortem"
+
+  - name: "High Latency"
+    severity: "warning"
+    response_time: "10m"
+    escalation_time: "30m"
+
+    steps:
+      - name: "Performance Analysis"
+        description: "Analyze performance metrics"
+        actions:
+          - "Check latency percentiles"
+          - "Identify slow endpoints"
+          - "Check database performance"
+
+      - name: "Optimization"
+        description: "Implement performance improvements"
+        actions:
+          - "Optimize slow queries"
+          - "Add caching layers"
+          - "Scale resources"
+```
+
+## Hands-on Exercises
+
+### Exercise 1: Prometheus Setup
+
+```bash
+# Create Prometheus configuration
+cat > prometheus.yml << 'EOF'
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  - job_name: 'application'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+EOF
+
+# Start Prometheus
+docker run -d \
+  --name prometheus \
+  -p 9090:9090 \
+  -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \
+  prom/prometheus
+
+# Start Node Exporter
+docker run -d \
+  --name node-exporter \
+  -p 9100:9100 \
+  prom/node-exporter
+```
+
+### Exercise 2: Grafana Dashboard
+
+```bash
+# Start Grafana
+docker run -d \
+  --name grafana \
+  -p 3000:3000 \
+  grafana/grafana
+
+# Create dashboard
+cat > dashboard.json << 'EOF'
+{
+  "dashboard": {
+    "title": "System Metrics",
+    "panels": [
+      {
+        "title": "CPU Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"
+          }
+        ]
+      },
+      {
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100"
+          }
+        ]
+      }
+    ]
+  }
+}
+EOF
+```
+
+### Exercise 3: ELK Stack Setup
+
+```bash
+# Start Elasticsearch
+docker run -d \
+  --name elasticsearch \
+  -p 9200:9200 \
+  -e "discovery.type=single-node" \
+  elasticsearch:8.8.0
+
+# Start Logstash
+docker run -d \
+  --name logstash \
+  -p 5044:5044 \
+  -v $(pwd)/logstash.conf:/usr/share/logstash/pipeline/logstash.conf \
+  logstash:8.8.0
+
+# Start Kibana
+docker run -d \
+  --name kibana \
+  -p 5601:5601 \
+  -e "ELASTICSEARCH_HOSTS=http://elasticsearch:9200" \
+  kibana:8.8.0
+```
+
+## Assessment Questions
+
+1. **What are the three pillars of observability?**
+
+   - Metrics, Logs, and Traces
+
+2. **Explain the difference between monitoring and observability.**
+
+   - Monitoring: predefined metrics and reactive approach
+   - Observability: exploratory analysis and proactive approach
+
+3. **What is PromQL and how is it used?**
+
+   - Prometheus Query Language
+   - Used for querying time-series metrics and creating alerts
+
+4. **How do SLIs and SLOs relate to error budgets?**
+
+   - SLIs measure service performance
+   - SLOs define performance targets
+   - Error budgets track remaining failure tolerance
+
+5. **What is distributed tracing and why is it important?**
+   - Tracks request flow through distributed systems
+   - Important for debugging complex microservices architectures
+
+## Additional Resources
+
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/)
+- [Elastic Stack Documentation](https://www.elastic.co/guide/)
+- [Jaeger Documentation](https://www.jaegertracing.io/docs/)
+- [Google SRE Book](https://sre.google/sre-book/table-of-contents/)
+
+## Next Steps
+
+Tomorrow we'll explore **Security in DevOps (DevSecOps)**, covering:
+
+- Security fundamentals and threat modeling
+- Vulnerability management and scanning
+- Security testing in CI/CD pipelines
+- Compliance and governance
+- Security monitoring and incident response
+- Zero trust architecture implementation

@@ -1,8 +1,1465 @@
 ---
-title: "Day 14: Title"
-description: "DevOps 100 Days - Day 14"
+title: "Day 14: Infrastructure as Code (IaC)"
+description: "Master infrastructure as code concepts, Terraform, and configuration management"
 ---
 
-# Day 14
+# Day 14: Infrastructure as Code (IaC)
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Understand infrastructure as code concepts and benefits
+- Master Terraform fundamentals and best practices
+- Learn configuration management tools (Ansible, Chef, Puppet)
+- Understand cloud-native IaC tools (CloudFormation, ARM Templates)
+- Master infrastructure testing and validation
+- Learn infrastructure security and compliance
+
+## 🏗️ Infrastructure as Code Concepts
+
+### What is Infrastructure as Code?
+
+**IaC Definition:**
+
+```bash
+# Infrastructure as Code (IaC) is the practice of managing and provisioning
+# computing infrastructure through machine-readable definition files
+
+# Key Principles:
+# - Version control for infrastructure
+# - Declarative configuration
+# - Automated provisioning
+# - Consistent environments
+# - Reproducible deployments
+```
+
+**IaC Benefits:**
+
+```bash
+# Operational Benefits:
+# - Reduced manual errors
+# - Consistent environments
+# - Faster provisioning
+# - Better documentation
+
+# Development Benefits:
+# - Environment parity
+# - Self-service infrastructure
+# - Version control
+# - Code review process
+
+# Business Benefits:
+# - Cost optimization
+# - Compliance automation
+# - Disaster recovery
+# - Scalability
+```
+
+### IaC Tools Comparison
+
+**Popular IaC Tools:**
+
+```bash
+# Terraform:
+# - Multi-cloud support
+# - Declarative syntax
+# - State management
+# - Large ecosystem
+
+# Ansible:
+# - Agentless
+# - YAML syntax
+# - Configuration management
+# - Playbook-based
+
+# CloudFormation (AWS):
+# - AWS-native
+# - JSON/YAML templates
+# - Stack management
+# - Change sets
+
+# ARM Templates (Azure):
+# - Azure-native
+# - JSON syntax
+# - Resource groups
+# - Template validation
+
+# Pulumi:
+# - General-purpose languages
+# - Type safety
+# - Modern tooling
+# - Multi-cloud
+```
+
+## 🏔️ Terraform Fundamentals
+
+### Terraform Installation
+
+**Install Terraform:**
+
+```bash
+# Download Terraform
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+sudo apt update
+sudo apt install terraform
+
+# Verify installation
+terraform version
+
+# Install Terraform plugins
+terraform init
+```
+
+**Terraform Configuration:**
+
+```hcl
+# main.tf
+terraform {
+  required_version = ">= 1.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+  }
+  backend "s3" {
+    bucket = "my-terraform-state"
+    key    = "prod/terraform.tfstate"
+    region = "us-west-2"
+  }
+}
+
+provider "aws" {
+  region = "us-west-2"
+  default_tags {
+    tags = {
+      Environment = "production"
+      Project     = "my-app"
+      ManagedBy   = "terraform"
+    }
+  }
+}
+
+# Variables
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "production"
+}
+
+variable "vpc_cidr" {
+  description = "CIDR block for VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+# Data sources
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+# VPC
+resource "aws_vpc" "main" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = {
+    Name = "${var.environment}-vpc"
+  }
+}
+
+# Internet Gateway
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.environment}-igw"
+  }
+}
+
+# Public Subnets
+resource "aws_subnet" "public" {
+  count             = 2
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index)
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "${var.environment}-public-subnet-${count.index + 1}"
+  }
+}
+
+# Route Table
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+  tags = {
+    Name = "${var.environment}-public-rt"
+  }
+}
+
+# Route Table Association
+resource "aws_route_table_association" "public" {
+  count          = 2
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
+# Security Group
+resource "aws_security_group" "web" {
+  name_prefix = "web-sg-"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.environment}-web-sg"
+  }
+}
+
+# EC2 Instance
+resource "aws_instance" "web" {
+  ami                    = "ami-0c55b159cbfafe1f0"
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.public[0].id
+  vpc_security_group_ids = [aws_security_group.web.id]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo "<h1>Hello from Terraform!</h1>" > /var/www/html/index.html
+              EOF
+
+  tags = {
+    Name = "${var.environment}-web-server"
+  }
+}
+
+# Outputs
+output "vpc_id" {
+  description = "VPC ID"
+  value       = aws_vpc.main.id
+}
+
+output "public_subnet_ids" {
+  description = "Public subnet IDs"
+  value       = aws_subnet.public[*].id
+}
+
+output "web_server_public_ip" {
+  description = "Web server public IP"
+  value       = aws_instance.web.public_ip
+}
+```
+
+### Terraform Modules
+
+**Module Structure:**
+
+```bash
+# Module directory structure:
+modules/
+├── vpc/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── README.md
+├── ec2/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── README.md
+└── rds/
+    ├── main.tf
+    ├── variables.tf
+    ├── outputs.tf
+    └── README.md
+```
+
+**VPC Module:**
+
+```hcl
+# modules/vpc/main.tf
+resource "aws_vpc" "main" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = merge(var.tags, {
+    Name = "${var.name}-vpc"
+  })
+}
+
+resource "aws_subnet" "public" {
+  count             = length(var.availability_zones)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index)
+  availability_zone = var.availability_zones[count.index]
+
+  map_public_ip_on_launch = true
+
+  tags = merge(var.tags, {
+    Name = "${var.name}-public-subnet-${count.index + 1}"
+  })
+}
+
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = merge(var.tags, {
+    Name = "${var.name}-igw"
+  })
+}
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name}-public-rt"
+  })
+}
+
+resource "aws_route_table_association" "public" {
+  count          = length(var.availability_zones)
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+```
+
+**Module Variables:**
+
+```hcl
+# modules/vpc/variables.tf
+variable "name" {
+  description = "Name prefix for resources"
+  type        = string
+}
+
+variable "vpc_cidr" {
+  description = "CIDR block for VPC"
+  type        = string
+}
+
+variable "availability_zones" {
+  description = "List of availability zones"
+  type        = list(string)
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}
+```
+
+**Module Outputs:**
+
+```hcl
+# modules/vpc/outputs.tf
+output "vpc_id" {
+  description = "VPC ID"
+  value       = aws_vpc.main.id
+}
+
+output "public_subnet_ids" {
+  description = "Public subnet IDs"
+  value       = aws_subnet.public[*].id
+}
+
+output "route_table_id" {
+  description = "Public route table ID"
+  value       = aws_route_table.public.id
+}
+```
+
+**Using Modules:**
+
+```hcl
+# main.tf
+module "vpc" {
+  source = "./modules/vpc"
+
+  name               = "my-app"
+  vpc_cidr          = "10.0.0.0/16"
+  availability_zones = ["us-west-2a", "us-west-2b"]
+  tags = {
+    Environment = "production"
+    Project     = "my-app"
+  }
+}
+
+module "ec2" {
+  source = "./modules/ec2"
+
+  name              = "my-app"
+  vpc_id            = module.vpc.vpc_id
+  subnet_ids        = module.vpc.public_subnet_ids
+  instance_type     = "t3.micro"
+  ami_id            = "ami-0c55b159cbfafe1f0"
+  security_group_id = module.vpc.route_table_id
+}
+```
+
+### Terraform State Management
+
+**Remote State Configuration:**
+
+```hcl
+# backend.tf
+terraform {
+  backend "s3" {
+    bucket         = "my-terraform-state"
+    key            = "prod/terraform.tfstate"
+    region         = "us-west-2"
+    encrypt        = true
+    dynamodb_table = "terraform-locks"
+  }
+}
+```
+
+**State Commands:**
+
+```bash
+# Initialize with backend
+terraform init
+
+# Plan changes
+terraform plan
+
+# Apply changes
+terraform apply
+
+# Show current state
+terraform show
+
+# List resources
+terraform state list
+
+# Move resource in state
+terraform state mv aws_instance.old aws_instance.new
+
+# Import existing resource
+terraform import aws_instance.web i-1234567890abcdef0
+
+# Destroy resources
+terraform destroy
+```
+
+## ⚙️ Configuration Management
+
+### Ansible
+
+**Ansible Installation:**
+
+```bash
+# Install Ansible
+sudo apt update
+sudo apt install ansible
+
+# Verify installation
+ansible --version
+
+# Create inventory
+cat > inventory.ini << 'EOF'
+[webservers]
+web1 ansible_host=192.168.1.10
+web2 ansible_host=192.168.1.11
+
+[dbservers]
+db1 ansible_host=192.168.1.20
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+EOF
+```
+
+**Ansible Playbook:**
+
+```yaml
+# playbook.yml
+---
+- name: Configure web servers
+  hosts: webservers
+  become: yes
+  vars:
+    nginx_version: "1.18.0"
+    app_port: 8080
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - nginx
+          - python3
+          - python3-pip
+        state: present
+
+    - name: Create application directory
+      file:
+        path: /var/www/app
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "0755"
+
+    - name: Copy application files
+      copy:
+        src: ../app/
+        dest: /var/www/app/
+        owner: www-data
+        group: www-data
+        mode: "0644"
+
+    - name: Configure nginx
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/app
+        owner: root
+        group: root
+        mode: "0644"
+      notify: restart nginx
+
+    - name: Enable nginx site
+      file:
+        src: /etc/nginx/sites-available/app
+        dest: /etc/nginx/sites-enabled/app
+        state: link
+      notify: restart nginx
+
+    - name: Start and enable nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+```
+
+**Ansible Roles:**
+
+```bash
+# Create role structure
+ansible-galaxy init web-server
+
+# Role structure:
+web-server/
+├── defaults/
+│   └── main.yml
+├── handlers/
+│   └── main.yml
+├── tasks/
+│   └── main.yml
+├── templates/
+│   └── nginx.conf.j2
+├── vars/
+│   └── main.yml
+└── meta/
+    └── main.yml
+```
+
+**Role Tasks:**
+
+```yaml
+# roles/web-server/tasks/main.yml
+---
+- name: Install nginx
+  apt:
+    name: nginx
+    state: present
+  notify: restart nginx
+
+- name: Create web directory
+  file:
+    path: /var/www/html
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Configure nginx
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/default
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart nginx
+
+- name: Start nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+```
+
+### Chef
+
+**Chef Installation:**
+
+```bash
+# Install Chef Workstation
+curl -L https://omnitruck.chef.io/install.sh | sudo bash -s -- -P chef-workstation
+
+# Verify installation
+chef --version
+
+# Create cookbook
+chef generate cookbook my-app
+
+# Cookbook structure:
+my-app/
+├── attributes/
+├── recipes/
+├── templates/
+├── files/
+├── metadata.rb
+└── Berksfile
+```
+
+**Chef Recipe:**
+
+```ruby
+# recipes/default.rb
+package 'nginx' do
+  action :install
+end
+
+service 'nginx' do
+  action [:enable, :start]
+end
+
+template '/etc/nginx/sites-available/default' do
+  source 'nginx.conf.erb'
+  owner 'root'
+  group 'root'
+  mode '0644'
+  notifies :restart, 'service[nginx]'
+end
+
+directory '/var/www/html' do
+  owner 'www-data'
+  group 'www-data'
+  mode '0755'
+  action :create
+end
+
+file '/var/www/html/index.html' do
+  content '<h1>Hello from Chef!</h1>'
+  owner 'www-data'
+  group 'www-data'
+  mode '0644'
+end
+```
+
+## ☁️ Cloud-Native IaC
+
+### AWS CloudFormation
+
+**CloudFormation Template:**
+
+```yaml
+# template.yaml
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Web application stack"
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues:
+      - development
+      - staging
+      - production
+    Description: Environment name
+
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    Description: EC2 instance type
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-vpc"
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-igw"
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-public-subnet"
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-public-rt"
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for web server
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.0.0/8
+
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c55b159cbfafe1f0
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref WebServerSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<h1>Hello from CloudFormation!</h1>" > /var/www/html/index.html
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-web-server"
+
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "${Environment}-vpc-id"
+
+  PublicSubnetId:
+    Description: Public subnet ID
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub "${Environment}-public-subnet-id"
+
+  WebServerPublicIP:
+    Description: Web server public IP
+    Value: !GetAtt WebServer.PublicIp
+```
+
+### Azure ARM Templates
+
+**ARM Template:**
+
+```json
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "defaultValue": "production",
+      "allowedValues": ["development", "staging", "production"],
+      "metadata": {
+        "description": "Environment name"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B1s",
+      "metadata": {
+        "description": "VM size"
+      }
+    }
+  },
+  "variables": {
+    "vnetName": "[concat(parameters('environment'), '-vnet')]",
+    "subnetName": "[concat(parameters('environment'), '-subnet')]",
+    "nsgName": "[concat(parameters('environment'), '-nsg')]",
+    "vmName": "[concat(parameters('environment'), '-vm')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('vnetName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": ["10.0.0.0/16"]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('nsgName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowHTTP",
+            "properties": {
+              "priority": 1000,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "80"
+            }
+          },
+          {
+            "name": "AllowHTTPS",
+            "properties": {
+              "priority": 1001,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "443"
+            }
+          },
+          {
+            "name": "AllowSSH",
+            "properties": {
+              "priority": 1002,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "10.0.0.0/8",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "22"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2021-07-01",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "azureuser",
+          "adminPassword": "P@ssw0rd123!"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "18.04-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName'), '-osdisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmName'), '-nic'))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "vnetId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+    },
+    "vmPublicIP": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmName'), '-pip'))).dnsSettings.fqdn]"
+    }
+  }
+}
+```
+
+## 🧪 Infrastructure Testing
+
+### Terraform Testing
+
+**Terraform Test Configuration:**
+
+```hcl
+# test/main.tf
+terraform {
+  required_providers {
+    test = {
+      source = "terraform.io/builtin/test"
+    }
+  }
+}
+
+resource "test_assertions" "vpc" {
+  component = "VPC"
+
+  equal "vpc_cidr" {
+    statement = "VPC CIDR should be 10.0.0.0/16"
+    got      = data.terraform_remote_state.main.outputs.vpc_cidr
+    want     = "10.0.0.0/16"
+  }
+
+  check "vpc_enabled" {
+    data_source = data.terraform_remote_state.main.outputs.vpc_id
+    condition   = can(data_terraform_remote_state.main.outputs.vpc_id)
+  }
+}
+```
+
+**Terratest Example:**
+
+```go
+// test/vpc_test.go
+package test
+
+import (
+    "testing"
+    "github.com/gruntwork-io/terratest/modules/terraform"
+    "github.com/stretchr/testify/assert"
+)
+
+func TestVPC(t *testing.T) {
+    terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+        TerraformDir: "../",
+        Vars: map[string]interface{}{
+            "environment": "test",
+        },
+    })
+
+    defer terraform.Destroy(t, terraformOptions)
+    terraform.InitAndApply(t, terraformOptions)
+
+    vpcID := terraform.Output(t, terraformOptions, "vpc_id")
+    assert.NotEmpty(t, vpcID)
+
+    subnetIDs := terraform.OutputList(t, terraformOptions, "public_subnet_ids")
+    assert.Len(t, subnetIDs, 2)
+}
+```
+
+### Ansible Testing
+
+**Ansible Test Playbook:**
+
+```yaml
+# test.yml
+---
+- name: Test web server configuration
+  hosts: webservers
+  gather_facts: yes
+  tasks:
+    - name: Check if nginx is installed
+      package_facts:
+        manager: apt
+
+    - name: Verify nginx is installed
+      assert:
+        that:
+          - "'nginx' in ansible_facts.packages"
+        fail_msg: "Nginx is not installed"
+        success_msg: "Nginx is installed"
+
+    - name: Check if nginx is running
+      uri:
+        url: http://localhost
+        status_code: 200
+      register: nginx_response
+
+    - name: Verify nginx is responding
+      assert:
+        that:
+          - nginx_response.status == 200
+        fail_msg: "Nginx is not responding"
+        success_msg: "Nginx is responding correctly"
+
+    - name: Check if port 80 is open
+      wait_for:
+        host: localhost
+        port: 80
+        timeout: 10
+      register: port_check
+
+    - name: Verify port 80 is accessible
+      assert:
+        that:
+          - port_check.elapsed < 10
+        fail_msg: "Port 80 is not accessible"
+        success_msg: "Port 80 is accessible"
+```
+
+## 🔐 Infrastructure Security
+
+### Security Best Practices
+
+**Terraform Security:**
+
+```hcl
+# security.tf
+# Enable encryption for S3 buckets
+resource "aws_s3_bucket" "secure" {
+  bucket = "my-secure-bucket"
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "secure" {
+  bucket = aws_s3_bucket.secure.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Enable versioning
+resource "aws_s3_bucket_versioning" "secure" {
+  bucket = aws_s3_bucket.secure.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Block public access
+resource "aws_s3_bucket_public_access_block" "secure" {
+  bucket = aws_s3_bucket.secure.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Secure security group
+resource "aws_security_group" "secure" {
+  name_prefix = "secure-sg-"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "secure-sg"
+  }
+}
+```
+
+**Security Scanning:**
+
+```bash
+#!/bin/bash
+# security-scan.sh
+
+echo "Running infrastructure security scans..."
+
+# Run tfsec
+echo "Running tfsec..."
+tfsec .
+
+# Run checkov
+echo "Running checkov..."
+checkov -d .
+
+# Run terrascan
+echo "Running terrascan..."
+terrascan scan
+
+# Run infracost for cost analysis
+echo "Running infracost..."
+infracost breakdown --path .
+
+echo "Security scans completed!"
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: Terraform Setup
+
+**Objective:** Create basic Terraform infrastructure
+
+**Tasks:**
+
+```bash
+# 1. Install Terraform
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+sudo apt update
+sudo apt install terraform
+
+# 2. Create Terraform configuration
+cat > main.tf << 'EOF'
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "us-west-2"
+}
+
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "my-vpc"
+  }
+}
+
+resource "aws_subnet" "public" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.1.0/24"
+  tags = {
+    Name = "public-subnet"
+  }
+}
+EOF
+
+# 3. Initialize and apply
+terraform init
+terraform plan
+terraform apply
+```
+
+### Exercise 2: Ansible Playbook
+
+**Objective:** Create Ansible playbook for web server
+
+**Tasks:**
+
+```bash
+# 1. Install Ansible
+sudo apt update
+sudo apt install ansible
+
+# 2. Create inventory
+cat > inventory.ini << 'EOF'
+[webservers]
+web1 ansible_host=192.168.1.10
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+EOF
+
+# 3. Create playbook
+cat > playbook.yml << 'EOF'
+---
+- name: Configure web server
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+EOF
+
+# 4. Run playbook
+ansible-playbook -i inventory.ini playbook.yml
+```
+
+### Exercise 3: CloudFormation Stack
+
+**Objective:** Deploy CloudFormation stack
+
+**Tasks:**
+
+```bash
+# 1. Create CloudFormation template
+cat > template.yaml << 'EOF'
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Simple web server stack'
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Tags:
+        - Key: Name
+          Value: my-vpc
+
+  Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Web server security group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c55b159cbfafe1f0
+      InstanceType: t3.micro
+      SubnetId: !Ref Subnet
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<h1>Hello from CloudFormation!</h1>" > /var/www/html/index.html
+EOF
+
+# 2. Deploy stack
+aws cloudformation create-stack \
+  --stack-name my-web-stack \
+  --template-body file://template.yaml \
+  --capabilities CAPABILITY_IAM
+
+# 3. Check stack status
+aws cloudformation describe-stacks \
+  --stack-name my-web-stack
+```
+
+## 📊 Assessment Questions
+
+**Day 14 Quiz:**
+
+1. **What is Infrastructure as Code?**
+
+   - Answer: Managing infrastructure through machine-readable definition files
+
+2. **What is Terraform's primary advantage?**
+
+   - Answer: Multi-cloud support and declarative syntax
+
+3. **What is the purpose of Terraform state?**
+
+   - Answer: Track resource metadata and dependencies
+
+4. **What is Ansible's main characteristic?**
+
+   - Answer: Agentless configuration management
+
+5. **What is CloudFormation used for?**
+
+   - Answer: AWS-native infrastructure provisioning
+
+6. **What is the purpose of ARM templates?**
+
+   - Answer: Azure resource deployment
+
+7. **What is tfsec used for?**
+
+   - Answer: Terraform security scanning
+
+8. **What is the benefit of using modules?**
+   - Answer: Reusability and maintainability
+
+## 📚 Additional Resources
+
+### Books
+
+- **"Terraform: Up & Running"** by Yevgeniy Brikman
+- **"Ansible: Up and Running"** by Lorin Hochstein
+- **"Infrastructure as Code"** by Kief Morris
+
+### Online Resources
+
+- [Terraform Documentation](https://www.terraform.io/docs/)
+- [Ansible Documentation](https://docs.ansible.com/)
+- [CloudFormation Documentation](https://docs.aws.amazon.com/cloudformation/)
+
+### Tools
+
+- **IaC**: Terraform, Ansible, Chef, Puppet
+- **Testing**: Terratest, Kitchen, Molecule
+- **Security**: tfsec, checkov, terrascan
+- **Cost**: Infracost, CloudHealth
+
+## 🎉 Day 14 Summary
+
+**What You've Learned:**
+
+- ✅ Infrastructure as code concepts and benefits
+- ✅ Terraform fundamentals and best practices
+- ✅ Configuration management tools (Ansible, Chef, Puppet)
+- ✅ Cloud-native IaC tools (CloudFormation, ARM Templates)
+- ✅ Infrastructure testing and validation
+- ✅ Infrastructure security and compliance
+
+**Key Takeaways:**
+
+- IaC provides consistency and automation
+- Version control is essential for infrastructure
+- Testing infrastructure is as important as testing code
+- Security should be built into infrastructure from the start
+- Multi-cloud strategies require careful tool selection
+
+**Tomorrow:** We'll continue with monitoring and observability, building on today's infrastructure knowledge.
+
+**Remember:** Infrastructure as code is the foundation of modern DevOps. Start simple and iterate!

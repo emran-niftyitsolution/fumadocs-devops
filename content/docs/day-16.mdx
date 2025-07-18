@@ -1,8 +1,1318 @@
 ---
-title: "Day 16: Title"
-description: "DevOps 100 Days - Day 16"
+title: "Day 16: Security in DevOps (DevSecOps)"
+description: "Master security integration in DevOps, vulnerability management, and compliance"
 ---
 
-# Day 16
+# Day 16: Security in DevOps (DevSecOps)
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Understand DevSecOps principles and security integration
+- Master vulnerability scanning and management
+- Learn security testing tools and practices
+- Understand compliance and governance
+- Master secrets management and encryption
+- Learn security monitoring and incident response
+
+## 🔒 DevSecOps Fundamentals
+
+### What is DevSecOps?
+
+**DevSecOps Definition:**
+
+```bash
+# DevSecOps is the integration of security practices within the DevOps process
+# creating a 'Security as Code' culture with continuous, flexible collaboration
+# between release engineers and security teams
+
+# Key Principles:
+# - Security as Code
+# - Continuous Security
+# - Shift Left Security
+# - Automated Security
+# - Security by Design
+```
+
+**DevSecOps Benefits:**
+
+```bash
+# Security Benefits:
+# - Early vulnerability detection
+# - Reduced security risks
+# - Automated compliance
+# - Continuous monitoring
+
+# Development Benefits:
+# - Faster security feedback
+# - Integrated security tools
+# - Reduced rework
+# - Better collaboration
+
+# Business Benefits:
+# - Reduced breach costs
+# - Compliance automation
+# - Trust and reputation
+# - Competitive advantage
+```
+
+### Security Integration Points
+
+**CI/CD Security Integration:**
+
+```bash
+# Code Security:
+# - Static code analysis
+# - Dependency scanning
+# - Secret detection
+# - Code signing
+
+# Build Security:
+# - Container scanning
+# - Image signing
+# - Build verification
+# - Artifact validation
+
+# Deploy Security:
+# - Infrastructure scanning
+# - Configuration validation
+# - Runtime protection
+# - Network security
+```
+
+**Security Toolchain:**
+
+```bash
+# Code Analysis:
+# - SonarQube
+# - Snyk
+# - Checkmarx
+# - Fortify
+
+# Container Security:
+# - Trivy
+# - Clair
+# - Anchore
+# - Falco
+
+# Infrastructure Security:
+# - tfsec
+# - checkov
+# - Terrascan
+# - OPA
+```
+
+## 🔍 Vulnerability Management
+
+### Static Application Security Testing (SAST)
+
+**SonarQube Setup:**
+
+```bash
+# Install SonarQube
+docker run -d --name sonarqube \
+  -p 9000:9000 \
+  -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true \
+  sonarqube:latest
+
+# Access SonarQube
+# http://localhost:9000
+# Default: admin/admin
+
+# Create project
+# 1. Go to http://localhost:9000
+# 2. Create new project
+# 3. Generate token
+# 4. Configure scanner
+```
+
+**SonarQube Configuration:**
+
+```yaml
+# sonar-project.properties
+sonar.projectKey=my-app
+sonar.projectName=My Application
+sonar.projectVersion=1.0
+
+sonar.sources=src
+sonar.tests=test
+sonar.java.binaries=target/classes
+sonar.java.test.binaries=target/test-classes
+
+sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+sonar.python.coverage.reportPaths=coverage.xml
+
+sonar.security.sources.python=src
+sonar.python.version=3.9
+```
+
+**Snyk Integration:**
+
+```bash
+# Install Snyk CLI
+npm install -g snyk
+
+# Authenticate
+snyk auth
+
+# Test for vulnerabilities
+snyk test
+
+# Monitor project
+snyk monitor
+
+# Fix vulnerabilities
+snyk wizard
+
+# Test container images
+snyk container test my-app:latest
+
+# Test infrastructure
+snyk iac test
+```
+
+### Dynamic Application Security Testing (DAST)
+
+**OWASP ZAP Setup:**
+
+```bash
+# Install OWASP ZAP
+docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
+  -t http://localhost:8080 \
+  -J zap-report.json
+
+# Run active scan
+docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-full-scan.py \
+  -t http://localhost:8080 \
+  -J zap-full-scan.json
+
+# Run API scan
+docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-api-scan.py \
+  -t http://localhost:8080/api \
+  -f openapi \
+  -J zap-api-scan.json
+```
+
+**ZAP Configuration:**
+
+```yaml
+# zap.conf
+# Basic scan configuration
+10016	# Allow ZAP to do anything
+10020	# Ignore proxy
+10024	# Ignore proxy for local addresses
+10026	# Ignore proxy for local addresses
+10027	# Ignore proxy for local addresses
+10028	# Ignore proxy for local addresses
+10029	# Ignore proxy for local addresses
+10030	# Ignore proxy for local addresses
+10031	# Ignore proxy for local addresses
+10032	# Ignore proxy for local addresses
+10033	# Ignore proxy for local addresses
+10034	# Ignore proxy for local addresses
+10035	# Ignore proxy for local addresses
+10036	# Ignore proxy for local addresses
+10037	# Ignore proxy for local addresses
+10038	# Ignore proxy for local addresses
+10039	# Ignore proxy for local addresses
+10040	# Ignore proxy for local addresses
+10041	# Ignore proxy for local addresses
+10042	# Ignore proxy for local addresses
+10043	# Ignore proxy for local addresses
+10044	# Ignore proxy for local addresses
+10045	# Ignore proxy for local addresses
+10046	# Ignore proxy for local addresses
+10047	# Ignore proxy for local addresses
+10048	# Ignore proxy for local addresses
+10049	# Ignore proxy for local addresses
+10050	# Ignore proxy for local addresses
+```
+
+### Container Security
+
+**Trivy Container Scanning:**
+
+```bash
+# Install Trivy
+sudo apt-get install wget apt-transport-https gnupg lsb-release
+wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+sudo apt-get update
+sudo apt-get install trivy
+
+# Scan container image
+trivy image my-app:latest
+
+# Scan with specific severity
+trivy image --severity HIGH,CRITICAL my-app:latest
+
+# Scan with output formats
+trivy image --format json my-app:latest > trivy-report.json
+trivy image --format table my-app:latest
+trivy image --format sarif my-app:latest > trivy-report.sarif
+
+# Scan filesystem
+trivy fs --security-checks vuln,config .
+
+# Scan repository
+trivy repo https://github.com/user/repo
+```
+
+**Clair Container Scanning:**
+
+```bash
+# Install Clair
+docker run -d --name clair-db \
+  -e POSTGRES_PASSWORD=password \
+  postgres:13
+
+docker run -d --name clair \
+  --link clair-db:postgres \
+  -p 6060:6060 \
+  -e CLAIR_DB=postgres \
+  -e CLAIR_DB_HOST=clair-db \
+  -e CLAIR_DB_USERNAME=postgres \
+  -e CLAIR_DB_PASSWORD=password \
+  quay.io/coreos/clair:latest
+
+# Scan with clair-scanner
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(pwd):/report \
+  clair-scanner:latest \
+  --clair="http://clair:6060" \
+  --ip="host.docker.internal" \
+  --report="/report/clair-report.json" \
+  my-app:latest
+```
+
+### Infrastructure Security
+
+**Terraform Security Scanning:**
+
+```bash
+# Install tfsec
+curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install.sh | bash
+
+# Scan Terraform code
+tfsec .
+
+# Scan with specific checks
+tfsec . --exclude aws-s3-enable-bucket-logging
+
+# Scan with output formats
+tfsec . --format json > tfsec-report.json
+tfsec . --format sarif > tfsec-report.sarif
+
+# Scan with custom rules
+tfsec . --custom-check-dir ./custom-rules
+```
+
+**Checkov Infrastructure Scanning:**
+
+```bash
+# Install Checkov
+pip install checkov
+
+# Scan Terraform
+checkov -d .
+
+# Scan Kubernetes
+checkov -f k8s/
+
+# Scan Dockerfile
+checkov -f Dockerfile
+
+# Scan with specific frameworks
+checkov -d . --framework kubernetes terraform
+
+# Scan with output formats
+checkov -d . --output json > checkov-report.json
+checkov -d . --output sarif > checkov-report.sarif
+```
+
+## 🔐 Secrets Management
+
+### HashiCorp Vault
+
+**Vault Installation:**
+
+```bash
+# Install Vault
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+sudo apt update
+sudo apt install vault
+
+# Start Vault server
+vault server -config=vault.hcl
+
+# Initialize Vault
+vault operator init
+
+# Unseal Vault
+vault operator unseal
+
+# Login
+vault login
+```
+
+**Vault Configuration:**
+
+```hcl
+# vault.hcl
+storage "file" {
+  path = "/opt/vault/data"
+}
+
+listener "tcp" {
+  address     = "0.0.0.0:8200"
+  tls_disable = 1
+}
+
+api_addr = "http://0.0.0.0:8200"
+cluster_addr = "https://0.0.0.0:8201"
+
+ui = true
+```
+
+**Vault Secrets Management:**
+
+```bash
+# Enable key-value secrets engine
+vault secrets enable -path=secret kv-v2
+
+# Store secret
+vault kv put secret/my-app \
+  username=admin \
+  password=secret123 \
+  api_key=abc123
+
+# Retrieve secret
+vault kv get secret/my-app
+
+# Enable database secrets engine
+vault secrets enable database
+
+# Configure database connection
+vault write database/config/my-db \
+  plugin_name=postgresql-database-plugin \
+  allowed_roles="my-role" \
+  connection_url="postgresql://{{username}}:{{password}}@localhost:5432/my-db" \
+  username="vault" \
+  password="password"
+
+# Create database role
+vault write database/roles/my-role \
+  db_name=my-db \
+  creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';" \
+  revocation_statements="DROP ROLE \"{{name}}\";" \
+  default_ttl=1h \
+  max_ttl=24h
+```
+
+### AWS Secrets Manager
+
+**AWS Secrets Manager Setup:**
+
+```bash
+# Create secret
+aws secretsmanager create-secret \
+  --name my-app/database \
+  --description "Database credentials" \
+  --secret-string '{"username":"admin","password":"secret123","host":"localhost","port":5432}'
+
+# Retrieve secret
+aws secretsmanager get-secret-value \
+  --secret-id my-app/database
+
+# Update secret
+aws secretsmanager update-secret \
+  --secret-id my-app/database \
+  --secret-string '{"username":"admin","password":"newpassword","host":"localhost","port":5432}'
+
+# Rotate secret
+aws secretsmanager rotate-secret \
+  --secret-id my-app/database
+```
+
+**AWS Secrets Manager Integration:**
+
+```python
+# Python integration
+import boto3
+import json
+
+def get_secret(secret_name):
+    """Retrieve secret from AWS Secrets Manager"""
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name='us-west-2'
+    )
+
+    try:
+        response = client.get_secret_value(SecretId=secret_name)
+        secret = json.loads(response['SecretString'])
+        return secret
+    except Exception as e:
+        print(f"Error retrieving secret: {e}")
+        return None
+
+# Usage
+db_credentials = get_secret('my-app/database')
+if db_credentials:
+    username = db_credentials['username']
+    password = db_credentials['password']
+```
+
+### Kubernetes Secrets
+
+**Kubernetes Secrets Management:**
+
+```yaml
+# Create secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-app-secret
+type: Opaque
+data:
+  username: YWRtaW4= # base64 encoded
+  password: c2VjcmV0MTIz # base64 encoded
+  api-key: YWJjMTIz # base64 encoded
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-app
+          image: my-app:latest
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: my-app-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: my-app-secret
+                  key: password
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: my-app-secret
+                  key: api-key
+```
+
+## 🛡️ Security Testing
+
+### Security Testing Tools
+
+**Nmap Network Scanning:**
+
+```bash
+# Install Nmap
+sudo apt install nmap
+
+# Basic scan
+nmap localhost
+
+# Port scan
+nmap -p 80,443,22 localhost
+
+# Service detection
+nmap -sV localhost
+
+# OS detection
+nmap -O localhost
+
+# Aggressive scan
+nmap -A localhost
+
+# Network scan
+nmap 192.168.1.0/24
+
+# Save results
+nmap -oN scan-results.txt localhost
+nmap -oX scan-results.xml localhost
+```
+
+**Nikto Web Application Scanner:**
+
+```bash
+# Install Nikto
+sudo apt install nikto
+
+# Basic scan
+nikto -h http://localhost
+
+# Comprehensive scan
+nikto -h http://localhost -C all
+
+# Scan with specific plugins
+nikto -h http://localhost -Plugins "robots,headers"
+
+# Save results
+nikto -h http://localhost -o nikto-report.txt
+nikto -h http://localhost -Format xml -o nikto-report.xml
+```
+
+**SQLMap SQL Injection Testing:**
+
+```bash
+# Install SQLMap
+git clone https://github.com/sqlmapproject/sqlmap.git
+cd sqlmap
+
+# Basic scan
+python sqlmap.py -u "http://localhost/vulnerable.php?id=1"
+
+# Database enumeration
+python sqlmap.py -u "http://localhost/vulnerable.php?id=1" --dbs
+
+# Table enumeration
+python sqlmap.py -u "http://localhost/vulnerable.php?id=1" -D database --tables
+
+# Data extraction
+python sqlmap.py -u "http://localhost/vulnerable.php?id=1" -D database -T users --dump
+
+# Automated scan
+python sqlmap.py -u "http://localhost/vulnerable.php?id=1" --batch --random-agent
+```
+
+### Security Testing in CI/CD
+
+**GitHub Actions Security Workflow:**
+
+```yaml
+# .github/workflows/security.yml
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "my-app:latest"
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Run OWASP ZAP scan
+        uses: zaproxy/action-full-scan@v0.8.0
+        with:
+          target: "http://localhost:8080"
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v0.2.0
+        with:
+          format: sarif
+          out: tfsec.sarif
+
+      - name: Upload tfsec results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: tfsec.sarif
+```
+
+**Jenkins Security Pipeline:**
+
+```groovy
+// Jenkinsfile
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = 'my-app'
+        DOCKER_TAG = 'latest'
+    }
+
+    stages {
+        stage('Security Scan') {
+            parallel {
+                stage('SAST') {
+                    steps {
+                        script {
+                            // Run SonarQube analysis
+                            withSonarQubeEnv('SonarQube') {
+                                sh 'mvn sonar:sonar'
+                            }
+                        }
+                    }
+                }
+
+                stage('Container Scan') {
+                    steps {
+                        script {
+                            // Build Docker image
+                            docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+
+                            // Scan with Trivy
+                            sh "trivy image --severity HIGH,CRITICAL ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        }
+                    }
+                }
+
+                stage('Dependency Scan') {
+                    steps {
+                        script {
+                            // Run Snyk
+                            sh 'snyk test'
+                        }
+                    }
+                }
+
+                stage('Infrastructure Scan') {
+                    steps {
+                        script {
+                            // Run tfsec
+                            sh 'tfsec . --format json --out tfsec-results.json'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Security Gate') {
+            steps {
+                script {
+                    // Check if any critical vulnerabilities found
+                    def criticalVulns = sh(
+                        script: "trivy image --severity CRITICAL ${DOCKER_IMAGE}:${DOCKER_TAG} | grep -c CRITICAL || true",
+                        returnStdout: true
+                    ).trim()
+
+                    if (criticalVulns.toInteger() > 0) {
+                        error "Critical vulnerabilities found. Build blocked."
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    // Deploy only if security checks pass
+                    sh 'kubectl apply -f k8s/'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Publish security reports
+            publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reports',
+                reportFiles: 'security-report.html',
+                reportName: 'Security Report'
+            ])
+        }
+    }
+}
+```
+
+## 📋 Compliance and Governance
+
+### Policy as Code
+
+**Open Policy Agent (OPA):**
+
+```rego
+# security.rego
+package kubernetes.admission
+
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    not input.request.object.spec.securityContext.runAsNonRoot
+
+    msg := "Pods must not run as root"
+}
+
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    container := input.request.object.spec.containers[_]
+    not container.securityContext.readOnlyRootFilesystem
+
+    msg := "Containers must have read-only root filesystem"
+}
+
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    container := input.request.object.spec.containers[_]
+    not container.securityContext.allowPrivilegeEscalation == false
+
+    msg := "Containers must not allow privilege escalation"
+}
+
+# Allow specific images only
+deny[msg] {
+    input.request.kind.kind == "Pod"
+    container := input.request.object.spec.containers[_]
+    not startswith(container.image, "approved-registry.com/")
+
+    msg := sprintf("Image %v not from approved registry", [container.image])
+}
+```
+
+**OPA Gatekeeper Configuration:**
+
+```yaml
+# gatekeeper.yaml
+apiVersion: config.gatekeeper.sh/v1alpha1
+kind: Config
+metadata:
+  name: config
+  namespace: gatekeeper-system
+spec:
+  sync:
+    syncOnly:
+      - group: ""
+        version: "v1"
+        kind: "Pod"
+      - group: ""
+        version: "v1"
+        kind: "Service"
+      - group: "apps"
+        version: "v1"
+        kind: "Deployment"
+  validation:
+    traces: ["admission"]
+---
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: securityconstraints
+spec:
+  crd:
+    spec:
+      names:
+        kind: SecurityConstraints
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package kubernetes.admission
+
+        deny[msg] {
+          input.request.kind.kind == "Pod"
+          not input.request.object.spec.securityContext.runAsNonRoot
+          msg := "Pods must not run as root"
+        }
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: SecurityConstraints
+metadata:
+  name: pod-security
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+```
+
+### Compliance Frameworks
+
+**SOC 2 Compliance:**
+
+```yaml
+# soc2-controls.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: soc2-controls
+data:
+  controls.yaml: |
+    CC1: Control Environment
+      - Access controls implemented
+      - Security policies documented
+      - Regular access reviews
+
+    CC2: Communication and Information
+      - Security awareness training
+      - Incident response procedures
+      - Change management process
+
+    CC3: Risk Assessment
+      - Vulnerability assessments
+      - Threat modeling
+      - Risk mitigation strategies
+
+    CC4: Monitoring Activities
+      - Continuous monitoring
+      - Log analysis
+      - Alert management
+
+    CC5: Control Activities
+      - Change management
+      - Security testing
+      - Backup procedures
+
+    CC6: Logical and Physical Access Controls
+      - Authentication systems
+      - Authorization controls
+      - Physical security
+
+    CC7: System Operations
+      - System monitoring
+      - Performance management
+      - Capacity planning
+
+    CC8: Change Management
+      - Change approval process
+      - Testing procedures
+      - Rollback procedures
+
+    CC9: Risk Mitigation
+      - Security controls
+      - Incident response
+      - Business continuity
+```
+
+**GDPR Compliance:**
+
+```yaml
+# gdpr-controls.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gdpr-controls
+data:
+  controls.yaml: |
+    Article 5: Principles
+      - Lawfulness, fairness, and transparency
+      - Purpose limitation
+      - Data minimization
+      - Accuracy
+      - Storage limitation
+      - Integrity and confidentiality
+
+    Article 6: Lawful Processing
+      - Consent
+      - Contract performance
+      - Legal obligations
+      - Vital interests
+      - Public interest
+      - Legitimate interests
+
+    Article 25: Data Protection by Design
+      - Privacy by design
+      - Privacy by default
+      - Technical measures
+      - Organizational measures
+
+    Article 32: Security of Processing
+      - Encryption
+      - Access controls
+      - Regular testing
+      - Incident response
+      - Data backup
+      - Availability
+```
+
+## 🚨 Security Monitoring
+
+### Security Information and Event Management (SIEM)
+
+**ELK Stack for Security:**
+
+```yaml
+# security-elk.yml
+version: "3.8"
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.0
+    ports:
+      - "5044:5044"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.0
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.17.0
+    user: root
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log/docker:/var/log/docker:ro
+    depends_on:
+      - logstash
+
+volumes:
+  elasticsearch_data:
+```
+
+**Logstash Security Pipeline:**
+
+```ruby
+# logstash/pipeline/security.conf
+input {
+  beats {
+    port => 5044
+  }
+  file {
+    path => "/var/log/auth.log"
+    type => "auth"
+    start_position => "beginning"
+  }
+  file {
+    path => "/var/log/nginx/access.log"
+    type => "nginx"
+    start_position => "beginning"
+  }
+}
+
+filter {
+  if [type] == "auth" {
+    grok {
+      match => { "message" => "%{SYSLOGTIMESTAMP:timestamp} %{SYSLOGFACILITY:facility} %{SYSLOGHOST:hostname} %{DATA:program}(?:\[%{POSINT:pid}\])?: %{GREEDYDATA:message}" }
+    }
+
+    if [message] =~ /Failed password/ {
+      mutate {
+        add_tag => ["security", "failed_login"]
+      }
+    }
+
+    if [message] =~ /Invalid user/ {
+      mutate {
+        add_tag => ["security", "invalid_user"]
+      }
+    }
+  }
+
+  if [type] == "nginx" {
+    grok {
+      match => { "message" => "%{COMBINEDAPACHELOG}" }
+    }
+
+    if [status] >= 400 {
+      mutate {
+        add_tag => ["security", "http_error"]
+      }
+    }
+
+    if [status] >= 500 {
+      mutate {
+        add_tag => ["security", "server_error"]
+      }
+    }
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["elasticsearch:9200"]
+    index => "security-logs-%{+YYYY.MM.dd}"
+  }
+}
+```
+
+### Security Alerting
+
+**Security Alert Rules:**
+
+```yaml
+# security-alerts.yml
+groups:
+  - name: security_alerts
+    rules:
+      - alert: FailedLoginAttempts
+        expr: rate(auth_failed_logins_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of failed login attempts"
+          description: "{{ $value }} failed login attempts per second"
+
+      - alert: UnauthorizedAccess
+        expr: rate(unauthorized_requests_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Unauthorized access attempts detected"
+          description: "{{ $value }} unauthorized requests per second"
+
+      - alert: SQLInjectionAttempt
+        expr: rate(sql_injection_attempts_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SQL injection attempt detected"
+          description: "SQL injection attempt detected in application"
+
+      - alert: ContainerEscapeAttempt
+        expr: rate(container_escape_attempts_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container escape attempt detected"
+          description: "Attempt to escape container detected"
+
+      - alert: PrivilegeEscalation
+        expr: rate(privilege_escalation_attempts_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Privilege escalation attempt detected"
+          description: "Attempt to escalate privileges detected"
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: Vulnerability Scanning
+
+**Objective:** Set up automated vulnerability scanning
+
+**Tasks:**
+
+```bash
+# 1. Install Trivy
+curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+# 2. Scan local images
+trivy image nginx:latest
+
+# 3. Scan with specific severity
+trivy image --severity HIGH,CRITICAL nginx:latest
+
+# 4. Generate report
+trivy image --format json nginx:latest > trivy-report.json
+
+# 5. Scan filesystem
+trivy fs --security-checks vuln,config .
+
+# 6. Scan repository
+trivy repo https://github.com/user/repo
+```
+
+### Exercise 2: Secrets Management
+
+**Objective:** Implement secrets management
+
+**Tasks:**
+
+```bash
+# 1. Install Vault
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+sudo apt update
+sudo apt install vault
+
+# 2. Start Vault
+vault server -dev
+
+# 3. Initialize Vault
+export VAULT_ADDR='http://localhost:8200'
+vault operator init
+
+# 4. Unseal Vault
+vault operator unseal
+
+# 5. Enable secrets engine
+vault secrets enable -path=secret kv-v2
+
+# 6. Store secret
+vault kv put secret/my-app \
+  username=admin \
+  password=secret123
+
+# 7. Retrieve secret
+vault kv get secret/my-app
+```
+
+### Exercise 3: Security Testing
+
+**Objective:** Implement security testing in CI/CD
+
+**Tasks:**
+
+```bash
+# 1. Create security workflow
+cat > .github/workflows/security.yml << 'EOF'
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'nginx:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Run Snyk
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+    - name: Run OWASP ZAP
+      uses: zaproxy/action-full-scan@v0.8.0
+      with:
+        target: 'http://localhost:8080'
+EOF
+
+# 2. Add secrets to repository
+# Go to Settings > Secrets and variables > Actions
+# Add SNYK_TOKEN
+
+# 3. Commit and push
+git add .github/workflows/security.yml
+git commit -m "Add security scanning workflow"
+git push
+```
+
+## 📊 Assessment Questions
+
+**Day 16 Quiz:**
+
+1. **What is DevSecOps?**
+
+   - Answer: Integration of security practices within DevOps
+
+2. **What is SAST?**
+
+   - Answer: Static Application Security Testing
+
+3. **What is Trivy used for?**
+
+   - Answer: Container and infrastructure vulnerability scanning
+
+4. **What is Vault used for?**
+
+   - Answer: Secrets management and encryption
+
+5. **What is OPA used for?**
+
+   - Answer: Policy as Code and compliance
+
+6. **What is SIEM?**
+
+   - Answer: Security Information and Event Management
+
+7. **What is the purpose of security gates?**
+
+   - Answer: Block deployment if security issues are found
+
+8. **What is shift-left security?**
+   - Answer: Moving security earlier in the development process
+
+## 📚 Additional Resources
+
+### Books
+
+- **"DevSecOps"** by John Willis
+- **"Security Engineering"** by Ross Anderson
+- **"Building Secure and Reliable Systems"** by Google
+
+### Online Resources
+
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
+- [CIS Controls](https://www.cisecurity.org/controls/)
+
+### Tools
+
+- **Vulnerability Scanning**: Trivy, Snyk, OWASP ZAP
+- **Secrets Management**: Vault, AWS Secrets Manager, Azure Key Vault
+- **Policy as Code**: OPA, Gatekeeper, Sentinel
+- **Security Monitoring**: ELK Stack, Splunk, QRadar
+
+## 🎉 Day 16 Summary
+
+**What You've Learned:**
+
+- ✅ DevSecOps principles and security integration
+- ✅ Vulnerability scanning and management
+- ✅ Security testing tools and practices
+- ✅ Compliance and governance
+- ✅ Secrets management and encryption
+- ✅ Security monitoring and incident response
+
+**Key Takeaways:**
+
+- Security should be integrated throughout the DevOps lifecycle
+- Automated security testing prevents vulnerabilities
+- Secrets management is crucial for application security
+- Compliance can be automated with policy as code
+- Continuous security monitoring is essential
+
+**Tomorrow:** We'll continue with advanced Kubernetes topics, building on today's security knowledge.
+
+**Remember:** Security is everyone's responsibility. Build it in from the start!

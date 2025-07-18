@@ -1,8 +1,1189 @@
 ---
-title: "Day 25: Title"
-description: "DevOps 100 Days - Day 25"
+title: "Day 25: Site Reliability Engineering (SRE)"
+description: "Master SRE fundamentals, SLIs/SLOs, error budgets, incident response, toil reduction, and SRE culture best practices"
 ---
 
-# Day 25
+# Day 25: Site Reliability Engineering (SRE)
 
-Content coming soon.
+## Learning Objectives
+
+- Understand SRE fundamentals and principles
+- Master service level objectives (SLOs) and indicators (SLIs)
+- Learn error budget management and implementation
+- Explore incident response and post-mortem processes
+- Implement toil reduction and automation strategies
+- Understand SRE culture and team practices
+
+## SRE Fundamentals
+
+### What is Site Reliability Engineering?
+
+Site Reliability Engineering (SRE) is a discipline that incorporates aspects of software engineering and applies them to infrastructure and operations problems. The main goals are to:
+
+- **Create scalable and highly reliable software systems**
+- **Automate operations tasks**
+- **Balance reliability with feature velocity**
+- **Manage risk through error budgets**
+- **Eliminate toil through automation**
+
+### SRE Principles
+
+```bash
+# Core SRE Principles
+1. Service Level Objectives (SLOs)
+   - Define measurable reliability targets
+   - Balance user experience with engineering velocity
+
+2. Error Budgets
+   - Allow for planned risk-taking
+   - Enable rapid innovation while maintaining reliability
+
+3. Eliminate Toil
+   - Automate repetitive operational tasks
+   - Focus on engineering work vs. manual operations
+
+4. Monitoring and Observability
+   - Comprehensive monitoring of all systems
+   - Ability to debug issues quickly
+
+5. Release Engineering
+   - Safe, rapid, and frequent deployments
+   - Automated rollback capabilities
+
+6. Incident Response
+   - Structured incident management
+   - Post-incident analysis and learning
+```
+
+### SRE vs Traditional Operations
+
+```bash
+# Traditional Operations
+- Manual configuration management
+- Reactive incident response
+- Limited automation
+- Focus on stability over velocity
+- Siloed teams (Dev vs Ops)
+
+# SRE Approach
+- Infrastructure as Code
+- Proactive monitoring and alerting
+- Extensive automation
+- Balance of reliability and velocity
+- Cross-functional teams
+- Data-driven decision making
+```
+
+## Service Level Objectives (SLOs) and Indicators (SLIs)
+
+### SLI Definition and Implementation
+
+```yaml
+# SLI Configuration Example
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sli-config
+data:
+  slis: |
+    # Availability SLI
+    availability:
+      description: "Percentage of successful requests"
+      measurement: "successful_requests / total_requests * 100"
+      target: 99.9%
+      window: 30d
+
+    # Latency SLI
+    latency:
+      description: "95th percentile response time"
+      measurement: "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
+      target: "< 200ms"
+      window: 30d
+
+    # Throughput SLI
+    throughput:
+      description: "Requests per second"
+      measurement: "rate(http_requests_total[5m])"
+      target: "> 1000 rps"
+      window: 30d
+
+    # Error Rate SLI
+    error_rate:
+      description: "Percentage of error responses"
+      measurement: "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m]) * 100"
+      target: "< 0.1%"
+      window: 30d
+```
+
+### SLO Implementation
+
+```yaml
+# SLO Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: slo-config
+data:
+  slos: |
+    # Web Service SLOs
+    web_service:
+      availability:
+        target: 99.9
+        window: 30d
+        measurement: "availability"
+      
+      latency:
+        target: 200
+        window: 30d
+        measurement: "latency_p95"
+        unit: "ms"
+      
+      error_rate:
+        target: 0.1
+        window: 30d
+        measurement: "error_rate"
+        unit: "%"
+
+    # API Service SLOs
+    api_service:
+      availability:
+        target: 99.95
+        window: 30d
+        measurement: "availability"
+      
+      latency:
+        target: 100
+        window: 30d
+        measurement: "latency_p95"
+        unit: "ms"
+      
+      throughput:
+        target: 5000
+        window: 30d
+        measurement: "requests_per_second"
+```
+
+### SLI Measurement Implementation
+
+```python
+# SLI Measurement Service
+import time
+import statistics
+from typing import Dict, List, Optional
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+
+@dataclass
+class SLIMeasurement:
+    name: str
+    value: float
+    timestamp: datetime
+    labels: Dict[str, str]
+
+class SLIService:
+    def __init__(self):
+        self.measurements: Dict[str, List[SLIMeasurement]] = {}
+
+    def record_measurement(self, sli_name: str, value: float, labels: Dict[str, str] = None):
+        """Record a new SLI measurement"""
+        measurement = SLIMeasurement(
+            name=sli_name,
+            value=value,
+            timestamp=datetime.now(),
+            labels=labels or {}
+        )
+
+        if sli_name not in self.measurements:
+            self.measurements[sli_name] = []
+
+        self.measurements[sli_name].append(measurement)
+
+    def calculate_availability(self, service: str, window: timedelta = timedelta(days=30)) -> float:
+        """Calculate availability SLI"""
+        cutoff = datetime.now() - window
+        measurements = [
+            m for m in self.measurements.get(f"{service}_availability", [])
+            if m.timestamp >= cutoff
+        ]
+
+        if not measurements:
+            return 0.0
+
+        successful = sum(1 for m in measurements if m.value > 0)
+        total = len(measurements)
+
+        return (successful / total) * 100 if total > 0 else 0.0
+
+    def calculate_latency_p95(self, service: str, window: timedelta = timedelta(days=30)) -> float:
+        """Calculate 95th percentile latency"""
+        cutoff = datetime.now() - window
+        measurements = [
+            m.value for m in self.measurements.get(f"{service}_latency", [])
+            if m.timestamp >= cutoff
+        ]
+
+        if not measurements:
+            return 0.0
+
+        return statistics.quantiles(measurements, n=20)[18]  # 95th percentile
+
+    def calculate_error_rate(self, service: str, window: timedelta = timedelta(days=30)) -> float:
+        """Calculate error rate SLI"""
+        cutoff = datetime.now() - window
+        measurements = [
+            m for m in self.measurements.get(f"{service}_errors", [])
+            if m.timestamp >= cutoff
+        ]
+
+        if not measurements:
+            return 0.0
+
+        total_requests = sum(m.labels.get("total_requests", 0) for m in measurements)
+        error_requests = sum(m.value for m in measurements)
+
+        return (error_requests / total_requests) * 100 if total_requests > 0 else 0.0
+
+# Usage example
+sli_service = SLIService()
+
+# Record availability measurement
+sli_service.record_measurement(
+    "web_service_availability",
+    1.0,  # 1.0 = available, 0.0 = unavailable
+    {"endpoint": "/api/users", "method": "GET"}
+)
+
+# Record latency measurement
+sli_service.record_measurement(
+    "web_service_latency",
+    150.5,  # milliseconds
+    {"endpoint": "/api/users", "method": "GET"}
+)
+
+# Record error measurement
+sli_service.record_measurement(
+    "web_service_errors",
+    5,  # number of errors
+    {"total_requests": 1000, "status_code": "500"}
+)
+
+# Calculate current SLIs
+availability = sli_service.calculate_availability("web_service")
+latency_p95 = sli_service.calculate_latency_p95("web_service")
+error_rate = sli_service.calculate_error_rate("web_service")
+
+print(f"Availability: {availability:.2f}%")
+print(f"Latency P95: {latency_p95:.2f}ms")
+print(f"Error Rate: {error_rate:.2f}%")
+```
+
+## Error Budget Management
+
+### Error Budget Calculation
+
+```yaml
+# Error Budget Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: error-budget-config
+data:
+  error_budgets: |
+    # Error Budget Definition
+    error_budget:
+      calculation: "1 - SLO_target"
+      window: "30d"
+      burn_rate_threshold: 1.0
+
+    # Service-specific Error Budgets
+    web_service:
+      availability_slo: 99.9
+      error_budget: 0.1  # 0.1% = 43.2 minutes per month
+      burn_rate_alerts:
+        - threshold: 1.0  # Normal burn rate
+          severity: warning
+        - threshold: 2.0  # 2x burn rate
+          severity: critical
+        - threshold: 5.0  # 5x burn rate
+          severity: emergency
+
+    api_service:
+      availability_slo: 99.95
+      error_budget: 0.05  # 0.05% = 21.6 minutes per month
+      burn_rate_alerts:
+        - threshold: 1.0
+          severity: warning
+        - threshold: 3.0
+          severity: critical
+```
+
+### Error Budget Monitoring
+
+```python
+# Error Budget Monitoring Service
+from datetime import datetime, timedelta
+from typing import Dict, List
+import math
+
+class ErrorBudgetService:
+    def __init__(self, slo_target: float, window_days: int = 30):
+        self.slo_target = slo_target
+        self.window_days = window_days
+        self.error_budget = 1.0 - (slo_target / 100.0)
+        self.window_seconds = window_days * 24 * 60 * 60
+
+    def calculate_error_budget_remaining(self, current_availability: float) -> float:
+        """Calculate remaining error budget"""
+        current_error_rate = 1.0 - (current_availability / 100.0)
+        used_budget = current_error_rate / self.error_budget
+        remaining_budget = max(0.0, 1.0 - used_budget)
+        return remaining_budget
+
+    def calculate_burn_rate(self, error_rate: float) -> float:
+        """Calculate error budget burn rate"""
+        return error_rate / self.error_budget
+
+    def estimate_time_to_exhaustion(self, burn_rate: float) -> timedelta:
+        """Estimate time until error budget is exhausted"""
+        if burn_rate <= 0:
+            return timedelta.max
+
+        remaining_budget = self.error_budget
+        seconds_to_exhaustion = (remaining_budget / burn_rate) * self.window_seconds
+        return timedelta(seconds=seconds_to_exhaustion)
+
+    def should_trigger_alert(self, burn_rate: float, alert_threshold: float) -> bool:
+        """Check if burn rate exceeds alert threshold"""
+        return burn_rate >= alert_threshold
+
+    def get_error_budget_status(self, current_availability: float, error_rate: float) -> Dict:
+        """Get comprehensive error budget status"""
+        remaining_budget = self.calculate_error_budget_remaining(current_availability)
+        burn_rate = self.calculate_burn_rate(error_rate)
+        time_to_exhaustion = self.estimate_time_to_exhaustion(burn_rate)
+
+        return {
+            "slo_target": self.slo_target,
+            "current_availability": current_availability,
+            "error_budget_total": self.error_budget,
+            "error_budget_remaining": remaining_budget,
+            "burn_rate": burn_rate,
+            "time_to_exhaustion": time_to_exhaustion,
+            "status": "critical" if burn_rate > 2.0 else "warning" if burn_rate > 1.0 else "normal"
+        }
+
+# Usage example
+error_budget_service = ErrorBudgetService(slo_target=99.9, window_days=30)
+
+# Monitor error budget
+current_availability = 99.85  # 99.85% availability
+current_error_rate = 0.15     # 0.15% error rate
+
+status = error_budget_service.get_error_budget_status(current_availability, current_error_rate)
+
+print(f"Error Budget Status:")
+print(f"  SLO Target: {status['slo_target']}%")
+print(f"  Current Availability: {status['current_availability']}%")
+print(f"  Error Budget Remaining: {status['error_budget_remaining']:.2%}")
+print(f"  Burn Rate: {status['burn_rate']:.2f}x")
+print(f"  Time to Exhaustion: {status['time_to_exhaustion']}")
+print(f"  Status: {status['status']}")
+```
+
+### Error Budget Alerts
+
+```yaml
+# Error Budget Alert Rules
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: error-budget-alerts
+spec:
+  groups:
+    - name: error_budget.rules
+      rules:
+        - alert: ErrorBudgetBurnRateHigh
+          expr: |
+            (
+              rate(http_requests_total{status=~"5.."}[5m]) /
+              rate(http_requests_total[5m])
+            ) / (1 - 0.999) > 1.0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Error budget burn rate is high"
+            description: "Error budget is being consumed faster than expected"
+
+        - alert: ErrorBudgetBurnRateCritical
+          expr: |
+            (
+              rate(http_requests_total{status=~"5.."}[5m]) /
+              rate(http_requests_total[5m])
+            ) / (1 - 0.999) > 2.0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Error budget burn rate is critical"
+            description: "Error budget is being consumed at 2x normal rate"
+
+        - alert: ErrorBudgetExhausted
+          expr: |
+            (
+              sum_over_time(http_requests_total{status=~"5.."}[30d]) /
+              sum_over_time(http_requests_total[30d])
+            ) > (1 - 0.999)
+          for: 1m
+          labels:
+            severity: emergency
+          annotations:
+            summary: "Error budget exhausted"
+            description: "Error budget has been completely consumed"
+```
+
+## Incident Response and Post-Mortems
+
+### Incident Response Process
+
+```yaml
+# Incident Response Playbook
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: incident-response-playbook
+data:
+  playbook: |
+    # Incident Response Process
+
+    ## Phase 1: Detection and Assessment (0-5 minutes)
+    - Incident detected via monitoring/alerting
+    - Initial severity assessment
+    - Incident commander assigned
+    - Communication channels established
+
+    ## Phase 2: Response and Mitigation (5-30 minutes)
+    - Immediate mitigation actions
+    - Team mobilization
+    - Customer communication initiated
+    - Technical investigation begins
+
+    ## Phase 3: Resolution (30 minutes - 4 hours)
+    - Root cause identification
+    - Permanent fix implementation
+    - Service restoration
+    - Customer impact assessment
+
+    ## Phase 4: Recovery and Follow-up (4-24 hours)
+    - Service validation
+    - Customer communication updates
+    - Post-mortem scheduling
+    - Lessons learned documentation
+
+    ## Severity Levels
+    SEV1 (Critical):
+      - Service completely unavailable
+      - Customer data at risk
+      - Response time: 5 minutes
+      - Resolution target: 1 hour
+
+    SEV2 (High):
+      - Service degraded
+      - Some customers affected
+      - Response time: 15 minutes
+      - Resolution target: 4 hours
+
+    SEV3 (Medium):
+      - Minor service issues
+      - Limited customer impact
+      - Response time: 1 hour
+      - Resolution target: 24 hours
+
+    SEV4 (Low):
+      - Cosmetic issues
+      - No customer impact
+      - Response time: 4 hours
+      - Resolution target: 1 week
+```
+
+### Post-Mortem Template
+
+```markdown
+# Post-Mortem Template
+
+## Incident Summary
+
+- **Incident ID**: INC-2024-001
+- **Date**: 2024-01-15
+- **Duration**: 2 hours 15 minutes
+- **Severity**: SEV2
+- **Services Affected**: Web API, User Authentication
+- **Customer Impact**: 15% of users unable to log in
+
+## Timeline
+
+- **14:30**: Monitoring alert triggered
+- **14:32**: Incident commander assigned
+- **14:35**: Initial assessment completed
+- **14:40**: Mitigation actions started
+- **15:15**: Root cause identified
+- **16:00**: Permanent fix deployed
+- **16:45**: Service fully restored
+
+## Root Cause Analysis
+
+### What Happened
+
+- Database connection pool exhausted
+- Authentication service unable to process requests
+- Cascading failure to dependent services
+
+### Why It Happened
+
+- Increased traffic load not anticipated
+- Connection pool configuration inadequate
+- Missing circuit breaker pattern
+
+### Contributing Factors
+
+- Recent feature release increased user activity
+- Monitoring gaps in connection pool metrics
+- Insufficient load testing before deployment
+
+## Impact Assessment
+
+- **Users Affected**: ~50,000 (15% of total)
+- **Revenue Impact**: $25,000 in lost transactions
+- **Reputation Impact**: Social media complaints
+- **Internal Impact**: 2 hours of engineering time
+
+## Actions Taken
+
+### Immediate Actions
+
+- [x] Restarted authentication service
+- [x] Increased database connection pool size
+- [x] Implemented circuit breaker pattern
+- [x] Enhanced monitoring for connection metrics
+
+### Long-term Actions
+
+- [ ] Implement connection pool auto-scaling
+- [ ] Add comprehensive load testing to CI/CD
+- [ ] Improve monitoring and alerting
+- [ ] Review all service dependencies
+
+## Lessons Learned
+
+### What Went Well
+
+- Quick incident response team mobilization
+- Effective communication with stakeholders
+- Successful rollback of recent changes
+
+### What Could Be Improved
+
+- Better capacity planning for traffic spikes
+- More comprehensive monitoring coverage
+- Faster root cause identification process
+
+## Action Items
+
+- [ ] **Owner**: Database Team
+
+  - **Action**: Implement connection pool auto-scaling
+  - **Due Date**: 2024-01-30
+  - **Priority**: High
+
+- [ ] **Owner**: DevOps Team
+
+  - **Action**: Add connection pool monitoring
+  - **Due Date**: 2024-01-25
+  - **Priority**: High
+
+- [ ] **Owner**: QA Team
+  - **Action**: Enhance load testing procedures
+  - **Due Date**: 2024-02-15
+  - **Priority**: Medium
+
+## Follow-up
+
+- **Next Review**: 2024-02-15
+- **Success Metrics**: Zero connection pool incidents
+- **Owner**: SRE Team Lead
+```
+
+## Toil Reduction and Automation
+
+### Toil Identification and Measurement
+
+```yaml
+# Toil Measurement Framework
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: toil-measurement
+data:
+  toil_categories: |
+    # Toil Categories
+    manual_operations:
+      - name: "Manual deployments"
+        description: "Deployments requiring manual intervention"
+        measurement: "time_spent_deploying"
+        target: "< 5% of total time"
+      
+      - name: "Incident response"
+        description: "Time spent responding to incidents"
+        measurement: "incident_response_time"
+        target: "< 10% of total time"
+      
+      - name: "Manual configuration"
+        description: "Manual system configuration changes"
+        measurement: "config_changes_time"
+        target: "< 5% of total time"
+
+    repetitive_tasks:
+      - name: "Log analysis"
+        description: "Manual log analysis and debugging"
+        measurement: "log_analysis_time"
+        target: "< 3% of total time"
+      
+      - name: "Health checks"
+        description: "Manual system health checks"
+        measurement: "health_check_time"
+        target: "< 2% of total time"
+      
+      - name: "Backup verification"
+        description: "Manual backup verification"
+        measurement: "backup_verification_time"
+        target: "< 1% of total time"
+```
+
+### Automation Strategies
+
+```python
+# Automation Framework
+import asyncio
+import logging
+from typing import Dict, List, Callable
+from dataclasses import dataclass
+from datetime import datetime
+
+@dataclass
+class AutomationTask:
+    name: str
+    description: str
+    function: Callable
+    schedule: str  # cron expression
+    enabled: bool = True
+    last_run: datetime = None
+    next_run: datetime = None
+
+class AutomationService:
+    def __init__(self):
+        self.tasks: Dict[str, AutomationTask] = {}
+        self.logger = logging.getLogger(__name__)
+
+    def register_task(self, task: AutomationTask):
+        """Register a new automation task"""
+        self.tasks[task.name] = task
+        self.logger.info(f"Registered automation task: {task.name}")
+
+    async def run_task(self, task_name: str) -> bool:
+        """Run a specific automation task"""
+        if task_name not in self.tasks:
+            self.logger.error(f"Task not found: {task_name}")
+            return False
+
+        task = self.tasks[task_name]
+        if not task.enabled:
+            self.logger.info(f"Task disabled: {task_name}")
+            return False
+
+        try:
+            self.logger.info(f"Starting task: {task_name}")
+            start_time = datetime.now()
+
+            # Run the task
+            result = await task.function()
+
+            end_time = datetime.now()
+            duration = (end_time - start_time).total_seconds()
+
+            task.last_run = end_time
+            self.logger.info(f"Task completed: {task_name} in {duration:.2f}s")
+
+            return result
+
+        except Exception as e:
+            self.logger.error(f"Task failed: {task_name} - {str(e)}")
+            return False
+
+    async def run_scheduled_tasks(self):
+        """Run all scheduled tasks"""
+        current_time = datetime.now()
+
+        for task_name, task in self.tasks.items():
+            if not task.enabled:
+                continue
+
+            if task.next_run and current_time >= task.next_run:
+                await self.run_task(task_name)
+                # Calculate next run time based on schedule
+                task.next_run = self.calculate_next_run(task.schedule)
+
+# Example automation tasks
+async def health_check_automation():
+    """Automated health check task"""
+    # Check all services
+    services = ["web-api", "auth-service", "database"]
+
+    for service in services:
+        # Perform health check
+        is_healthy = await check_service_health(service)
+
+        if not is_healthy:
+            # Trigger alert
+            await send_alert(f"Service {service} is unhealthy")
+
+    return True
+
+async def backup_verification_automation():
+    """Automated backup verification task"""
+    # Verify recent backups
+    backups = await list_recent_backups()
+
+    for backup in backups:
+        # Verify backup integrity
+        is_valid = await verify_backup_integrity(backup)
+
+        if not is_valid:
+            # Trigger alert
+            await send_alert(f"Backup verification failed: {backup}")
+
+    return True
+
+async def log_analysis_automation():
+    """Automated log analysis task"""
+    # Analyze logs for patterns
+    patterns = await analyze_log_patterns()
+
+    for pattern in patterns:
+        if pattern.severity == "high":
+            # Create incident
+            await create_incident(f"High severity pattern detected: {pattern.description}")
+
+    return True
+
+# Usage
+automation_service = AutomationService()
+
+# Register automation tasks
+automation_service.register_task(AutomationTask(
+    name="health_check",
+    description="Automated health checks",
+    function=health_check_automation,
+    schedule="*/5 * * * *"  # Every 5 minutes
+))
+
+automation_service.register_task(AutomationTask(
+    name="backup_verification",
+    description="Automated backup verification",
+    function=backup_verification_automation,
+    schedule="0 2 * * *"  # Daily at 2 AM
+))
+
+automation_service.register_task(AutomationTask(
+    name="log_analysis",
+    description="Automated log analysis",
+    function=log_analysis_automation,
+    schedule="*/15 * * * *"  # Every 15 minutes
+))
+```
+
+## SRE Culture and Practices
+
+### SRE Team Structure
+
+```yaml
+# SRE Team Organization
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sre-team-structure
+data:
+  team_structure: |
+    # SRE Team Roles and Responsibilities
+
+    ## SRE Lead
+    - Team management and strategy
+    - SLO/SLI definition and monitoring
+    - Incident response coordination
+    - Cross-team collaboration
+
+    ## Senior SRE Engineers
+    - System architecture and design
+    - Complex automation development
+    - Incident investigation and resolution
+    - Mentoring junior engineers
+
+    ## SRE Engineers
+    - Service reliability implementation
+    - Monitoring and alerting setup
+    - Automation development
+    - Incident response
+
+    ## SRE Specialists
+    - Database reliability
+    - Network reliability
+    - Security reliability
+    - Performance optimization
+
+    ## On-Call Rotation
+    - Primary: 1 week shifts
+    - Secondary: 1 week shifts
+    - Escalation: 24/7 availability
+    - Handoff: Daily at 9 AM
+
+    ## Team Practices
+    - Weekly reliability reviews
+    - Monthly SLO reviews
+    - Quarterly post-mortem analysis
+    - Continuous learning and improvement
+```
+
+### SRE Best Practices
+
+```yaml
+# SRE Best Practices
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sre-best-practices
+data:
+  practices: |
+    # SRE Best Practices
+
+    ## Reliability Practices
+    1. Define clear SLOs and SLIs
+       - Measure what matters to users
+       - Set realistic targets
+       - Monitor continuously
+
+    2. Implement error budgets
+       - Allow for innovation
+       - Balance reliability and velocity
+       - Use for decision making
+
+    3. Practice chaos engineering
+       - Test system resilience
+       - Identify failure modes
+       - Improve reliability
+
+    ## Automation Practices
+    1. Eliminate toil
+       - Automate repetitive tasks
+       - Focus on engineering work
+       - Measure automation effectiveness
+
+    2. Infrastructure as Code
+       - Version control all configurations
+       - Automated provisioning
+       - Consistent environments
+
+    3. Self-healing systems
+       - Automatic failure detection
+       - Automatic recovery
+       - Minimal human intervention
+
+    ## Monitoring Practices
+    1. Comprehensive observability
+       - Metrics, logs, and traces
+       - User-centric monitoring
+       - Business metrics
+
+    2. Alerting best practices
+       - Actionable alerts only
+       - Appropriate thresholds
+       - Clear escalation paths
+
+    3. Incident response
+       - Structured response process
+       - Clear communication
+       - Post-mortem analysis
+
+    ## Team Practices
+    1. Blameless post-mortems
+       - Focus on learning
+       - Identify systemic issues
+       - Implement improvements
+
+    2. Continuous learning
+       - Regular training
+       - Knowledge sharing
+       - Industry best practices
+
+    3. Collaboration
+       - Cross-functional teams
+       - Shared responsibility
+       - Open communication
+```
+
+## Hands-on Exercises
+
+### Exercise 1: SLI/SLO Implementation
+
+```bash
+# Create SLI measurement service
+cat > sli_service.py << 'EOF'
+import time
+import statistics
+from datetime import datetime, timedelta
+from typing import Dict, List
+
+class SLIService:
+    def __init__(self):
+        self.measurements = {}
+
+    def record_measurement(self, sli_name: str, value: float, labels: Dict = None):
+        if sli_name not in self.measurements:
+            self.measurements[sli_name] = []
+
+        measurement = {
+            'value': value,
+            'timestamp': datetime.now(),
+            'labels': labels or {}
+        }
+        self.measurements[sli_name].append(measurement)
+
+    def calculate_availability(self, service: str, window_days: int = 30) -> float:
+        cutoff = datetime.now() - timedelta(days=window_days)
+        measurements = [
+            m for m in self.measurements.get(f"{service}_availability", [])
+            if m['timestamp'] >= cutoff
+        ]
+
+        if not measurements:
+            return 0.0
+
+        successful = sum(1 for m in measurements if m['value'] > 0)
+        total = len(measurements)
+
+        return (successful / total) * 100 if total > 0 else 0.0
+
+    def calculate_latency_p95(self, service: str, window_days: int = 30) -> float:
+        cutoff = datetime.now() - timedelta(days=window_days)
+        values = [
+            m['value'] for m in self.measurements.get(f"{service}_latency", [])
+            if m['timestamp'] >= cutoff
+        ]
+
+        if not values:
+            return 0.0
+
+        return statistics.quantiles(values, n=20)[18]  # 95th percentile
+
+# Usage
+sli_service = SLIService()
+
+# Record some measurements
+for i in range(1000):
+    sli_service.record_measurement("web_service_availability", 1.0)  # Available
+    sli_service.record_measurement("web_service_latency", 150 + i % 50)  # Latency
+
+# Calculate SLIs
+availability = sli_service.calculate_availability("web_service")
+latency_p95 = sli_service.calculate_latency_p95("web_service")
+
+print(f"Availability: {availability:.2f}%")
+print(f"Latency P95: {latency_p95:.2f}ms")
+EOF
+
+python3 sli_service.py
+```
+
+### Exercise 2: Error Budget Calculation
+
+```bash
+# Create error budget calculator
+cat > error_budget.py << 'EOF'
+class ErrorBudgetCalculator:
+    def __init__(self, slo_target: float, window_days: int = 30):
+        self.slo_target = slo_target
+        self.error_budget = 1.0 - (slo_target / 100.0)
+        self.window_seconds = window_days * 24 * 60 * 60
+
+    def calculate_remaining_budget(self, current_availability: float) -> float:
+        current_error_rate = 1.0 - (current_availability / 100.0)
+        used_budget = current_error_rate / self.error_budget
+        return max(0.0, 1.0 - used_budget)
+
+    def calculate_burn_rate(self, error_rate: float) -> float:
+        return error_rate / self.error_budget
+
+    def estimate_time_to_exhaustion(self, burn_rate: float) -> float:
+        if burn_rate <= 0:
+            return float('inf')
+
+        remaining_budget = self.error_budget
+        seconds_to_exhaustion = (remaining_budget / burn_rate) * self.window_seconds
+        return seconds_to_exhaustion / (24 * 60 * 60)  # Convert to days
+
+# Usage
+calculator = ErrorBudgetCalculator(slo_target=99.9)
+
+# Example scenarios
+scenarios = [
+    {"availability": 99.9, "error_rate": 0.1},
+    {"availability": 99.8, "error_rate": 0.2},
+    {"availability": 99.5, "error_rate": 0.5},
+]
+
+for scenario in scenarios:
+    remaining = calculator.calculate_remaining_budget(scenario["availability"])
+    burn_rate = calculator.calculate_burn_rate(scenario["error_rate"])
+    time_to_exhaustion = calculator.estimate_time_to_exhaustion(burn_rate)
+
+    print(f"Availability: {scenario['availability']}%")
+    print(f"  Remaining Budget: {remaining:.2%}")
+    print(f"  Burn Rate: {burn_rate:.2f}x")
+    print(f"  Time to Exhaustion: {time_to_exhaustion:.1f} days")
+    print()
+EOF
+
+python3 error_budget.py
+```
+
+### Exercise 3: Incident Response Simulation
+
+```bash
+# Create incident response simulation
+cat > incident_simulation.py << 'EOF'
+import time
+from datetime import datetime
+from typing import Dict, List
+
+class IncidentResponse:
+    def __init__(self):
+        self.incidents = []
+        self.current_incident = None
+
+    def start_incident(self, severity: str, description: str) -> str:
+        incident_id = f"INC-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+        incident = {
+            'id': incident_id,
+            'severity': severity,
+            'description': description,
+            'start_time': datetime.now(),
+            'status': 'active',
+            'timeline': [],
+            'actions': []
+        }
+
+        self.current_incident = incident
+        self.incidents.append(incident)
+
+        print(f"🚨 Incident {incident_id} started")
+        print(f"Severity: {severity}")
+        print(f"Description: {description}")
+
+        return incident_id
+
+    def add_timeline_event(self, event: str):
+        if self.current_incident:
+            timestamp = datetime.now()
+            self.current_incident['timeline'].append({
+                'timestamp': timestamp,
+                'event': event
+            })
+            print(f"📝 {timestamp.strftime('%H:%M:%S')} - {event}")
+
+    def add_action(self, action: str, owner: str, due_date: str):
+        if self.current_incident:
+            self.current_incident['actions'].append({
+                'action': action,
+                'owner': owner,
+                'due_date': due_date,
+                'status': 'pending'
+            })
+            print(f"✅ Action added: {action} (Owner: {owner}, Due: {due_date})")
+
+    def resolve_incident(self):
+        if self.current_incident:
+            self.current_incident['status'] = 'resolved'
+            self.current_incident['end_time'] = datetime.now()
+            duration = self.current_incident['end_time'] - self.current_incident['start_time']
+
+            print(f"✅ Incident {self.current_incident['id']} resolved")
+            print(f"Duration: {duration}")
+
+            self.current_incident = None
+
+# Simulation
+response = IncidentResponse()
+
+# Start incident
+incident_id = response.start_incident("SEV2", "Database connection pool exhausted")
+
+# Add timeline events
+response.add_timeline_event("Monitoring alert triggered")
+time.sleep(1)
+response.add_timeline_event("Incident commander assigned")
+time.sleep(1)
+response.add_timeline_event("Initial assessment completed")
+time.sleep(1)
+response.add_timeline_event("Root cause identified")
+time.sleep(1)
+response.add_timeline_event("Fix deployed")
+
+# Add actions
+response.add_action("Implement connection pool auto-scaling", "Database Team", "2024-01-30")
+response.add_action("Add connection pool monitoring", "DevOps Team", "2024-01-25")
+response.add_action("Enhance load testing", "QA Team", "2024-02-15")
+
+# Resolve incident
+response.resolve_incident()
+EOF
+
+python3 incident_simulation.py
+```
+
+## Assessment Questions
+
+1. **What are the key principles of SRE?**
+
+   - Service level objectives, error budgets, toil elimination, automation, monitoring
+
+2. **How do you calculate error budgets?**
+
+   - Error budget = 1 - SLO target, burn rate = error rate / error budget
+
+3. **What is the purpose of post-mortems?**
+
+   - Learning from incidents, identifying systemic issues, implementing improvements
+
+4. **How do you measure and reduce toil?**
+
+   - Identify repetitive tasks, automate them, measure time saved
+
+5. **What are the key components of SRE culture?**
+   - Blameless post-mortems, continuous learning, collaboration, data-driven decisions
+
+## Additional Resources
+
+- [Google SRE Book](https://sre.google/sre-book/table-of-contents/)
+- [Site Reliability Engineering](https://sre.google/)
+- [SRE Weekly](https://sreweekly.com/)
+- [SREcon](https://www.usenix.org/conference/srecon)
+- [SRE Tools](https://github.com/sre-tools)
+
+## Next Steps
+
+Tomorrow we'll explore **Advanced Networking and Security**, covering:
+
+- Network architecture and design patterns
+- Advanced security protocols and implementations
+- Network monitoring and troubleshooting
+- Zero trust networking
+- Cloud networking best practices

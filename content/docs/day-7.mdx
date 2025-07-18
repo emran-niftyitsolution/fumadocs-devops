@@ -1,8 +1,759 @@
 ---
-title: "Day 7: Title"
-description: "DevOps 100 Days - Day 7"
+title: "Day 7: Subnetting and Network Design"
+description: "Master subnetting calculations, network design principles, and practical network planning"
 ---
 
-# Day 7
+# Day 7: Subnetting and Network Design
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Master subnetting calculations and techniques
+- Understand network design principles
+- Learn VLAN concepts and implementation
+- Master network segmentation strategies
+- Understand load balancing concepts
+- Learn network monitoring and management
+
+## 🔢 Advanced Subnetting
+
+### Subnetting Fundamentals
+
+**Binary to Decimal Conversion:**
+
+```bash
+# Understanding binary math
+# 8-bit binary: 11111111 = 255
+# 24-bit subnet mask: 11111111.11111111.11111111.00000000 = 255.255.255.0
+
+# Quick conversion table:
+# 128 64 32 16 8 4 2 1
+# 1   1  1  1  1 1 1 1 = 255
+# 1   1  0  0  0 0 0 0 = 192
+# 1   1  1  0  0 0 0 0 = 224
+```
+
+**Subnet Mask Calculation:**
+
+```bash
+# /24 = 255.255.255.0 (256 addresses)
+# /25 = 255.255.255.128 (128 addresses)
+# /26 = 255.255.255.192 (64 addresses)
+# /27 = 255.255.255.224 (32 addresses)
+# /28 = 255.255.255.240 (16 addresses)
+# /29 = 255.255.255.248 (8 addresses)
+# /30 = 255.255.255.252 (4 addresses)
+```
+
+### Subnetting Examples
+
+**Example 1: /24 Network**
+
+```bash
+# Network: 192.168.1.0/24
+# Subnet mask: 255.255.255.0
+# Network address: 192.168.1.0
+# First usable: 192.168.1.1
+# Last usable: 192.168.1.254
+# Broadcast: 192.168.1.255
+# Total addresses: 256
+# Usable addresses: 254
+```
+
+**Example 2: /26 Network**
+
+```bash
+# Network: 192.168.1.0/26
+# Subnet mask: 255.255.255.192
+# Network address: 192.168.1.0
+# First usable: 192.168.1.1
+# Last usable: 192.168.1.62
+# Broadcast: 192.168.1.63
+# Total addresses: 64
+# Usable addresses: 62
+```
+
+**Example 3: Variable Length Subnet Masking (VLSM)**
+
+```bash
+# Network: 192.168.1.0/24
+# Divide into subnets:
+# - Sales: 50 hosts → /26 (64 addresses)
+# - Engineering: 30 hosts → /27 (32 addresses)
+# - Marketing: 20 hosts → /27 (32 addresses)
+# - IT: 10 hosts → /28 (16 addresses)
+
+# Subnet breakdown:
+# Sales: 192.168.1.0/26 (192.168.1.1 - 192.168.1.62)
+# Engineering: 192.168.1.64/27 (192.168.1.65 - 192.168.1.94)
+# Marketing: 192.168.1.96/27 (192.168.1.97 - 192.168.1.126)
+# IT: 192.168.1.128/28 (192.168.1.129 - 192.168.1.142)
+```
+
+### Subnetting Tools
+
+**ipcalc - Subnet Calculator:**
+
+```bash
+# Install ipcalc
+sudo apt install ipcalc
+
+# Calculate subnet information
+ipcalc 192.168.1.0/24
+ipcalc 10.0.0.0/16
+ipcalc 172.16.0.0/12
+
+# Output includes:
+# - Network address
+# - Netmask
+# - Network range
+# - Broadcast address
+# - Host range
+# - Hosts/Net
+```
+
+**Manual Subnetting Practice:**
+
+```bash
+# Practice problems:
+# 1. Network: 192.168.15.0/26
+#    - Subnet mask: 255.255.255.192
+#    - Network: 192.168.15.0
+#    - Broadcast: 192.168.15.63
+#    - Usable: 192.168.15.1 - 192.168.15.62
+
+# 2. Network: 10.0.0.0/25
+#    - Subnet mask: 255.255.255.128
+#    - Network: 10.0.0.0
+#    - Broadcast: 10.0.0.127
+#    - Usable: 10.0.0.1 - 10.0.0.126
+```
+
+## 🏗️ Network Design Principles
+
+### Network Hierarchy
+
+**Three-Tier Architecture:**
+
+```bash
+# Core Layer (Backbone)
+# - High-speed switching
+# - Redundancy and reliability
+# - Minimal packet manipulation
+
+# Distribution Layer (Aggregation)
+# - Policy enforcement
+# - Route summarization
+# - VLAN routing
+
+# Access Layer (Edge)
+# - User connectivity
+# - Port security
+# - VLAN assignment
+```
+
+**Network Segmentation:**
+
+```bash
+# Separate networks by function:
+# - Production: 10.0.1.0/24
+# - Development: 10.0.2.0/24
+# - Testing: 10.0.3.0/24
+# - Management: 10.0.4.0/24
+# - DMZ: 10.0.5.0/24
+```
+
+### VLAN Design
+
+**VLAN Concepts:**
+
+```bash
+# VLAN (Virtual Local Area Network)
+# - Logical network segmentation
+# - Broadcast domain isolation
+# - Security and performance benefits
+
+# Common VLAN assignments:
+VLAN 1:   Default/Native
+VLAN 10:  Management
+VLAN 20:  Production
+VLAN 30:  Development
+VLAN 40:  Testing
+VLAN 50:  Guest
+VLAN 100: Voice
+VLAN 200: Video
+```
+
+**VLAN Configuration (Linux):**
+
+```bash
+# Create VLAN interface
+sudo ip link add link eth0 name eth0.10 type vlan id 10
+
+# Configure VLAN interface
+sudo ip addr add 192.168.10.1/24 dev eth0.10
+sudo ip link set eth0.10 up
+
+# Remove VLAN interface
+sudo ip link delete eth0.10
+```
+
+**VLAN Configuration (Network Switch):**
+
+```bash
+# Cisco IOS example:
+# Create VLAN
+vlan 10
+ name Production
+ exit
+
+# Configure interface
+interface FastEthernet0/1
+ switchport mode access
+ switchport access vlan 10
+ exit
+```
+
+### Network Security Design
+
+**Security Zones:**
+
+```bash
+# Internet (Untrusted)
+# - External threats
+# - No direct access to internal resources
+
+# DMZ (Semi-trusted)
+# - Public-facing services
+# - Web servers, mail servers
+# - Limited access to internal network
+
+# Internal (Trusted)
+# - User workstations
+# - Internal applications
+# - Controlled access
+
+# Management (Highly trusted)
+# - Network management
+# - Administrative access
+# - Restricted access
+```
+
+**Firewall Rules:**
+
+```bash
+# Basic firewall rules:
+# Allow established connections
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Allow SSH from management network
+iptables -A INPUT -p tcp --dport 22 -s 10.0.4.0/24 -j ACCEPT
+
+# Allow HTTP/HTTPS to DMZ
+iptables -A INPUT -p tcp --dport 80,443 -d 10.0.5.0/24 -j ACCEPT
+
+# Drop everything else
+iptables -A INPUT -j DROP
+```
+
+## ⚖️ Load Balancing Concepts
+
+### Load Balancer Types
+
+**Application Load Balancer (Layer 7):**
+
+```bash
+# HTTP/HTTPS load balancing
+# - Content-based routing
+# - SSL termination
+# - Health checks
+# - Session persistence
+
+# Example configuration:
+upstream backend {
+    server 192.168.1.10:8080 weight=3;
+    server 192.168.1.11:8080 weight=3;
+    server 192.168.1.12:8080 weight=3;
+    server 192.168.1.13:8080 backup;
+}
+```
+
+**Network Load Balancer (Layer 4):**
+
+```bash
+# TCP/UDP load balancing
+# - Fast forwarding
+# - No SSL termination
+# - Connection-based routing
+# - High performance
+
+# Example configuration:
+stream {
+    upstream backend {
+        server 192.168.1.10:3306;
+        server 192.168.1.11:3306;
+    }
+
+    server {
+        listen 3306;
+        proxy_pass backend;
+    }
+}
+```
+
+### Load Balancing Algorithms
+
+**Round Robin:**
+
+```bash
+# Distribute requests evenly
+# Simple and effective
+# No consideration for server capacity
+
+upstream backend {
+    server 192.168.1.10:8080;
+    server 192.168.1.11:8080;
+    server 192.168.1.12:8080;
+}
+```
+
+**Weighted Round Robin:**
+
+```bash
+# Distribute based on server capacity
+# Higher weight = more requests
+
+upstream backend {
+    server 192.168.1.10:8080 weight=3;
+    server 192.168.1.11:8080 weight=2;
+    server 192.168.1.12:8080 weight=1;
+}
+```
+
+**Least Connections:**
+
+```bash
+# Send to server with fewest connections
+# Good for long-lived connections
+
+upstream backend {
+    least_conn;
+    server 192.168.1.10:8080;
+    server 192.168.1.11:8080;
+    server 192.168.1.12:8080;
+}
+```
+
+**IP Hash:**
+
+```bash
+# Route based on client IP
+# Ensures session persistence
+
+upstream backend {
+    ip_hash;
+    server 192.168.1.10:8080;
+    server 192.168.1.11:8080;
+    server 192.168.1.12:8080;
+}
+```
+
+## 📊 Network Monitoring
+
+### Network Performance Metrics
+
+**Bandwidth Monitoring:**
+
+```bash
+# Monitor bandwidth usage
+iftop -i eth0
+nethogs eth0
+
+# Check interface statistics
+cat /proc/net/dev
+ip -s link show eth0
+
+# Monitor specific connections
+ss -i
+netstat -i
+```
+
+**Latency Monitoring:**
+
+```bash
+# Measure latency
+ping -c 10 google.com
+ping -c 10 8.8.8.8
+
+# Continuous monitoring
+mtr google.com
+traceroute google.com
+
+# Jitter measurement
+ping -c 100 -i 0.1 google.com | grep "time=" | awk '{print $7}' | cut -d= -f2
+```
+
+**Packet Loss Monitoring:**
+
+```bash
+# Check packet loss
+ping -c 100 google.com | grep "packet loss"
+
+# Monitor with iperf
+iperf3 -c server -t 60 -i 1
+
+# Network quality test
+iperf3 -c server -u -b 10M
+```
+
+### Network Monitoring Tools
+
+**SNMP Monitoring:**
+
+```bash
+# Install SNMP tools
+sudo apt install snmp snmp-mibs-downloader
+
+# Query SNMP data
+snmpwalk -v2c -c public localhost system
+snmpget -v2c -c public localhost .1.3.6.1.2.1.1.1.0
+
+# Monitor interface statistics
+snmpwalk -v2c -c public localhost .1.3.6.1.2.1.2.2.1
+```
+
+**Netflow/sFlow Monitoring:**
+
+```bash
+# Install flow monitoring
+sudo apt install nfdump nfsen
+
+# Capture flow data
+nfdump -R /var/cache/nfdump -t "2024/01/15.10:00:00-2024/01/15.11:00:00"
+
+# Analyze flow data
+nfdump -R /var/cache/nfdump -s ip/flows
+```
+
+## 🔧 Network Management
+
+### Network Configuration Management
+
+**Configuration Backup:**
+
+```bash
+# Backup network configurations
+sudo cp /etc/network/interfaces /backup/interfaces.$(date +%Y%m%d)
+sudo cp /etc/hosts /backup/hosts.$(date +%Y%m%d)
+sudo cp /etc/resolv.conf /backup/resolv.conf.$(date +%Y%m%d)
+
+# Backup iptables rules
+sudo iptables-save > /backup/iptables.$(date +%Y%m%d)
+```
+
+**Network Documentation:**
+
+```bash
+# Create network documentation
+cat > network_doc.md << EOF
+# Network Documentation
+
+## Network Topology
+- Core switches: 2x Cisco 3850
+- Access switches: 8x Cisco 2960
+- Firewalls: 2x Fortinet 60F
+
+## IP Addressing Scheme
+- Management: 10.0.4.0/24
+- Production: 10.0.1.0/24
+- Development: 10.0.2.0/24
+- Testing: 10.0.3.0/24
+- DMZ: 10.0.5.0/24
+
+## VLAN Configuration
+- VLAN 10: Management
+- VLAN 20: Production
+- VLAN 30: Development
+- VLAN 40: Testing
+- VLAN 50: Guest
+
+## DNS Servers
+- Primary: 8.8.8.8
+- Secondary: 8.8.4.4
+
+## Default Gateway
+- 10.0.1.1 (Core switch)
+EOF
+```
+
+### Network Automation
+
+**Ansible Network Automation:**
+
+```yaml
+# network_config.yml
+---
+- name: Configure network devices
+  hosts: network_devices
+  gather_facts: no
+
+  tasks:
+    - name: Configure VLANs
+      ios_vlans:
+        config:
+          - name: Production
+            vlan_id: 20
+          - name: Development
+            vlan_id: 30
+        state: merged
+
+    - name: Configure interfaces
+      ios_interfaces:
+        config:
+          - name: GigabitEthernet0/1
+            description: Production VLAN
+            enabled: true
+        state: merged
+
+    - name: Configure routing
+      ios_static_routes:
+        config:
+          - address_families:
+              - afi: ipv4
+                routes:
+                  - dest: 0.0.0.0/0
+                    next_hops:
+                      - forward_router_address: 192.168.1.1
+        state: merged
+```
+
+**Python Network Automation:**
+
+```python
+#!/usr/bin/env python3
+import paramiko
+import time
+
+def configure_switch(hostname, username, password, config_commands):
+    """Configure network switch via SSH"""
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    try:
+        ssh.connect(hostname, username=username, password=password)
+        channel = ssh.invoke_shell()
+
+        for command in config_commands:
+            channel.send(command + '\n')
+            time.sleep(1)
+
+        output = channel.recv(4096).decode()
+        print(f"Configuration applied to {hostname}")
+        print(output)
+
+    except Exception as e:
+        print(f"Error configuring {hostname}: {e}")
+    finally:
+        ssh.close()
+
+# Example usage
+config_commands = [
+    'enable',
+    'configure terminal',
+    'vlan 20',
+    'name Production',
+    'exit',
+    'interface vlan 20',
+    'ip address 192.168.20.1 255.255.255.0',
+    'no shutdown',
+    'exit',
+    'write memory'
+]
+
+configure_switch('192.168.1.1', 'admin', 'password', config_commands)
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: Subnetting Practice
+
+**Objective:** Master subnetting calculations
+
+**Tasks:**
+
+```bash
+# 1. Calculate subnet information
+ipcalc 192.168.1.0/26
+ipcalc 10.0.0.0/25
+ipcalc 172.16.0.0/27
+
+# 2. Manual calculations:
+# Network: 192.168.15.0/26
+# - Subnet mask: 255.255.255.192
+# - Network address: 192.168.15.0
+# - Broadcast: 192.168.15.63
+# - Usable range: 192.168.15.1 - 192.168.15.62
+
+# 3. VLSM practice:
+# Network: 192.168.1.0/24
+# Divide into:
+# - 50 hosts (Sales)
+# - 30 hosts (Engineering)
+# - 20 hosts (Marketing)
+# - 10 hosts (IT)
+```
+
+### Exercise 2: Network Design
+
+**Objective:** Design a network for a small company
+
+**Tasks:**
+
+```bash
+# 1. Create network documentation
+cat > network_design.md << EOF
+# Company Network Design
+
+## Requirements:
+- 100 employees
+- 4 departments (Sales, Engineering, Marketing, IT)
+- Public web server
+- Email server
+- File server
+
+## Network Design:
+- Management: 10.0.4.0/24
+- Sales: 10.0.1.0/25 (126 hosts)
+- Engineering: 10.0.1.128/26 (62 hosts)
+- Marketing: 10.0.2.0/26 (62 hosts)
+- IT: 10.0.2.64/27 (30 hosts)
+- DMZ: 10.0.3.0/24
+
+## VLANs:
+- VLAN 10: Management
+- VLAN 20: Sales
+- VLAN 30: Engineering
+- VLAN 40: Marketing
+- VLAN 50: IT
+- VLAN 100: DMZ
+EOF
+
+# 2. Create IP addressing scheme
+# 3. Design VLAN structure
+# 4. Plan security zones
+```
+
+### Exercise 3: Load Balancer Configuration
+
+**Objective:** Configure basic load balancer
+
+**Tasks:**
+
+```bash
+# 1. Install nginx
+sudo apt install nginx
+
+# 2. Configure load balancer
+sudo nano /etc/nginx/sites-available/loadbalancer
+
+# Add configuration:
+upstream backend {
+    server 192.168.1.10:8080 weight=3;
+    server 192.168.1.11:8080 weight=3;
+    server 192.168.1.12:8080 weight=3;
+    server 192.168.1.13:8080 backup;
+}
+
+server {
+    listen 80;
+    location / {
+        proxy_pass http://backend;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+}
+
+# 3. Enable site
+sudo ln -s /etc/nginx/sites-available/loadbalancer /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+## 📊 Assessment Questions
+
+**Day 7 Quiz:**
+
+1. **What is the subnet mask for /26?**
+
+   - Answer: 255.255.255.192
+
+2. **How many usable addresses in a /27 network?**
+
+   - Answer: 30 (32 total - 2 reserved)
+
+3. **What is VLSM?**
+
+   - Answer: Variable Length Subnet Masking
+
+4. **What is the purpose of VLANs?**
+
+   - Answer: Logical network segmentation and broadcast domain isolation
+
+5. **What load balancing algorithm ensures session persistence?**
+
+   - Answer: IP Hash
+
+6. **What command shows interface statistics?**
+
+   - Answer: `cat /proc/net/dev` or `ip -s link show`
+
+7. **What is the three-tier network architecture?**
+
+   - Answer: Core, Distribution, Access layers
+
+8. **What tool measures network latency?**
+   - Answer: `ping` or `mtr`
+
+## 📚 Additional Resources
+
+### Books
+
+- **"Network Design"** by Priscilla Oppenheimer
+- **"Switching and Routing"** by Cisco Press
+- **"Network Security"** by William Stallings
+
+### Online Resources
+
+- [Cisco Network Design](https://www.cisco.com/c/en/us/solutions/enterprise/design-zone.html)
+- [RFC 1918](https://tools.ietf.org/html/rfc1918)
+- [VLAN Best Practices](https://www.cisco.com/c/en/us/support/docs/lan-switching/vlan/10558-21.html)
+
+### Tools
+
+- **Network Design**: GNS3, Packet Tracer, EVE-NG
+- **Monitoring**: Nagios, Zabbix, PRTG
+- **Load Balancing**: HAProxy, Nginx, F5
+
+## 🎉 Day 7 Summary
+
+**What You've Learned:**
+
+- ✅ Advanced subnetting techniques and VLSM
+- ✅ Network design principles and hierarchy
+- ✅ VLAN concepts and implementation
+- ✅ Load balancing algorithms and configuration
+- ✅ Network monitoring and management
+- ✅ Network automation techniques
+
+**Key Takeaways:**
+
+- Subnetting is fundamental to network design
+- Proper network segmentation improves security and performance
+- Load balancing is essential for high availability
+- Network monitoring is crucial for troubleshooting
+- Automation reduces configuration errors
+
+**Tomorrow:** We'll continue with network protocols and services, building on today's design principles.
+
+**Remember:** Good network design is the foundation of reliable infrastructure. Plan carefully and document everything!

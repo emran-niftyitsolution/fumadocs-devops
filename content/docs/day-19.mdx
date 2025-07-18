@@ -1,8 +1,1004 @@
 ---
-title: "Day 19: Title"
-description: "DevOps 100 Days - Day 19"
+title: "Day 19: Configuration Management with Ansible"
+description: "Master Ansible fundamentals, playbook development, inventory management, roles, and automation best practices"
 ---
 
-# Day 19
+# Day 19: Configuration Management with Ansible
 
-Content coming soon.
+## Learning Objectives
+
+- Understand Ansible fundamentals and architecture
+- Master playbook development and execution
+- Learn inventory management and dynamic inventories
+- Explore Ansible roles and reusable components
+- Implement Ansible Galaxy and community modules
+- Understand Ansible security and best practices
+
+## Ansible Fundamentals
+
+### What is Ansible?
+
+Ansible is an open-source automation tool that provides:
+
+- **Agentless**: No software installation on managed nodes
+- **Declarative**: Describe desired state, not how to achieve it
+- **Idempotent**: Safe to run multiple times
+- **Cross-platform**: Works on Linux, Windows, macOS, and network devices
+- **YAML-based**: Human-readable configuration language
+
+### Ansible Architecture
+
+```bash
+# Core Components
+Control Node     # Where Ansible is installed and run
+Managed Nodes   # Servers being configured
+Inventory       # List of managed nodes
+Playbooks       # Automation tasks in YAML
+Modules         # Reusable units of code
+```
+
+### Installation and Setup
+
+```bash
+# Install Ansible (macOS)
+brew install ansible
+
+# Install Ansible (Ubuntu/Debian)
+sudo apt update
+sudo apt install software-properties-common
+sudo apt-add-repository --yes --update ppa:ansible/ansible
+sudo apt install ansible
+
+# Install Ansible (CentOS/RHEL)
+sudo yum install epel-release
+sudo yum install ansible
+
+# Verify installation
+ansible --version
+```
+
+### Basic Ansible Commands
+
+```bash
+# Test connectivity to hosts
+ansible all -m ping
+
+# Run command on all hosts
+ansible all -m shell -a "uptime"
+
+# Run command on specific group
+ansible webservers -m shell -a "df -h"
+
+# Check syntax of playbook
+ansible-playbook --syntax-check playbook.yml
+
+# Run playbook in dry-run mode
+ansible-playbook --check playbook.yml
+
+# Run playbook with verbose output
+ansible-playbook -v playbook.yml
+```
+
+## Inventory Management
+
+### Static Inventory
+
+```ini
+# inventory.ini
+[webservers]
+web1.example.com
+web2.example.com
+web3.example.com
+
+[dbservers]
+db1.example.com
+db2.example.com
+
+[loadbalancers]
+lb1.example.com
+
+[production:children]
+webservers
+dbservers
+loadbalancers
+
+[production:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/prod_key
+
+[webservers:vars]
+http_port=80
+max_connections=200
+
+[dbservers:vars]
+mysql_port=3306
+mysql_root_password={{ vault_mysql_root_password }}
+```
+
+### Dynamic Inventory
+
+```python
+#!/usr/bin/env python3
+# inventory.py
+import json
+import boto3
+
+def get_aws_instances():
+    ec2 = boto3.client('ec2')
+    response = ec2.describe_instances(
+        Filters=[
+            {'Name': 'tag:Environment', 'Values': ['production']}
+        ]
+    )
+
+    hosts = {
+        'webservers': {
+            'hosts': [],
+            'vars': {
+                'ansible_user': 'ubuntu',
+                'http_port': 80
+            }
+        },
+        'dbservers': {
+            'hosts': [],
+            'vars': {
+                'ansible_user': 'ubuntu',
+                'mysql_port': 3306
+            }
+        }
+    }
+
+    for reservation in response['Reservations']:
+        for instance in reservation['Instances']:
+            if instance['State']['Name'] == 'running':
+                for tag in instance['Tags']:
+                    if tag['Key'] == 'Role':
+                        if tag['Value'] == 'web':
+                            hosts['webservers']['hosts'].append(instance['PublicIpAddress'])
+                        elif tag['Value'] == 'db':
+                            hosts['dbservers']['hosts'].append(instance['PublicIpAddress'])
+
+    return hosts
+
+if __name__ == '__main__':
+    print(json.dumps(get_aws_instances()))
+```
+
+### Inventory Variables
+
+```yaml
+# group_vars/webservers.yml
+---
+http_port: 80
+max_connections: 200
+ssl_enabled: true
+cert_path: /etc/ssl/certs/web.crt
+key_path: /etc/ssl/private/web.key
+
+# host_vars/web1.example.com.yml
+---
+http_port: 8080
+server_name: web1.example.com
+```
+
+## Playbook Development
+
+### Basic Playbook Structure
+
+```yaml
+# playbook.yml
+---
+- name: Configure web servers
+  hosts: webservers
+  become: yes
+  vars:
+    http_port: 80
+    max_connections: 200
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Start and enable Apache
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Configure Apache
+      template:
+        src: apache.conf.j2
+        dest: /etc/apache2/apache2.conf
+        backup: yes
+      notify: restart apache
+
+    - name: Create web directory
+      file:
+        path: /var/www/html
+        state: directory
+        mode: "0755"
+        owner: www-data
+        group: www-data
+
+    - name: Deploy web content
+      copy:
+        src: files/index.html
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: "0644"
+
+  handlers:
+    - name: restart apache
+      service:
+        name: apache2
+        state: restarted
+```
+
+### Task Types and Modules
+
+```yaml
+# File and directory management
+- name: Create directory
+  file:
+    path: /var/www/app
+    state: directory
+    mode: "0755"
+    owner: www-data
+    group: www-data
+
+- name: Copy file
+  copy:
+    src: files/config.conf
+    dest: /etc/app/config.conf
+    owner: root
+    group: root
+    mode: "0644"
+    backup: yes
+
+- name: Create symbolic link
+  file:
+    src: /etc/nginx/sites-available/app
+    dest: /etc/nginx/sites-enabled/app
+    state: link
+
+# Package management
+- name: Install packages
+  apt:
+    name:
+      - nginx
+      - php-fpm
+      - mysql-client
+    state: present
+    update_cache: yes
+
+- name: Remove package
+  yum:
+    name: httpd
+    state: absent
+
+# Service management
+- name: Start and enable service
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Restart service
+  service:
+    name: apache2
+    state: restarted
+
+# User and group management
+- name: Create user
+  user:
+    name: appuser
+    uid: 1001
+    group: appgroup
+    shell: /bin/bash
+    home: /home/appuser
+    create_home: yes
+
+- name: Create group
+  group:
+    name: appgroup
+    gid: 1001
+    state: present
+
+# Command execution
+- name: Run command
+  command: /usr/local/bin/setup.sh
+  args:
+    chdir: /opt/app
+
+- name: Run shell command
+  shell: |
+    echo "Starting setup..."
+    /usr/local/bin/configure.sh
+    echo "Setup complete"
+  args:
+    chdir: /opt/app
+
+# Template processing
+- name: Configure application
+  template:
+    src: templates/app.conf.j2
+    dest: /etc/app/app.conf
+    owner: root
+    group: root
+    mode: "0644"
+    backup: yes
+  notify: restart app
+```
+
+### Conditionals and Loops
+
+```yaml
+# Conditionals
+- name: Install Apache on Ubuntu
+  apt:
+    name: apache2
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install Apache on CentOS
+  yum:
+    name: httpd
+    state: present
+  when: ansible_os_family == "RedHat"
+
+# Loops
+- name: Install multiple packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - nginx
+    - php-fpm
+    - mysql-client
+    - redis-server
+
+- name: Create multiple users
+  user:
+    name: "{{ item.name }}"
+    uid: "{{ item.uid }}"
+    group: "{{ item.group }}"
+  loop:
+    - { name: "user1", uid: 1001, group: "developers" }
+    - { name: "user2", uid: 1002, group: "developers" }
+    - { name: "admin", uid: 1003, group: "admins" }
+
+# Nested loops
+- name: Configure multiple services
+  template:
+    src: "{{ item.template }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+  loop:
+    - {
+        template: "nginx.conf.j2",
+        dest: "/etc/nginx/nginx.conf",
+        owner: "root",
+        group: "root",
+      }
+    - {
+        template: "php.ini.j2",
+        dest: "/etc/php/7.4/fpm/php.ini",
+        owner: "root",
+        group: "root",
+      }
+    - {
+        template: "mysql.cnf.j2",
+        dest: "/etc/mysql/mysql.conf.d/mysqld.cnf",
+        owner: "mysql",
+        group: "mysql",
+      }
+```
+
+## Ansible Roles
+
+### Role Structure
+
+```bash
+roles/
+├── webserver/
+│   ├── defaults/
+│   │   └── main.yml
+│   ├── files/
+│   │   ├── index.html
+│   │   └── nginx.conf
+│   ├── handlers/
+│   │   └── main.yml
+│   ├── meta/
+│   │   └── main.yml
+│   ├── tasks/
+│   │   └── main.yml
+│   ├── templates/
+│   │   └── nginx.conf.j2
+│   └── vars/
+│       └── main.yml
+├── database/
+│   ├── defaults/
+│   ├── files/
+│   ├── handlers/
+│   ├── tasks/
+│   └── templates/
+└── application/
+    ├── defaults/
+    ├── files/
+    ├── handlers/
+    ├── tasks/
+    └── templates/
+```
+
+### Creating a Role
+
+```yaml
+# roles/webserver/defaults/main.yml
+---
+http_port: 80
+ssl_port: 443
+server_name: "{{ inventory_hostname }}"
+document_root: /var/www/html
+max_connections: 200
+ssl_enabled: false
+cert_path: /etc/ssl/certs/web.crt
+key_path: /etc/ssl/private/web.key
+
+# roles/webserver/tasks/main.yml
+---
+- name: Update package cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install Nginx (RedHat)
+  yum:
+    name: nginx
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Create web directory
+  file:
+    path: "{{ document_root }}"
+    state: directory
+    mode: '0755'
+    owner: www-data
+    group: www-data
+
+- name: Configure Nginx
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    backup: yes
+  notify: restart nginx
+
+- name: Deploy web content
+  copy:
+    src: index.html
+    dest: "{{ document_root }}/index.html"
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+- name: Start and enable Nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+# roles/webserver/handlers/main.yml
+---
+- name: restart nginx
+  service:
+    name: nginx
+    state: restarted
+
+- name: reload nginx
+  service:
+    name: nginx
+    state: reloaded
+
+# roles/webserver/templates/nginx.conf.j2
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
+    worker_connections {{ max_connections }};
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    server {
+        listen {{ http_port }} default_server;
+        listen [::]:{{ http_port }} default_server;
+
+        server_name {{ server_name }};
+        root {{ document_root }};
+        index index.html index.htm;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+
+        {% if ssl_enabled %}
+        listen {{ ssl_port }} ssl http2;
+        listen [::]:{{ ssl_port }} ssl http2;
+
+        ssl_certificate {{ cert_path }};
+        ssl_certificate_key {{ key_path }};
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
+        ssl_prefer_server_ciphers off;
+        {% endif %}
+    }
+}
+```
+
+### Using Roles
+
+```yaml
+# site.yml
+---
+- name: Configure web servers
+  hosts: webservers
+  become: yes
+  roles:
+    - webserver
+
+- name: Configure database servers
+  hosts: dbservers
+  become: yes
+  roles:
+    - database
+
+- name: Configure application servers
+  hosts: appservers
+  become: yes
+  roles:
+    - application
+    - webserver
+
+# With role parameters
+- name: Configure web servers with SSL
+  hosts: webservers
+  become: yes
+  roles:
+    - role: webserver
+      vars:
+        ssl_enabled: true
+        cert_path: /etc/ssl/certs/web.crt
+        key_path: /etc/ssl/private/web.key
+```
+
+## Ansible Galaxy and Community Modules
+
+### Ansible Galaxy
+
+```bash
+# Install role from Galaxy
+ansible-galaxy install geerlingguy.nginx
+
+# Install role with specific version
+ansible-galaxy install geerlingguy.nginx,2.0.0
+
+# Install role from requirements file
+ansible-galaxy install -r requirements.yml
+
+# Create new role
+ansible-galaxy init my-role
+
+# Search for roles
+ansible-galaxy search nginx
+
+# View role information
+ansible-galaxy info geerlingguy.nginx
+```
+
+### Requirements File
+
+```yaml
+# requirements.yml
+---
+# From Ansible Galaxy
+- src: geerlingguy.nginx
+  version: 2.0.0
+
+- src: geerlingguy.mysql
+  version: 2.0.0
+
+- src: geerlingguy.php
+  version: 1.0.0
+
+# From Git repository
+- src: https://github.com/user/role.git
+  scm: git
+  version: main
+
+# From local path
+- src: ../local-roles/my-role
+```
+
+### Custom Modules
+
+```python
+#!/usr/bin/env python3
+# library/my_custom_module.py
+from ansible.module_utils.basic import AnsibleModule
+import json
+
+def run_module():
+    module_args = dict(
+        name=dict(type='str', required=True),
+        state=dict(type='str', default='present', choices=['present', 'absent'])
+    )
+
+    module = AnsibleModule(
+        argument_spec=module_args,
+        supports_check_mode=True
+    )
+
+    result = dict(
+        changed=False,
+        original_message='',
+        message=''
+    )
+
+    # Your module logic here
+    name = module.params['name']
+    state = module.params['state']
+
+    if module.check_mode:
+        module.exit_json(**result)
+
+    if state == 'present':
+        result['message'] = f"Created {name}"
+        result['changed'] = True
+    elif state == 'absent':
+        result['message'] = f"Removed {name}"
+        result['changed'] = True
+
+    module.exit_json(**result)
+
+if __name__ == '__main__':
+    run_module()
+```
+
+## Advanced Ansible Features
+
+### Vault for Sensitive Data
+
+```bash
+# Create encrypted file
+ansible-vault create secret.yml
+
+# Edit encrypted file
+ansible-vault edit secret.yml
+
+# Encrypt existing file
+ansible-vault encrypt secret.yml
+
+# Decrypt file
+ansible-vault decrypt secret.yml
+
+# View encrypted file
+ansible-vault view secret.yml
+```
+
+### Vault Usage in Playbooks
+
+```yaml
+# vars/main.yml (encrypted)
+---
+db_password: "{{ vault_db_password }}"
+api_key: "{{ vault_api_key }}"
+
+# playbook.yml
+---
+- name: Configure application
+  hosts: appservers
+  become: yes
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Configure database connection
+      template:
+        src: db.conf.j2
+        dest: /etc/app/db.conf
+        owner: appuser
+        group: appuser
+        mode: '0600'
+
+# Run playbook with vault
+ansible-playbook playbook.yml --ask-vault-pass
+ansible-playbook playbook.yml --vault-password-file ~/.vault_pass
+```
+
+### Tags and Conditional Execution
+
+```yaml
+# playbook.yml
+---
+- name: Configure servers
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update system
+      apt:
+        update_cache: yes
+      tags:
+        - update
+        - always
+
+    - name: Install packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - nginx
+        - php-fpm
+        - mysql-client
+      tags:
+        - install
+        - packages
+
+    - name: Configure services
+      template:
+        src: "{{ item.template }}"
+        dest: "{{ item.dest }}"
+      loop:
+        - { template: 'nginx.conf.j2', dest: '/etc/nginx/nginx.conf' }
+        - { template: 'php.ini.j2', dest: '/etc/php/7.4/fpm/php.ini' }
+      tags:
+        - configure
+        - services
+
+# Run specific tags
+ansible-playbook playbook.yml --tags "install,configure"
+ansible-playbook playbook.yml --skip-tags "update"
+```
+
+## Hands-on Exercises
+
+### Exercise 1: Basic Ansible Setup
+
+```bash
+# Create project directory
+mkdir ansible-demo
+cd ansible-demo
+
+# Create inventory
+cat > inventory.ini << 'EOF'
+[webservers]
+web1 ansible_host=192.168.1.10
+web2 ansible_host=192.168.1.11
+
+[dbservers]
+db1 ansible_host=192.168.1.20
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+EOF
+
+# Test connectivity
+ansible all -m ping
+
+# Create basic playbook
+cat > playbook.yml << 'EOF'
+---
+- name: Configure web servers
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Start and enable Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+EOF
+
+# Run playbook
+ansible-playbook -i inventory.ini playbook.yml
+```
+
+### Exercise 2: Create a Custom Role
+
+```bash
+# Create role structure
+ansible-galaxy init webserver
+
+# Edit role tasks
+cat > roles/webserver/tasks/main.yml << 'EOF'
+---
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Create web directory
+  file:
+    path: /var/www/html
+    state: directory
+    mode: '0755'
+    owner: www-data
+    group: www-data
+
+- name: Deploy web content
+  copy:
+    src: index.html
+    dest: /var/www/html/index.html
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+- name: Start and enable Nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+EOF
+
+# Create web content
+cat > roles/webserver/files/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome</title>
+</head>
+<body>
+    <h1>Welcome to Ansible-managed server!</h1>
+    <p>This server was configured using Ansible.</p>
+</body>
+</html>
+EOF
+
+# Create site playbook
+cat > site.yml << 'EOF'
+---
+- name: Configure web servers
+  hosts: webservers
+  become: yes
+  roles:
+    - webserver
+EOF
+
+# Run playbook
+ansible-playbook -i inventory.ini site.yml
+```
+
+### Exercise 3: Dynamic Inventory with AWS
+
+```bash
+# Install boto3
+pip install boto3
+
+# Create dynamic inventory script
+cat > inventory.py << 'EOF'
+#!/usr/bin/env python3
+import json
+import boto3
+
+def get_aws_instances():
+    ec2 = boto3.client('ec2')
+    response = ec2.describe_instances(
+        Filters=[
+            {'Name': 'instance-state-name', 'Values': ['running']}
+        ]
+    )
+
+    hosts = {
+        'webservers': {
+            'hosts': [],
+            'vars': {
+                'ansible_user': 'ubuntu'
+            }
+        }
+    }
+
+    for reservation in response['Reservations']:
+        for instance in reservation['Instances']:
+            hosts['webservers']['hosts'].append(instance['PublicIpAddress'])
+
+    return hosts
+
+if __name__ == '__main__':
+    print(json.dumps(get_aws_instances()))
+EOF
+
+chmod +x inventory.py
+
+# Test dynamic inventory
+ansible all -i inventory.py -m ping
+```
+
+## Assessment Questions
+
+1. **What is Ansible and what are its key features?**
+
+   - Open-source automation tool
+   - Agentless, declarative, idempotent, cross-platform, YAML-based
+
+2. **Explain the difference between static and dynamic inventory.**
+
+   - Static: Fixed list of hosts in file
+   - Dynamic: Generated programmatically from external sources
+
+3. **What are Ansible roles and when should you use them?**
+
+   - Reusable automation components
+   - Use for common patterns, team collaboration, and code organization
+
+4. **How do you handle sensitive data in Ansible?**
+
+   - Use Ansible Vault for encryption
+   - Store secrets in encrypted files
+   - Use vault password files or prompts
+
+5. **What are the benefits of using Ansible Galaxy?**
+   - Access to community-contributed roles
+   - Faster development with pre-built solutions
+   - Quality assurance and versioning
+
+## Additional Resources
+
+- [Ansible Documentation](https://docs.ansible.com/)
+- [Ansible Galaxy](https://galaxy.ansible.com/)
+- [Ansible Best Practices](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
+- [Ansible Vault](https://docs.ansible.com/ansible/latest/user_guide/vault.html)
+- [Ansible Community](https://github.com/ansible/ansible)
+
+## Next Steps
+
+Tomorrow we'll explore **Container Orchestration with Kubernetes**, covering:
+
+- Kubernetes architecture and components
+- Pod management and networking
+- Deployments and scaling strategies
+- Service discovery and load balancing
+- Storage and persistent volumes
+- Security and RBAC implementation

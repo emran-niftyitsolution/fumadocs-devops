@@ -1,8 +1,774 @@
 ---
-title: "Day 8: Title"
-description: "DevOps 100 Days - Day 8"
+title: "Day 8: Network Protocols and Services"
+description: "Master essential network protocols, DNS, DHCP, and network services configuration"
 ---
 
-# Day 8
+# Day 8: Network Protocols and Services
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Understand core network protocols (HTTP, HTTPS, FTP, SMTP)
+- Master DNS configuration and troubleshooting
+- Learn DHCP server setup and management
+- Understand network time synchronization (NTP)
+- Master email server configuration
+- Learn web server setup and management
+
+## 🌐 Core Network Protocols
+
+### HTTP/HTTPS Protocol
+
+**HTTP Fundamentals:**
+
+```bash
+# HTTP Request Methods
+GET     - Retrieve data
+POST    - Submit data
+PUT     - Update data
+DELETE  - Remove data
+HEAD    - Get headers only
+OPTIONS - Get allowed methods
+PATCH   - Partial update
+
+# HTTP Status Codes
+200 - OK
+201 - Created
+301 - Moved Permanently
+400 - Bad Request
+401 - Unauthorized
+403 - Forbidden
+404 - Not Found
+500 - Internal Server Error
+503 - Service Unavailable
+```
+
+**HTTP Request/Response:**
+
+```bash
+# HTTP Request
+GET /api/users HTTP/1.1
+Host: api.example.com
+User-Agent: curl/7.68.0
+Accept: application/json
+Authorization: Bearer token123
+
+# HTTP Response
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 1234
+Date: Mon, 15 Jan 2024 10:30:00 GMT
+
+{"users": [{"id": 1, "name": "John"}]}
+```
+
+**HTTPS Configuration:**
+
+```bash
+# Generate SSL certificate
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+
+# Nginx HTTPS configuration
+server {
+    listen 443 ssl;
+    server_name example.com;
+
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512;
+    ssl_prefer_server_ciphers off;
+
+    location / {
+        proxy_pass http://backend;
+    }
+}
+```
+
+### FTP Protocol
+
+**FTP Server Setup:**
+
+```bash
+# Install vsftpd
+sudo apt install vsftpd
+
+# Configure vsftpd
+sudo nano /etc/vsftpd.conf
+
+# Basic configuration:
+anonymous_enable=NO
+local_enable=YES
+write_enable=YES
+local_umask=022
+dirmessage_enable=YES
+use_localtime=YES
+xferlog_enable=YES
+connect_from_port_20=YES
+chroot_local_user=YES
+allow_writeable_chroot=YES
+secure_chroot_dir=/var/run/vsftpd/empty
+pam_service_name=vsftpd
+
+# Start service
+sudo systemctl enable vsftpd
+sudo systemctl start vsftpd
+```
+
+**FTP Client Usage:**
+
+```bash
+# Connect to FTP server
+ftp ftp.example.com
+
+# Common FTP commands:
+ls          # List files
+cd dir      # Change directory
+get file    # Download file
+put file    # Upload file
+mget *.txt  # Download multiple files
+mput *.txt  # Upload multiple files
+quit        # Exit
+
+# Using curl for FTP
+curl -u username:password ftp://ftp.example.com/file.txt -o local_file.txt
+curl -T local_file.txt -u username:password ftp://ftp.example.com/
+```
+
+### SMTP Protocol
+
+**SMTP Server Configuration:**
+
+```bash
+# Install Postfix
+sudo apt install postfix
+
+# Configure Postfix
+sudo nano /etc/postfix/main.cf
+
+# Basic configuration:
+myhostname = mail.example.com
+mydomain = example.com
+myorigin = $mydomain
+inet_interfaces = all
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+mynetworks = 127.0.0.0/8, 192.168.0.0/16
+home_mailbox = Maildir/
+smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
+
+# Start service
+sudo systemctl enable postfix
+sudo systemctl start postfix
+```
+
+**SMTP Testing:**
+
+```bash
+# Test SMTP connection
+telnet mail.example.com 25
+
+# Send test email
+echo "Subject: Test Email" | sendmail user@example.com
+
+# Using curl for SMTP
+curl --mail-from "sender@example.com" \
+     --mail-rcpt "recipient@example.com" \
+     --upload-file email.txt \
+     smtp://mail.example.com
+```
+
+## 🔍 DNS (Domain Name System)
+
+### DNS Fundamentals
+
+**DNS Record Types:**
+
+```bash
+# A Record - IPv4 address
+example.com.    IN  A   192.168.1.10
+
+# AAAA Record - IPv6 address
+example.com.    IN  AAAA 2001:db8::1
+
+# CNAME Record - Canonical name
+www.example.com. IN CNAME example.com.
+
+# MX Record - Mail exchange
+example.com.    IN  MX  10 mail.example.com.
+
+# NS Record - Name server
+example.com.    IN  NS  ns1.example.com.
+
+# TXT Record - Text information
+example.com.    IN  TXT "v=spf1 include:_spf.example.com ~all"
+
+# SRV Record - Service location
+_service._proto.example.com. IN SRV 0 5 5060 sip.example.com.
+```
+
+### DNS Server Setup
+
+**BIND9 Installation:**
+
+```bash
+# Install BIND9
+sudo apt install bind9 bind9utils
+
+# Configure BIND9
+sudo nano /etc/bind/named.conf.local
+
+# Add zone configuration:
+zone "example.com" {
+    type master;
+    file "/etc/bind/zones/example.com.db";
+};
+
+zone "1.168.192.in-addr.arpa" {
+    type master;
+    file "/etc/bind/zones/192.168.1.rev";
+};
+```
+
+**Zone File Configuration:**
+
+```bash
+# Create zone file
+sudo nano /etc/bind/zones/example.com.db
+
+# Zone file content:
+$TTL    86400
+@       IN      SOA     ns1.example.com. admin.example.com. (
+                        2024011501      ; Serial
+                        3600            ; Refresh
+                        1800            ; Retry
+                        1209600         ; Expire
+                        86400 )         ; Negative Cache TTL
+
+@       IN      NS      ns1.example.com.
+@       IN      NS      ns2.example.com.
+@       IN      A       192.168.1.10
+ns1     IN      A       192.168.1.10
+ns2     IN      A       192.168.1.11
+www     IN      A       192.168.1.10
+mail    IN      A       192.168.1.12
+mail    IN      MX      10 mail.example.com.
+```
+
+**Reverse Zone File:**
+
+```bash
+# Create reverse zone file
+sudo nano /etc/bind/zones/192.168.1.rev
+
+# Reverse zone content:
+$TTL    86400
+@       IN      SOA     ns1.example.com. admin.example.com. (
+                        2024011501      ; Serial
+                        3600            ; Refresh
+                        1800            ; Retry
+                        1209600         ; Expire
+                        86400 )         ; Negative Cache TTL
+
+@       IN      NS      ns1.example.com.
+@       IN      NS      ns2.example.com.
+10      IN      PTR     example.com.
+11      IN      PTR     ns2.example.com.
+12      IN      PTR     mail.example.com.
+```
+
+### DNS Tools and Troubleshooting
+
+**DNS Query Tools:**
+
+```bash
+# Query DNS records
+nslookup example.com
+nslookup -type=A example.com
+nslookup -type=MX example.com
+
+# Using dig
+dig example.com
+dig example.com A
+dig example.com MX
+dig example.com NS
+dig example.com TXT
+
+# Reverse DNS lookup
+dig -x 192.168.1.10
+
+# Trace DNS resolution
+dig +trace example.com
+
+# Check specific nameserver
+dig @8.8.8.8 example.com
+```
+
+**DNS Troubleshooting:**
+
+```bash
+# Check DNS server status
+sudo systemctl status bind9
+
+# Check configuration syntax
+sudo named-checkconf /etc/bind/named.conf
+
+# Check zone file syntax
+sudo named-checkzone example.com /etc/bind/zones/example.com.db
+
+# View DNS logs
+sudo tail -f /var/log/syslog | grep named
+
+# Test DNS resolution
+host example.com
+host -t MX example.com
+```
+
+## ⚡ DHCP (Dynamic Host Configuration Protocol)
+
+### DHCP Server Setup
+
+**ISC DHCP Server:**
+
+```bash
+# Install DHCP server
+sudo apt install isc-dhcp-server
+
+# Configure DHCP server
+sudo nano /etc/dhcp/dhcpd.conf
+
+# Basic configuration:
+default-lease-time 600;
+max-lease-time 7200;
+
+subnet 192.168.1.0 netmask 255.255.255.0 {
+    range 192.168.1.100 192.168.1.200;
+    option routers 192.168.1.1;
+    option domain-name-servers 8.8.8.8, 8.8.4.4;
+    option domain-name "example.com";
+}
+
+# Static IP reservation
+host webserver {
+    hardware ethernet 00:11:22:33:44:55;
+    fixed-address 192.168.1.10;
+}
+```
+
+**DHCP Server Management:**
+
+```bash
+# Start DHCP server
+sudo systemctl enable isc-dhcp-server
+sudo systemctl start isc-dhcp-server
+
+# Check DHCP server status
+sudo systemctl status isc-dhcp-server
+
+# View DHCP leases
+sudo cat /var/lib/dhcp/dhcpd.leases
+
+# Restart DHCP server
+sudo systemctl restart isc-dhcp-server
+```
+
+### DHCP Client Configuration
+
+**Linux DHCP Client:**
+
+```bash
+# Configure network interface for DHCP
+sudo nano /etc/network/interfaces
+
+# DHCP configuration:
+auto eth0
+iface eth0 inet dhcp
+
+# Or using systemd-networkd
+sudo nano /etc/systemd/network/20-wired.network
+
+[Match]
+Name=eth0
+
+[Network]
+DHCP=yes
+```
+
+**DHCP Client Commands:**
+
+```bash
+# Release DHCP lease
+sudo dhclient -r eth0
+
+# Renew DHCP lease
+sudo dhclient eth0
+
+# Get new DHCP lease
+sudo dhclient -v eth0
+
+# View DHCP information
+cat /var/lib/dhcp/dhcpd.leases
+```
+
+## ⏰ NTP (Network Time Protocol)
+
+### NTP Server Setup
+
+**NTP Server Configuration:**
+
+```bash
+# Install NTP server
+sudo apt install ntp
+
+# Configure NTP server
+sudo nano /etc/ntp.conf
+
+# Basic configuration:
+# Use Google's public NTP servers
+server time.google.com iburst
+server time1.google.com iburst
+server time2.google.com iburst
+server time3.google.com iburst
+
+# Allow clients from local network
+restrict 192.168.1.0 mask 255.255.255.0 nomodify notrap
+
+# Local clock (if no internet)
+server 127.127.1.0
+fudge 127.127.1.0 stratum 10
+```
+
+**NTP Client Configuration:**
+
+```bash
+# Configure NTP client
+sudo nano /etc/ntp.conf
+
+# Client configuration:
+server ntp.example.com iburst
+server time.google.com iburst
+
+# Start NTP service
+sudo systemctl enable ntp
+sudo systemctl start ntp
+```
+
+**NTP Monitoring:**
+
+```bash
+# Check NTP status
+ntpq -p
+
+# Check NTP statistics
+ntpstat
+
+# Synchronize time manually
+sudo ntpdate ntp.example.com
+
+# View NTP logs
+sudo tail -f /var/log/syslog | grep ntp
+```
+
+## 📧 Email Server Configuration
+
+### Postfix Advanced Configuration
+
+**Postfix Security:**
+
+```bash
+# Configure Postfix security
+sudo nano /etc/postfix/main.cf
+
+# Security settings:
+smtpd_helo_required = yes
+smtpd_helo_restrictions = permit_mynetworks, reject_invalid_helo_hostname
+smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination, reject_invalid_hostname, reject_non_fqdn_hostname, reject_non_fqdn_sender, reject_non_fqdn_recipient, reject_unknown_sender_domain, reject_unknown_recipient_domain, reject_unauth_pipelining, permit
+
+# Enable TLS
+smtpd_tls_cert_file = /etc/ssl/certs/mail.crt
+smtpd_tls_key_file = /etc/ssl/private/mail.key
+smtpd_tls_security_level = may
+smtpd_tls_protocols = !SSLv2, !SSLv3
+```
+
+**Dovecot IMAP/POP3:**
+
+```bash
+# Install Dovecot
+sudo apt install dovecot-imapd dovecot-pop3d
+
+# Configure Dovecot
+sudo nano /etc/dovecot/conf.d/10-mail.conf
+
+# Mail location:
+mail_location = maildir:~/Maildir
+
+# Configure authentication
+sudo nano /etc/dovecot/conf.d/10-auth.conf
+
+# Enable authentication:
+disable_plaintext_auth = no
+auth_mechanisms = plain login
+
+# Start Dovecot
+sudo systemctl enable dovecot
+sudo systemctl start dovecot
+```
+
+## 🌐 Web Server Configuration
+
+### Apache Web Server
+
+**Apache Installation:**
+
+```bash
+# Install Apache
+sudo apt install apache2
+
+# Basic configuration
+sudo nano /etc/apache2/sites-available/000-default.conf
+
+# Virtual host configuration:
+<VirtualHost *:80>
+    ServerName example.com
+    ServerAdmin webmaster@example.com
+    DocumentRoot /var/www/html
+
+    <Directory /var/www/html>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
+
+**Apache Security:**
+
+```bash
+# Enable security modules
+sudo a2enmod ssl
+sudo a2enmod headers
+sudo a2enmod rewrite
+
+# Configure SSL
+sudo a2ensite default-ssl
+
+# Restart Apache
+sudo systemctl restart apache2
+```
+
+### Nginx Web Server
+
+**Nginx Configuration:**
+
+```bash
+# Install Nginx
+sudo apt install nginx
+
+# Configure Nginx
+sudo nano /etc/nginx/sites-available/default
+
+# Server block configuration:
+server {
+    listen 80;
+    server_name example.com www.example.com;
+    root /var/www/html;
+    index index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+    }
+}
+```
+
+**Nginx Performance:**
+
+```bash
+# Enable Nginx modules
+sudo nano /etc/nginx/nginx.conf
+
+# Performance settings:
+worker_processes auto;
+worker_connections 1024;
+keepalive_timeout 65;
+gzip on;
+gzip_types text/plain text/css application/json application/javascript;
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: DNS Server Setup
+
+**Objective:** Set up a complete DNS server
+
+**Tasks:**
+
+```bash
+# 1. Install and configure BIND9
+sudo apt install bind9 bind9utils
+
+# 2. Create zone files
+sudo mkdir -p /etc/bind/zones
+
+# 3. Configure named.conf.local
+sudo nano /etc/bind/named.conf.local
+
+# Add zones:
+zone "example.com" {
+    type master;
+    file "/etc/bind/zones/example.com.db";
+};
+
+zone "1.168.192.in-addr.arpa" {
+    type master;
+    file "/etc/bind/zones/192.168.1.rev";
+};
+
+# 4. Create zone files
+sudo nano /etc/bind/zones/example.com.db
+
+# 5. Test DNS server
+dig @localhost example.com
+nslookup example.com localhost
+```
+
+### Exercise 2: DHCP Server Configuration
+
+**Objective:** Configure DHCP server for network
+
+**Tasks:**
+
+```bash
+# 1. Install DHCP server
+sudo apt install isc-dhcp-server
+
+# 2. Configure DHCP
+sudo nano /etc/dhcp/dhcpd.conf
+
+# Add subnet configuration:
+subnet 192.168.1.0 netmask 255.255.255.0 {
+    range 192.168.1.100 192.168.1.200;
+    option routers 192.168.1.1;
+    option domain-name-servers 192.168.1.10, 8.8.8.8;
+    option domain-name "example.com";
+}
+
+# 3. Start DHCP server
+sudo systemctl enable isc-dhcp-server
+sudo systemctl start isc-dhcp-server
+
+# 4. Test DHCP
+# Connect client to network and check IP assignment
+```
+
+### Exercise 3: Email Server Setup
+
+**Objective:** Configure complete email server
+
+**Tasks:**
+
+```bash
+# 1. Install Postfix and Dovecot
+sudo apt install postfix dovecot-imapd dovecot-pop3d
+
+# 2. Configure Postfix
+sudo nano /etc/postfix/main.cf
+
+# 3. Configure Dovecot
+sudo nano /etc/dovecot/conf.d/10-mail.conf
+
+# 4. Create mail user
+sudo useradd -m -s /bin/bash mailuser
+sudo passwd mailuser
+
+# 5. Test email server
+# Send test email and check delivery
+```
+
+## 📊 Assessment Questions
+
+**Day 8 Quiz:**
+
+1. **What DNS record type maps domain to IPv4 address?**
+
+   - Answer: A Record
+
+2. **What port does SMTP use?**
+
+   - Answer: Port 25
+
+3. **What DHCP option provides router information?**
+
+   - Answer: option routers
+
+4. **What NTP stratum level indicates atomic clock?**
+
+   - Answer: Stratum 0
+
+5. **What HTTP status code indicates "Not Found"?**
+
+   - Answer: 404
+
+6. **What command shows DNS resolution trace?**
+
+   - Answer: `dig +trace example.com`
+
+7. **What file contains DHCP leases?**
+
+   - Answer: `/var/lib/dhcp/dhcpd.leases`
+
+8. **What Apache module enables SSL?**
+   - Answer: mod_ssl
+
+## 📚 Additional Resources
+
+### Books
+
+- **"DNS and BIND"** by Cricket Liu
+- **"Postfix: The Definitive Guide"** by Kyle Dent
+- **"Nginx HTTP Server"** by Clement Nedelcu
+
+### Online Resources
+
+- [DNS RFC 1035](https://tools.ietf.org/html/rfc1035)
+- [DHCP RFC 2131](https://tools.ietf.org/html/rfc2131)
+- [SMTP RFC 5321](https://tools.ietf.org/html/rfc5321)
+
+### Tools
+
+- **DNS**: BIND, dnsmasq, PowerDNS
+- **DHCP**: ISC DHCP, dnsmasq
+- **Email**: Postfix, Exim, Sendmail
+- **Web**: Apache, Nginx, Lighttpd
+
+## 🎉 Day 8 Summary
+
+**What You've Learned:**
+
+- ✅ Core network protocols (HTTP, HTTPS, FTP, SMTP)
+- ✅ DNS server setup and troubleshooting
+- ✅ DHCP server configuration and management
+- ✅ NTP time synchronization
+- ✅ Email server setup (Postfix + Dovecot)
+- ✅ Web server configuration (Apache/Nginx)
+
+**Key Takeaways:**
+
+- DNS is fundamental to internet connectivity
+- DHCP automates network configuration
+- Email servers require careful security configuration
+- Web servers need performance optimization
+- Time synchronization is critical for logs and security
+
+**Tomorrow:** We'll continue with network security and firewalls, building on today's protocol knowledge.
+
+**Remember:** Network services are the backbone of modern infrastructure. Configure them securely and monitor them closely!

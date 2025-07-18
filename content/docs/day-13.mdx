@@ -1,8 +1,1134 @@
 ---
-title: "Day 13: Title"
-description: "DevOps 100 Days - Day 13"
+title: "Day 13: CI/CD Fundamentals"
+description: "Master continuous integration and continuous deployment concepts and tools"
 ---
 
-# Day 13
+# Day 13: CI/CD Fundamentals
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Understand CI/CD concepts and benefits
+- Master CI/CD pipeline design and implementation
+- Learn popular CI/CD tools (Jenkins, GitLab CI, GitHub Actions)
+- Understand automated testing and deployment strategies
+- Master pipeline security and best practices
+- Learn deployment strategies (Blue-Green, Canary, Rolling)
+
+## 🔄 CI/CD Concepts
+
+### What is CI/CD?
+
+**CI/CD Definition:**
+
+```bash
+# Continuous Integration (CI):
+# - Automated code integration
+# - Automated testing
+# - Early bug detection
+# - Code quality checks
+
+# Continuous Deployment (CD):
+# - Automated deployment
+# - Environment management
+# - Release automation
+# - Rollback capabilities
+```
+
+**CI/CD Benefits:**
+
+```bash
+# Development Benefits:
+# - Faster feedback loops
+# - Reduced integration problems
+# - Automated testing
+# - Code quality improvements
+
+# Operations Benefits:
+# - Reduced manual errors
+# - Consistent deployments
+# - Faster time to market
+# - Better traceability
+
+# Business Benefits:
+# - Increased productivity
+# - Reduced costs
+# - Better quality
+# - Competitive advantage
+```
+
+### CI/CD Pipeline Stages
+
+**Pipeline Components:**
+
+```bash
+# Source Stage:
+# - Code commit
+# - Trigger pipeline
+# - Branch protection
+# - Code review
+
+# Build Stage:
+# - Compile code
+# - Run unit tests
+# - Code analysis
+# - Security scanning
+
+# Test Stage:
+# - Integration tests
+# - Performance tests
+# - Security tests
+# - User acceptance tests
+
+# Deploy Stage:
+# - Environment preparation
+# - Application deployment
+# - Health checks
+# - Monitoring setup
+```
+
+## 🛠️ CI/CD Tools
+
+### Jenkins
+
+**Jenkins Installation:**
+
+```bash
+# Install Java
+sudo apt update
+sudo apt install openjdk-11-jdk
+
+# Add Jenkins repository
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
+  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+# Install Jenkins
+sudo apt update
+sudo apt install jenkins
+
+# Start Jenkins
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+
+# Get initial password
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+```
+
+**Jenkins Pipeline (Declarative):**
+
+```groovy
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = 'my-app'
+        DOCKER_TAG = 'latest'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    publishTestResults testResultsPattern: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                }
+            }
+        }
+
+        stage('Push to Registry') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.example.com', 'registry-credentials') {
+                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh 'kubectl apply -f k8s/staging/'
+            }
+        }
+
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                input message: 'Deploy to production?'
+                sh 'kubectl apply -f k8s/production/'
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
+```
+
+**Jenkins Scripted Pipeline:**
+
+```groovy
+node {
+    stage('Checkout') {
+        checkout scm
+    }
+
+    stage('Build') {
+        sh 'mvn clean compile'
+    }
+
+    stage('Test') {
+        sh 'mvn test'
+        publishTestResults testResultsPattern: '**/target/surefire-reports/*.xml'
+    }
+
+    stage('SonarQube') {
+        withSonarQubeEnv('SonarQube') {
+            sh 'mvn sonar:sonar'
+        }
+    }
+
+    stage('Build Docker') {
+        docker.build('my-app:latest')
+    }
+
+    stage('Deploy') {
+        if (env.BRANCH_NAME == 'main') {
+            input message: 'Deploy to production?'
+            sh 'kubectl apply -f k8s/'
+        }
+    }
+}
+```
+
+### GitLab CI/CD
+
+**GitLab CI Configuration:**
+
+```yaml
+# .gitlab-ci.yml
+stages:
+  - build
+  - test
+  - security
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+before_script:
+  - echo "Setting up environment..."
+
+build:
+  stage: build
+  image: maven:3.8-openjdk-11
+  script:
+    - mvn clean compile
+  artifacts:
+    paths:
+      - target/
+    expire_in: 1 week
+
+test:
+  stage: test
+  image: maven:3.8-openjdk-11
+  script:
+    - mvn test
+  coverage: "/Total.*?([0-9]{1,3})%/"
+  artifacts:
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+    paths:
+      - target/surefire-reports/
+    expire_in: 1 week
+
+security-scan:
+  stage: security
+  image: owasp/zap2docker-stable
+  script:
+    - zap-baseline.py -t http://app:8080
+  allow_failure: true
+
+sonarqube:
+  stage: security
+  image: sonarqube-scanner
+  script:
+    - sonar-scanner
+  allow_failure: true
+
+build-docker:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t my-app:$CI_COMMIT_SHA .
+    - docker tag my-app:$CI_COMMIT_SHA registry.example.com/my-app:$CI_COMMIT_SHA
+    - docker push registry.example.com/my-app:$CI_COMMIT_SHA
+  only:
+    - main
+
+deploy-staging:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl set image deployment/my-app my-app=registry.example.com/my-app:$CI_COMMIT_SHA
+  environment:
+    name: staging
+    url: https://staging.example.com
+  only:
+    - main
+
+deploy-production:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl set image deployment/my-app my-app=registry.example.com/my-app:$CI_COMMIT_SHA
+  environment:
+    name: production
+    url: https://example.com
+  when: manual
+  only:
+    - main
+```
+
+### GitHub Actions
+
+**GitHub Actions Workflow:**
+
+```yaml
+# .github/workflows/ci-cd.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: "11"
+          distribution: "temurin"
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Run tests
+        run: mvn test
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: target/surefire-reports/
+
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run SonarQube
+        uses: sonarqube-quality-gate-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Run OWASP ZAP
+        uses: zaproxy/action-full-scan@v0.8.0
+        with:
+          target: "https://example.com"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: build
+    environment: staging
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging..."
+          kubectl set image deployment/my-app my-app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: production
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production..."
+          kubectl set image deployment/my-app my-app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+```
+
+## 🧪 Automated Testing
+
+### Test Types
+
+**Testing Pyramid:**
+
+```bash
+# Unit Tests (70%):
+# - Fast execution
+# - Isolated testing
+# - High coverage
+# - Examples: JUnit, pytest, Jest
+
+# Integration Tests (20%):
+# - Service integration
+# - Database testing
+# - API testing
+# - Examples: TestContainers, WireMock
+
+# End-to-End Tests (10%):
+# - Full user scenarios
+# - UI testing
+# - Cross-browser testing
+# - Examples: Selenium, Cypress
+```
+
+**Test Automation Scripts:**
+
+```bash
+# Maven Test Configuration
+cat > pom.xml << 'EOF'
+<project>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>4.5.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+EOF
+
+# Python Test Configuration
+cat > requirements-test.txt << 'EOF'
+pytest==7.3.1
+pytest-cov==4.1.0
+pytest-mock==3.10.0
+EOF
+
+# JavaScript Test Configuration
+cat > package.json << 'EOF'
+{
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "@types/jest": "^29.5.0"
+  }
+}
+EOF
+```
+
+### Performance Testing
+
+**Load Testing with JMeter:**
+
+```xml
+<!-- test-plan.jmx -->
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Load Test">
+      <elementProp name="TestPlan.arguments" elementType="Arguments">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group">
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">10</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.scheduler" elementType="ThreadGroupScheduler">
+          <boolProp name="ThreadGroupScheduler.duration">false</boolProp>
+          <boolProp name="ThreadGroupScheduler.delay">false</boolProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">100</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">10</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">example.com</stringProp>
+          <stringProp name="HTTPSampler.port">80</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.path">/</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
+```
+
+## 🚀 Deployment Strategies
+
+### Blue-Green Deployment
+
+**Blue-Green Deployment Script:**
+
+```bash
+#!/bin/bash
+# blue-green-deploy.sh
+
+set -e
+
+# Configuration
+APP_NAME="my-app"
+BLUE_VERSION="v1"
+GREEN_VERSION="v2"
+NAMESPACE="production"
+
+# Function to check deployment health
+check_deployment_health() {
+    local version=$1
+    kubectl rollout status deployment/${APP_NAME}-${version} -n ${NAMESPACE}
+
+    # Check if pods are ready
+    local ready_pods=$(kubectl get pods -n ${NAMESPACE} -l app=${APP_NAME},version=${version} --no-headers | grep Running | wc -l)
+    local total_pods=$(kubectl get pods -n ${NAMESPACE} -l app=${APP_NAME},version=${version} --no-headers | wc -l)
+
+    if [ $ready_pods -eq $total_pods ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Function to run health checks
+run_health_checks() {
+    local version=$1
+    local service_url="http://${APP_NAME}-${version}.${NAMESPACE}.svc.cluster.local"
+
+    # Basic health check
+    curl -f ${service_url}/health || return 1
+
+    # Performance check
+    response_time=$(curl -w "%{time_total}" -o /dev/null -s ${service_url}/api/test)
+    if (( $(echo "$response_time > 2.0" | bc -l) )); then
+        echo "Response time too high: ${response_time}s"
+        return 1
+    fi
+
+    return 0
+}
+
+# Function to switch traffic
+switch_traffic() {
+    local active_version=$1
+    local new_version=$2
+
+    # Update service to point to new version
+    kubectl patch service ${APP_NAME} -n ${NAMESPACE} -p "{\"spec\":{\"selector\":{\"version\":\"${new_version}\"}}}"
+
+    # Wait for traffic to switch
+    sleep 10
+
+    # Verify traffic is flowing to new version
+    local new_traffic=$(kubectl logs -n ${NAMESPACE} -l app=${APP_NAME},version=${new_version} --tail=100 | grep "GET /" | wc -l)
+    local old_traffic=$(kubectl logs -n ${NAMESPACE} -l app=${APP_NAME},version=${active_version} --tail=100 | grep "GET /" | wc -l)
+
+    if [ $new_traffic -gt $old_traffic ]; then
+        echo "Traffic successfully switched to ${new_version}"
+        return 0
+    else
+        echo "Traffic switch failed"
+        return 1
+    fi
+}
+
+# Main deployment logic
+echo "Starting Blue-Green deployment..."
+
+# Determine current active version
+if kubectl get deployment ${APP_NAME}-blue -n ${NAMESPACE} >/dev/null 2>&1; then
+    ACTIVE_VERSION="blue"
+    NEW_VERSION="green"
+else
+    ACTIVE_VERSION="green"
+    NEW_VERSION="blue"
+fi
+
+echo "Current active version: ${ACTIVE_VERSION}"
+echo "Deploying new version: ${NEW_VERSION}"
+
+# Deploy new version
+kubectl apply -f k8s/${NEW_VERSION}/
+
+# Wait for deployment to be ready
+echo "Waiting for ${NEW_VERSION} deployment to be ready..."
+if check_deployment_health ${NEW_VERSION}; then
+    echo "${NEW_VERSION} deployment is ready"
+else
+    echo "${NEW_VERSION} deployment failed"
+    exit 1
+fi
+
+# Run health checks
+echo "Running health checks on ${NEW_VERSION}..."
+if run_health_checks ${NEW_VERSION}; then
+    echo "Health checks passed"
+else
+    echo "Health checks failed"
+    exit 1
+fi
+
+# Switch traffic
+echo "Switching traffic to ${NEW_VERSION}..."
+if switch_traffic ${ACTIVE_VERSION} ${NEW_VERSION}; then
+    echo "Traffic switch successful"
+else
+    echo "Traffic switch failed, rolling back..."
+    kubectl patch service ${APP_NAME} -n ${NAMESPACE} -p "{\"spec\":{\"selector\":{\"version\":\"${ACTIVE_VERSION}\"}}}"
+    exit 1
+fi
+
+# Clean up old version (optional)
+echo "Cleaning up old version ${ACTIVE_VERSION}..."
+kubectl delete deployment ${APP_NAME}-${ACTIVE_VERSION} -n ${NAMESPACE}
+
+echo "Blue-Green deployment completed successfully!"
+```
+
+### Canary Deployment
+
+**Canary Deployment Configuration:**
+
+```yaml
+# canary-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-canary
+  labels:
+    app: my-app
+    version: canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+      version: canary
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: canary
+    spec:
+      containers:
+        - name: my-app
+          image: my-app:canary
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-canary
+spec:
+  selector:
+    app: my-app
+    version: canary
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "10"
+spec:
+  rules:
+    - host: my-app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: my-app-canary
+                port:
+                  number: 80
+```
+
+## 🔐 CI/CD Security
+
+### Security Best Practices
+
+**Pipeline Security:**
+
+```bash
+# Secrets Management:
+# - Use encrypted secrets
+# - Rotate secrets regularly
+# - Limit secret access
+# - Audit secret usage
+
+# Code Security:
+# - Static code analysis
+# - Dependency scanning
+# - Container scanning
+# - License compliance
+
+# Infrastructure Security:
+# - Least privilege access
+# - Network segmentation
+# - Encryption at rest/transit
+# - Regular security updates
+```
+
+**Security Scanning Script:**
+
+```bash
+#!/bin/bash
+# security-scan.sh
+
+set -e
+
+echo "Running security scans..."
+
+# Run OWASP ZAP scan
+echo "Running OWASP ZAP scan..."
+zap-baseline.py -t http://app:8080 -J zap-report.json
+
+# Run SonarQube analysis
+echo "Running SonarQube analysis..."
+sonar-scanner \
+  -Dsonar.projectKey=my-app \
+  -Dsonar.sources=src \
+  -Dsonar.host.url=http://sonarqube:9000 \
+  -Dsonar.login=$SONAR_TOKEN
+
+# Run Trivy container scan
+echo "Running Trivy container scan..."
+trivy image --severity HIGH,CRITICAL my-app:latest
+
+# Run dependency scan
+echo "Running dependency scan..."
+mvn dependency:check
+
+# Run license compliance
+echo "Running license compliance check..."
+license-checker --summary --onlyAllow "MIT;Apache-2.0;BSD-2-Clause"
+
+echo "Security scans completed!"
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: Jenkins Pipeline Setup
+
+**Objective:** Create a complete Jenkins pipeline
+
+**Tasks:**
+
+```bash
+# 1. Install Jenkins
+sudo apt update
+sudo apt install openjdk-11-jdk
+wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo apt-key add -
+sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+sudo apt update
+sudo apt install jenkins
+
+# 2. Start Jenkins
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+
+# 3. Get initial password
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+# 4. Create Jenkinsfile
+cat > Jenkinsfile << 'EOF'
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh 'echo "Deploying..."'
+            }
+        }
+    }
+}
+EOF
+```
+
+### Exercise 2: GitHub Actions Workflow
+
+**Objective:** Create GitHub Actions workflow
+
+**Tasks:**
+
+```bash
+# 1. Create workflow directory
+mkdir -p .github/workflows
+
+# 2. Create workflow file
+cat > .github/workflows/ci.yml << 'EOF'
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+    - name: Run tests
+      run: mvn test
+EOF
+
+# 3. Commit and push
+git add .github/workflows/ci.yml
+git commit -m "Add CI workflow"
+git push
+```
+
+### Exercise 3: Blue-Green Deployment
+
+**Objective:** Implement blue-green deployment
+
+**Tasks:**
+
+```bash
+# 1. Create deployment configurations
+mkdir -p k8s/{blue,green}
+
+# 2. Create blue deployment
+cat > k8s/blue/deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-blue
+  labels:
+    app: my-app
+    version: blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: blue
+    spec:
+      containers:
+      - name: my-app
+        image: my-app:v1
+        ports:
+        - containerPort: 8080
+EOF
+
+# 3. Create green deployment
+cat > k8s/green/deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-green
+  labels:
+    app: my-app
+    version: green
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+      version: green
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: green
+    spec:
+      containers:
+      - name: my-app
+        image: my-app:v2
+        ports:
+        - containerPort: 8080
+EOF
+
+# 4. Create service
+cat > k8s/service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app
+spec:
+  selector:
+    app: my-app
+    version: blue
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+EOF
+
+# 5. Apply configurations
+kubectl apply -f k8s/blue/
+kubectl apply -f k8s/service.yaml
+```
+
+## 📊 Assessment Questions
+
+**Day 13 Quiz:**
+
+1. **What does CI stand for?**
+
+   - Answer: Continuous Integration
+
+2. **What is the purpose of a CI/CD pipeline?**
+
+   - Answer: Automate code integration, testing, and deployment
+
+3. **What is Blue-Green deployment?**
+
+   - Answer: Deployment strategy with two identical environments
+
+4. **What is the main benefit of automated testing?**
+
+   - Answer: Early bug detection and consistent quality
+
+5. **What tool is used for container scanning?**
+
+   - Answer: Trivy, Clair, or Anchore
+
+6. **What is Canary deployment?**
+
+   - Answer: Gradual rollout to a small percentage of users
+
+7. **What is the purpose of SonarQube?**
+
+   - Answer: Code quality and security analysis
+
+8. **What is the testing pyramid?**
+   - Answer: Distribution of unit, integration, and E2E tests
+
+## 📚 Additional Resources
+
+### Books
+
+- **"Continuous Delivery"** by Jez Humble
+- **"The Phoenix Project"** by Gene Kim
+- **"DevOps Handbook"** by Gene Kim
+
+### Online Resources
+
+- [Jenkins Documentation](https://www.jenkins.io/doc/)
+- [GitLab CI/CD](https://docs.gitlab.com/ee/ci/)
+- [GitHub Actions](https://docs.github.com/en/actions)
+
+### Tools
+
+- **CI/CD**: Jenkins, GitLab CI, GitHub Actions, CircleCI
+- **Testing**: JUnit, pytest, Jest, Selenium
+- **Security**: SonarQube, OWASP ZAP, Trivy
+- **Monitoring**: Prometheus, Grafana, Jaeger
+
+## 🎉 Day 13 Summary
+
+**What You've Learned:**
+
+- ✅ CI/CD concepts and benefits
+- ✅ CI/CD pipeline design and implementation
+- ✅ Popular CI/CD tools (Jenkins, GitLab CI, GitHub Actions)
+- ✅ Automated testing and deployment strategies
+- ✅ Pipeline security and best practices
+- ✅ Deployment strategies (Blue-Green, Canary, Rolling)
+
+**Key Takeaways:**
+
+- CI/CD automates the software delivery process
+- Automated testing is crucial for quality
+- Security should be integrated into pipelines
+- Different deployment strategies serve different needs
+- Monitoring and observability are essential
+
+**Tomorrow:** We'll continue with infrastructure as code, building on today's CI/CD knowledge.
+
+**Remember:** CI/CD is the backbone of modern software delivery. Start simple and gradually add complexity!
