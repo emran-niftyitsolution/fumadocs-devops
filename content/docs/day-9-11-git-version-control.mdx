@@ -1,0 +1,328 @@
+---
+title: "Day 9-11: Git Version Control"
+description: "Master Git version control system for collaborative development"
+---
+
+# Day 9-11: Git Version Control
+
+## Day 9: Git Fundamentals
+
+### Understanding Version Control
+
+**Learning Objectives:**
+
+- Understand the importance of version control
+- Learn Git basic concepts and workflow
+- Master essential Git commands
+
+**Why Version Control?**
+
+- Track changes over time
+- Collaborate with team members
+- Rollback to previous versions
+- Branch and merge code safely
+
+### Git Core Concepts
+
+**Repository Types:**
+
+- **Local Repository**: On your machine
+- **Remote Repository**: On server (GitHub, GitLab, etc.)
+- **Bare Repository**: Server-side, no working directory
+
+**Git Workflow:**
+
+```
+Working Directory → Staging Area → Repository
+     (modified)    (staged)      (committed)
+```
+
+**Essential Commands:**
+
+```bash
+# Initialize a new repository
+git init
+
+# Clone existing repository
+git clone https://github.com/username/repo.git
+
+# Check status
+git status
+
+# Add files to staging
+git add filename
+git add .  # Add all files
+
+# Commit changes
+git commit -m "Initial commit"
+
+# View commit history
+git log
+git log --oneline
+```
+
+## Day 10: Git Branching and Merging
+
+### Branching Strategy
+
+**Branch Types:**
+
+- **main/master**: Production-ready code
+- **develop**: Integration branch
+- **feature/**: New features
+- **hotfix/**: Emergency fixes
+- **release/**: Release preparation
+
+**Branch Operations:**
+
+```bash
+# Create and switch to new branch
+git checkout -b feature/new-feature
+
+# List all branches
+git branch
+
+# Switch between branches
+git checkout main
+git checkout feature/new-feature
+
+# Delete branch
+git branch -d feature/old-feature
+```
+
+### Merging Strategies
+
+**Fast-forward Merge:**
+
+```bash
+# When no conflicts exist
+git checkout main
+git merge feature/new-feature
+```
+
+**Merge Commit:**
+
+```bash
+# When conflicts exist
+git merge --no-ff feature/new-feature
+```
+
+**Rebase (Clean History):**
+
+```bash
+# Rebase feature branch onto main
+git checkout feature/new-feature
+git rebase main
+```
+
+## Day 11: Advanced Git Operations
+
+### Remote Repository Management
+
+**Adding Remotes:**
+
+```bash
+# Add remote repository
+git remote add origin https://github.com/username/repo.git
+
+# List remotes
+git remote -v
+
+# Push to remote
+git push origin main
+
+# Pull from remote
+git pull origin main
+```
+
+### Git Configuration
+
+**User Setup:**
+
+```bash
+# Set global user
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+
+# Set local user (for specific repo)
+git config user.name "Your Name"
+git config user.email "your.email@example.com"
+```
+
+**SSH Key Setup:**
+
+```bash
+# Generate SSH key
+ssh-keygen -t ed25519 -C "your.email@example.com"
+
+# Add to SSH agent
+ssh-add ~/.ssh/id_ed25519
+
+# Copy public key to GitHub/GitLab
+cat ~/.ssh/id_ed25519.pub
+```
+
+### Advanced Git Features
+
+**Stashing:**
+
+```bash
+# Save work in progress
+git stash
+
+# List stashes
+git stash list
+
+# Apply stash
+git stash pop
+git stash apply stash@{0}
+
+# Drop stash
+git stash drop stash@{0}
+```
+
+**Git Tags:**
+
+```bash
+# Create lightweight tag
+git tag v1.0.0
+
+# Create annotated tag
+git tag -a v1.0.0 -m "Release version 1.0.0"
+
+# Push tags
+git push origin --tags
+```
+
+**Git Hooks:**
+
+```bash
+# Pre-commit hook example
+#!/bin/sh
+# .git/hooks/pre-commit
+echo "Running tests..."
+npm test
+```
+
+## Hands-on Projects
+
+### Project 1: Git Workflow Simulation
+
+```bash
+# Create a new project
+mkdir git-practice
+cd git-practice
+git init
+
+# Create initial files
+echo "# My Project" > README.md
+git add README.md
+git commit -m "Initial commit"
+
+# Create feature branch
+git checkout -b feature/login
+echo "function login() { }" > login.js
+git add login.js
+git commit -m "Add login functionality"
+
+# Merge back to main
+git checkout main
+git merge feature/login
+```
+
+### Project 2: Collaborative Workflow
+
+```bash
+# Fork and clone a repository
+git clone https://github.com/username/project.git
+cd project
+
+# Create feature branch
+git checkout -b feature/my-contribution
+
+# Make changes and commit
+echo "New feature" >> features.md
+git add features.md
+git commit -m "Add new feature"
+
+# Push to remote
+git push origin feature/my-contribution
+
+# Create pull request on GitHub
+```
+
+## Git Best Practices
+
+### Commit Messages
+
+```
+feat: add user authentication
+fix: resolve login bug
+docs: update README
+style: format code
+refactor: simplify login logic
+test: add unit tests
+chore: update dependencies
+```
+
+### .gitignore File
+
+```gitignore
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+```
+
+### Branch Protection Rules
+
+- Require pull request reviews
+- Require status checks to pass
+- Restrict direct pushes to main
+- Require up-to-date branches
+
+## Assessment
+
+**Day 9 Quiz:**
+
+1. What is the difference between `git add` and `git commit`?
+2. Explain the three areas in Git workflow
+3. How do you check the status of your repository?
+
+**Day 10 Quiz:**
+
+1. What is the difference between merge and rebase?
+2. When would you use a feature branch?
+3. How do you resolve merge conflicts?
+
+**Day 11 Quiz:**
+
+1. How do you set up SSH authentication for Git?
+2. What is the purpose of git stash?
+3. Explain the difference between lightweight and annotated tags
+
+## Resources
+
+- **Documentation**: [Git Official Documentation](https://git-scm.com/doc)
+- **Interactive Learning**: [Learn Git Branching](https://learngitbranching.js.org/)
+- **Practice**: GitHub's [GitHub Skills](https://skills.github.com/)
+- **Books**: "Pro Git" by Scott Chacon and Ben Straub
+
+## Next Steps
+
+Tomorrow we'll continue with Bash scripting, building on our Git knowledge to automate development workflows.

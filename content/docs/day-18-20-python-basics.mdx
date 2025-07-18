@@ -1,0 +1,402 @@
+---
+title: "Day 18-20: Python Basics"
+description: "Learn Python programming fundamentals for DevOps automation"
+---
+
+# Day 18-20: Python Basics
+
+## Day 18: Python Fundamentals
+
+### Getting Started with Python
+
+**Learning Objectives:**
+
+- Understand Python syntax and data types
+- Learn control structures and functions
+- Master file I/O operations
+
+**Why Python for DevOps?**
+
+- Excellent for automation and scripting
+- Rich ecosystem of libraries
+- Cross-platform compatibility
+- Easy to learn and read
+
+### Python Setup and Environment
+
+**Installation:**
+
+```bash
+# Install Python (Ubuntu/Debian)
+sudo apt update
+sudo apt install python3 python3-pip
+
+# Install Python (macOS)
+brew install python3
+
+# Check version
+python3 --version
+```
+
+**Virtual Environments:**
+
+```bash
+# Create virtual environment
+python3 -m venv myenv
+
+# Activate environment
+source myenv/bin/activate  # Linux/macOS
+myenv\Scripts\activate     # Windows
+
+# Install packages
+pip install requests boto3
+```
+
+### Basic Syntax and Data Types
+
+**Variables and Data Types:**
+
+```python
+# Numbers
+age = 25
+height = 5.9
+complex_num = 3 + 4j
+
+# Strings
+name = "DevOps Engineer"
+message = 'Hello, World!'
+multiline = """
+This is a
+multiline string
+"""
+
+# Booleans
+is_active = True
+is_admin = False
+
+# Lists (mutable)
+fruits = ['apple', 'banana', 'orange']
+numbers = [1, 2, 3, 4, 5]
+
+# Tuples (immutable)
+coordinates = (10, 20)
+rgb = (255, 128, 0)
+
+# Dictionaries
+person = {
+    'name': 'John',
+    'age': 30,
+    'city': 'New York'
+}
+
+# Sets
+unique_numbers = {1, 2, 3, 4, 5}
+```
+
+## Day 19: Control Structures and Functions
+
+### Control Flow
+
+**Conditional Statements:**
+
+```python
+# If-elif-else
+age = 25
+if age < 18:
+    print("Minor")
+elif age < 65:
+    print("Adult")
+else:
+    print("Senior")
+
+# Ternary operator
+status = "adult" if age >= 18 else "minor"
+```
+
+**Loops:**
+
+```python
+# For loop
+for i in range(5):
+    print(f"Count: {i}")
+
+# For loop with list
+fruits = ['apple', 'banana', 'orange']
+for fruit in fruits:
+    print(f"I like {fruit}")
+
+# While loop
+count = 0
+while count < 5:
+    print(f"Count: {count}")
+    count += 1
+
+# List comprehension
+squares = [x**2 for x in range(10)]
+even_numbers = [x for x in range(20) if x % 2 == 0]
+```
+
+### Functions
+
+**Function Definition:**
+
+```python
+def greet(name, greeting="Hello"):
+    """Print a greeting message."""
+    return f"{greeting}, {name}!"
+
+# Function call
+message = greet("Alice")
+print(message)  # Output: Hello, Alice!
+
+# Function with multiple return values
+def get_coordinates():
+    return 10, 20
+
+x, y = get_coordinates()
+```
+
+**Lambda Functions:**
+
+```python
+# Lambda function
+square = lambda x: x**2
+print(square(5))  # Output: 25
+
+# Lambda with filter
+numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+even_numbers = list(filter(lambda x: x % 2 == 0, numbers))
+```
+
+## Day 20: File I/O and Error Handling
+
+### File Operations
+
+**Reading Files:**
+
+```python
+# Read entire file
+with open('config.txt', 'r') as file:
+    content = file.read()
+    print(content)
+
+# Read line by line
+with open('config.txt', 'r') as file:
+    for line in file:
+        print(line.strip())
+
+# Read all lines into list
+with open('config.txt', 'r') as file:
+    lines = file.readlines()
+```
+
+**Writing Files:**
+
+```python
+# Write to file
+with open('output.txt', 'w') as file:
+    file.write("Hello, World!\n")
+    file.write("This is a test file.\n")
+
+# Append to file
+with open('log.txt', 'a') as file:
+    file.write(f"{datetime.now()}: Log entry\n")
+```
+
+### Error Handling
+
+**Try-Except Blocks:**
+
+```python
+# Basic error handling
+try:
+    result = 10 / 0
+except ZeroDivisionError:
+    print("Cannot divide by zero!")
+except Exception as e:
+    print(f"An error occurred: {e}")
+finally:
+    print("This always executes")
+
+# Custom exceptions
+class ConfigError(Exception):
+    pass
+
+def load_config(filename):
+    try:
+        with open(filename, 'r') as file:
+            return file.read()
+    except FileNotFoundError:
+        raise ConfigError(f"Config file {filename} not found")
+```
+
+## Hands-on Projects
+
+### Project 1: Configuration Parser
+
+```python
+#!/usr/bin/env python3
+import json
+import yaml
+import configparser
+
+class ConfigParser:
+    def __init__(self):
+        self.config = {}
+
+    def load_json(self, filename):
+        """Load configuration from JSON file."""
+        try:
+            with open(filename, 'r') as file:
+                self.config.update(json.load(file))
+        except FileNotFoundError:
+            print(f"Config file {filename} not found")
+
+    def load_yaml(self, filename):
+        """Load configuration from YAML file."""
+        try:
+            with open(filename, 'r') as file:
+                self.config.update(yaml.safe_load(file))
+        except FileNotFoundError:
+            print(f"Config file {filename} not found")
+
+    def get(self, key, default=None):
+        """Get configuration value."""
+        return self.config.get(key, default)
+
+    def set(self, key, value):
+        """Set configuration value."""
+        self.config[key] = value
+
+# Usage
+config = ConfigParser()
+config.load_json('config.json')
+database_url = config.get('database_url', 'localhost')
+```
+
+### Project 2: Log Analyzer
+
+```python
+#!/usr/bin/env python3
+import re
+from collections import defaultdict
+from datetime import datetime
+
+class LogAnalyzer:
+    def __init__(self):
+        self.log_entries = []
+        self.error_count = defaultdict(int)
+
+    def parse_log_line(self, line):
+        """Parse a log line and extract information."""
+        # Example log format: 2023-01-01 10:30:45 ERROR Database connection failed
+        pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+) (.+)'
+        match = re.match(pattern, line)
+
+        if match:
+            timestamp, level, message = match.groups()
+            return {
+                'timestamp': datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S'),
+                'level': level,
+                'message': message
+            }
+        return None
+
+    def analyze_log_file(self, filename):
+        """Analyze a log file and count errors by type."""
+        with open(filename, 'r') as file:
+            for line in file:
+                entry = self.parse_log_line(line.strip())
+                if entry:
+                    self.log_entries.append(entry)
+                    if entry['level'] == 'ERROR':
+                        self.error_count[entry['message']] += 1
+
+    def get_error_summary(self):
+        """Get summary of errors."""
+        return dict(self.error_count)
+
+# Usage
+analyzer = LogAnalyzer()
+analyzer.analyze_log_file('application.log')
+errors = analyzer.get_error_summary()
+for error, count in errors.items():
+    print(f"{error}: {count} occurrences")
+```
+
+### Project 3: System Monitor
+
+```python
+#!/usr/bin/env python3
+import psutil
+import time
+import json
+
+class SystemMonitor:
+    def __init__(self):
+        self.metrics = []
+
+    def collect_metrics(self):
+        """Collect system metrics."""
+        metrics = {
+            'timestamp': time.time(),
+            'cpu_percent': psutil.cpu_percent(interval=1),
+            'memory_percent': psutil.virtual_memory().percent,
+            'disk_usage': psutil.disk_usage('/').percent,
+            'network_io': psutil.net_io_counters()._asdict()
+        }
+        self.metrics.append(metrics)
+        return metrics
+
+    def monitor_system(self, duration=60, interval=5):
+        """Monitor system for specified duration."""
+        print(f"Monitoring system for {duration} seconds...")
+
+        for i in range(0, duration, interval):
+            metrics = self.collect_metrics()
+            print(f"CPU: {metrics['cpu_percent']}% | "
+                  f"Memory: {metrics['memory_percent']}% | "
+                  f"Disk: {metrics['disk_usage']}%")
+            time.sleep(interval)
+
+    def save_metrics(self, filename):
+        """Save metrics to JSON file."""
+        with open(filename, 'w') as file:
+            json.dump(self.metrics, file, indent=2)
+
+# Usage
+monitor = SystemMonitor()
+monitor.monitor_system(duration=30, interval=5)
+monitor.save_metrics('system_metrics.json')
+```
+
+## Assessment
+
+**Day 18 Quiz:**
+
+1. What are the main data types in Python?
+2. How do you create a virtual environment?
+3. Explain the difference between lists and tuples
+
+**Day 19 Quiz:**
+
+1. How do you define a function in Python?
+2. What is a lambda function?
+3. Explain list comprehension
+
+**Day 20 Quiz:**
+
+1. How do you handle exceptions in Python?
+2. What's the difference between 'r' and 'w' file modes?
+3. How do you read a file line by line?
+
+## Resources
+
+- **Documentation**: [Python Official Documentation](https://docs.python.org/)
+- **Tutorial**: [Python Tutorial](https://docs.python.org/3/tutorial/)
+- **Libraries**: [PyPI](https://pypi.org/)
+- **Practice**: [HackerRank Python](https://www.hackerrank.com/domains/python)
+
+## Next Steps
+
+Tomorrow we'll dive into CI/CD fundamentals, building on our Python knowledge to automate deployment pipelines.

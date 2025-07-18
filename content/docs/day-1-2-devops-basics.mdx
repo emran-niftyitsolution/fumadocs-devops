@@ -1,0 +1,503 @@
+---
+title: "Day 1-2: DevOps Basics & Culture"
+description: "Understanding DevOps principles, culture, and lifecycle"
+---
+
+# 🔄 Day 1-2: DevOps Basics & Culture
+
+## Introduction
+
+Welcome to Days 1-2 of your DevOps journey! Today we'll explore the fundamental concepts of DevOps, its history, culture, and the complete DevOps lifecycle. Understanding these basics is crucial for your entire DevOps career.
+
+## 🏗️ What is DevOps?
+
+### **Definition**
+
+DevOps is a set of practices that combines software development (Dev) and IT operations (Ops) to shorten the development lifecycle while delivering features, fixes, and updates frequently in close alignment with business objectives.
+
+### **Core Principles**
+
+1. **Collaboration**: Breaking down silos between development and operations
+2. **Automation**: Automating repetitive tasks and processes
+3. **Continuous Improvement**: Learning from failures and iterating
+4. **Customer-Centric**: Focusing on delivering value to customers
+5. **Lean Management**: Eliminating waste and optimizing flow
+
+## 📚 History of DevOps
+
+### **The Traditional Waterfall Model**
+
+```
+Requirements → Design → Development → Testing → Deployment → Maintenance
+```
+
+**Problems with Waterfall:**
+
+- Long development cycles (months/years)
+- Late discovery of issues
+- Difficult to change requirements
+- Separate teams with conflicting goals
+- Manual deployment processes
+
+### **The Agile Revolution**
+
+Agile methodologies introduced:
+
+- Iterative development
+- Continuous feedback
+- Cross-functional teams
+- Faster delivery cycles
+
+### **The Birth of DevOps**
+
+DevOps emerged in 2009 when Patrick Debois organized the first "DevOps Days" conference. The movement was born from the need to:
+
+- Bridge the gap between development and operations
+- Automate deployment processes
+- Enable continuous delivery
+- Improve collaboration and communication
+
+## 🔄 DevOps Lifecycle
+
+### **The Complete DevOps Pipeline**
+
+```
+Plan → Code → Build → Test → Release → Deploy → Operate → Monitor
+```
+
+### **Detailed Lifecycle Stages**
+
+#### **1. Plan**
+
+- **Requirements gathering**
+- **Project planning**
+- **Sprint planning**
+- **Architecture design**
+
+```yaml
+# Example: Sprint Planning
+sprint_goals:
+  - Implement user authentication
+  - Add payment processing
+  - Deploy to staging environment
+  - Set up monitoring
+
+timeline: 2 weeks
+team_members:
+  - developers: 3
+  - operations: 1
+  - qa: 1
+```
+
+#### **2. Code**
+
+- **Version control**
+- **Code review**
+- **Pair programming**
+- **Code quality checks**
+
+```bash
+# Git workflow example
+git checkout -b feature/user-auth
+# Make changes
+git add .
+git commit -m "Add user authentication feature"
+git push origin feature/user-auth
+# Create pull request
+```
+
+#### **3. Build**
+
+- **Automated compilation**
+- **Dependency management**
+- **Artifact creation**
+- **Build verification**
+
+```yaml
+# Jenkins build pipeline
+pipeline {
+agent any
+stages {
+stage('Build') {
+steps {
+sh 'mvn clean compile'
+sh 'mvn package'
+}
+}
+}
+}
+```
+
+#### **4. Test**
+
+- **Unit testing**
+- **Integration testing**
+- **Automated testing**
+- **Security testing**
+
+```python
+# Example test automation
+def test_user_authentication():
+    user = User("john", "password123")
+    assert user.authenticate() == True
+    assert user.is_logged_in() == True
+```
+
+#### **5. Release**
+
+- **Release planning**
+- **Change management**
+- **Approval processes**
+- **Release notes**
+
+```yaml
+# Release configuration
+release:
+  version: "1.2.0"
+  changes:
+    - "New user authentication feature"
+    - "Bug fixes in payment processing"
+    - "Performance improvements"
+  deployment_strategy: "blue-green"
+```
+
+#### **6. Deploy**
+
+- **Automated deployment**
+- **Environment management**
+- **Rollback capabilities**
+- **Deployment verification**
+
+```bash
+# Deployment script
+#!/bin/bash
+echo "Deploying version $VERSION to $ENVIRONMENT"
+kubectl apply -f k8s/
+kubectl rollout status deployment/myapp
+echo "Deployment completed successfully"
+```
+
+#### **7. Operate**
+
+- **System administration**
+- **Incident response**
+- **Performance monitoring**
+- **User support**
+
+```yaml
+# Operations monitoring
+monitoring:
+  metrics:
+    - cpu_usage
+    - memory_usage
+    - response_time
+    - error_rate
+  alerts:
+    - cpu > 80%
+    - memory > 85%
+    - response_time > 2s
+```
+
+#### **8. Monitor**
+
+- **Application monitoring**
+- **Infrastructure monitoring**
+- **User experience monitoring**
+- **Business metrics**
+
+```python
+# Monitoring example
+import prometheus_client
+
+# Define metrics
+request_count = prometheus_client.Counter('http_requests_total', 'Total HTTP requests')
+response_time = prometheus_client.Histogram('http_request_duration_seconds', 'HTTP request duration')
+
+# Monitor application
+@app.route('/api/users')
+def get_users():
+    request_count.inc()
+    with response_time.time():
+        return jsonify(users)
+```
+
+## 🏢 DevOps Culture
+
+### **The Three Ways of DevOps**
+
+#### **First Way: Flow**
+
+- **Optimize flow from development to operations**
+- **Reduce handoffs and delays**
+- **Make work visible**
+- **Limit work in progress**
+
+```yaml
+# Kanban board example
+columns:
+  - "To Do"
+  - "In Progress"
+  - "Testing"
+  - "Deploy"
+  - "Done"
+
+work_in_progress_limits:
+  "In Progress": 3
+  "Testing": 2
+  "Deploy": 1
+```
+
+#### **Second Way: Feedback**
+
+- **Create feedback loops**
+- **Learn from failures**
+- **Share knowledge**
+- **Improve continuously**
+
+```bash
+# Post-mortem template
+post_mortem:
+  incident: "Database connection timeout"
+  date: "2024-01-15"
+  impact: "High - 30 minutes downtime"
+  root_cause: "Connection pool exhaustion"
+  action_items:
+    - "Implement connection pooling"
+    - "Add monitoring alerts"
+    - "Update runbooks"
+```
+
+#### **Third Way: Continuous Learning**
+
+- **Practice and repetition**
+- **Knowledge sharing**
+- **Experimentation**
+- **Learning from failures**
+
+```yaml
+# Learning culture practices
+practices:
+  - "Weekly knowledge sharing sessions"
+  - "Monthly hackathons"
+  - "Cross-team pair programming"
+  - "Regular retrospectives"
+  - "Encouraging experimentation"
+```
+
+### **DevOps Team Structure**
+
+#### **Traditional Silos**
+
+```
+Development Team → Handoff → Operations Team
+```
+
+#### **DevOps Team**
+
+```
+Cross-functional DevOps Team
+├── Developers
+├── Operations Engineers
+├── QA Engineers
+├── Security Engineers
+└── Business Analysts
+```
+
+## 🛠️ DevOps Tools Landscape
+
+### **Tool Categories**
+
+#### **Version Control**
+
+- **Git**: Distributed version control
+- **GitHub/GitLab**: Code hosting and collaboration
+- **Bitbucket**: Code hosting for teams
+
+#### **CI/CD Tools**
+
+- **Jenkins**: Automation server
+- **GitHub Actions**: CI/CD for GitHub
+- **GitLab CI**: GitLab's CI/CD
+- **CircleCI**: Cloud-based CI/CD
+
+#### **Containerization**
+
+- **Docker**: Container platform
+- **Kubernetes**: Container orchestration
+- **Docker Compose**: Multi-container applications
+
+#### **Infrastructure as Code**
+
+- **Terraform**: Infrastructure provisioning
+- **Ansible**: Configuration management
+- **CloudFormation**: AWS infrastructure
+- **ARM Templates**: Azure infrastructure
+
+#### **Monitoring & Observability**
+
+- **Prometheus**: Metrics collection
+- **Grafana**: Visualization
+- **ELK Stack**: Logging
+- **Jaeger**: Distributed tracing
+
+## 📊 DevOps Metrics
+
+### **Key Performance Indicators (KPIs)**
+
+#### **Deployment Frequency**
+
+```yaml
+# Deployment metrics
+deployment_frequency:
+  daily: 5 deployments
+  weekly: 25 deployments
+  monthly: 100 deployments
+  goal: "Multiple deployments per day"
+```
+
+#### **Lead Time**
+
+```yaml
+# Lead time measurement
+lead_time:
+  definition: "Time from code commit to production"
+  current: "2 days"
+  target: "4 hours"
+  measurement: "Track from commit to deployment"
+```
+
+#### **Mean Time to Recovery (MTTR)**
+
+```yaml
+# Recovery time metrics
+mttr:
+  definition: "Average time to restore service after failure"
+  current: "4 hours"
+  target: "30 minutes"
+  measurement: "Track incident resolution time"
+```
+
+#### **Change Failure Rate**
+
+```yaml
+# Change failure metrics
+change_failure_rate:
+  definition: "Percentage of deployments causing failures"
+  current: "15%"
+  target: "5%"
+  measurement: "Track failed deployments vs total"
+```
+
+## 🎯 Day 1-2 Exercises
+
+### **Exercise 1: DevOps Assessment**
+
+Evaluate your current organization's DevOps maturity:
+
+```yaml
+# DevOps Maturity Assessment
+categories:
+  culture:
+    - "Cross-functional teams"
+    - "Shared responsibility"
+    - "Continuous learning"
+  automation:
+    - "Build automation"
+    - "Test automation"
+    - "Deployment automation"
+  measurement:
+    - "Deployment frequency"
+    - "Lead time"
+    - "MTTR"
+    - "Change failure rate"
+  sharing:
+    - "Knowledge sharing"
+    - "Cross-training"
+    - "Documentation"
+```
+
+### **Exercise 2: DevOps Lifecycle Mapping**
+
+Map your current development process to the DevOps lifecycle:
+
+```bash
+# Current process analysis
+echo "Current Development Process:"
+echo "1. Requirements gathering (2 weeks)"
+echo "2. Development (4 weeks)"
+echo "3. Testing (2 weeks)"
+echo "4. Deployment (1 week)"
+echo "5. Monitoring (ongoing)"
+
+echo "DevOps Transformation Goals:"
+echo "1. Continuous integration (daily)"
+echo "2. Automated testing (every commit)"
+echo "3. Automated deployment (multiple per day)"
+echo "4. Continuous monitoring (real-time)"
+```
+
+### **Exercise 3: DevOps Culture Assessment**
+
+Assess your team's DevOps culture readiness:
+
+```yaml
+# Culture assessment questions
+questions:
+  collaboration:
+    - "Do developers and operations work together?"
+    - "Are there shared goals between teams?"
+    - "Is knowledge shared across teams?"
+
+  automation:
+    - "Are manual processes documented?"
+    - "Are there opportunities for automation?"
+    - "Is automation prioritized?"
+
+  learning:
+    - "Are failures treated as learning opportunities?"
+    - "Is experimentation encouraged?"
+    - "Are retrospectives held regularly?"
+```
+
+## 📚 Day 1-2 Resources
+
+### **Books**
+
+- "The Phoenix Project" by Gene Kim
+- "DevOps Handbook" by Gene Kim
+- "Accelerate" by Nicole Forsgren
+
+### **Videos**
+
+- "What is DevOps?" - AWS
+- "The Three Ways of DevOps" - Gene Kim
+- "DevOps Culture" - Google Cloud
+
+### **Articles**
+
+- "The History of DevOps" - DevOps.com
+- "DevOps Culture Best Practices" - Atlassian
+- "Measuring DevOps Success" - DORA
+
+## 🚀 Day 1-2 Checklist
+
+- [ ] Understand DevOps principles and culture
+- [ ] Learn the DevOps lifecycle
+- [ ] Complete the DevOps assessment exercise
+- [ ] Map your current process to DevOps lifecycle
+- [ ] Assess your team's DevOps culture readiness
+- [ ] Read recommended resources
+- [ ] Set up your learning environment
+- [ ] Prepare for Day 3-5: Linux Essentials
+
+## 🎯 Key Takeaways
+
+1. **DevOps is a culture**, not just tools
+2. **Collaboration** is key to DevOps success
+3. **Automation** enables faster delivery
+4. **Continuous improvement** drives excellence
+5. **Measurement** helps track progress
+
+---
+
+**Next Steps:** You've completed the foundation of DevOps understanding. Get ready for [Day 3-5: Linux Essentials](/docs/day-3-5-linux-essentials) where you'll learn the essential Linux skills needed for DevOps engineering.

@@ -1,0 +1,316 @@
+---
+title: "Day 15-17: Cloud & Virtualization"
+description: "Learn cloud computing fundamentals and virtualization technologies"
+---
+
+# Day 15-17: Cloud & Virtualization
+
+## Day 15: Cloud Computing Fundamentals
+
+### Understanding Cloud Computing
+
+**Learning Objectives:**
+
+- Understand cloud service models (IaaS, PaaS, SaaS)
+- Learn cloud deployment models
+- Master cloud computing benefits and challenges
+
+**Cloud Service Models:**
+
+#### Infrastructure as a Service (IaaS)
+
+- **What**: Virtual machines, storage, networking
+- **Examples**: AWS EC2, Azure VMs, Google Compute Engine
+- **Control**: OS, applications, data
+- **Management**: Provider handles hardware, networking
+
+#### Platform as a Service (PaaS)
+
+- **What**: Development platforms, runtime environments
+- **Examples**: Heroku, AWS Elastic Beanstalk, Google App Engine
+- **Control**: Applications, data
+- **Management**: Provider handles OS, runtime, middleware
+
+#### Software as a Service (SaaS)
+
+- **What**: Complete applications
+- **Examples**: Gmail, Salesforce, Slack
+- **Control**: Data only
+- **Management**: Provider handles everything
+
+### Cloud Deployment Models
+
+**Public Cloud:**
+
+- Shared infrastructure
+- Pay-as-you-go pricing
+- Examples: AWS, Azure, Google Cloud
+
+**Private Cloud:**
+
+- Dedicated infrastructure
+- Higher security and control
+- Examples: OpenStack, VMware vCloud
+
+**Hybrid Cloud:**
+
+- Combination of public and private
+- Workload portability
+- Examples: AWS Outposts, Azure Stack
+
+## Day 16: Virtualization Technologies
+
+### Virtualization Types
+
+**Server Virtualization:**
+
+```bash
+# VMware ESXi example
+# Create VM with specific resources
+vmware-cmd -s register /vmfs/volumes/datastore1/vm1/vm1.vmx
+
+# Check VM status
+vmware-cmd -s getstate /vmfs/volumes/datastore1/vm1/vm1.vmx
+```
+
+**Container Virtualization:**
+
+```bash
+# Docker container example
+docker run -d --name webapp -p 8080:80 nginx
+
+# Check running containers
+docker ps
+
+# Container resource usage
+docker stats
+```
+
+**Desktop Virtualization:**
+
+- VDI (Virtual Desktop Infrastructure)
+- Application virtualization
+- User profile virtualization
+
+### Hypervisor Types
+
+**Type 1 (Bare Metal):**
+
+- VMware ESXi
+- Microsoft Hyper-V
+- Citrix XenServer
+
+**Type 2 (Hosted):**
+
+- VMware Workstation
+- Oracle VirtualBox
+- Parallels Desktop
+
+## Day 17: Cloud Providers Deep Dive
+
+### AWS (Amazon Web Services)
+
+**Core Services:**
+
+```bash
+# AWS CLI setup
+aws configure
+
+# Create EC2 instance
+aws ec2 run-instances \
+  --image-id ami-12345678 \
+  --count 1 \
+  --instance-type t2.micro \
+  --key-name my-key-pair
+
+# List S3 buckets
+aws s3 ls
+
+# Upload file to S3
+aws s3 cp file.txt s3://my-bucket/
+```
+
+**AWS Architecture:**
+
+- **Regions**: Geographic locations
+- **Availability Zones**: Data centers within regions
+- **VPC**: Virtual private cloud
+- **Subnets**: Network segments
+
+### Azure (Microsoft)
+
+**Core Services:**
+
+```bash
+# Azure CLI setup
+az login
+
+# Create resource group
+az group create --name myResourceGroup --location eastus
+
+# Create VM
+az vm create \
+  --resource-group myResourceGroup \
+  --name myVM \
+  --image UbuntuLTS \
+  --size Standard_DS1_v2
+```
+
+### Google Cloud Platform (GCP)
+
+**Core Services:**
+
+```bash
+# Google Cloud CLI setup
+gcloud auth login
+
+# Create compute instance
+gcloud compute instances create my-instance \
+  --zone=us-central1-a \
+  --machine-type=e2-micro \
+  --image-family=debian-11 \
+  --image-project=debian-cloud
+```
+
+## Hands-on Projects
+
+### Project 1: Multi-Cloud Setup
+
+```bash
+# AWS setup
+aws configure set aws_access_key_id YOUR_ACCESS_KEY
+aws configure set aws_secret_access_key YOUR_SECRET_KEY
+aws configure set default.region us-east-1
+
+# Azure setup
+az login
+az account set --subscription YOUR_SUBSCRIPTION_ID
+
+# GCP setup
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+```
+
+### Project 2: Container Orchestration
+
+```yaml
+# Docker Compose example
+version: "3.8"
+services:
+  web:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    environment:
+      - NGINX_HOST=localhost
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - app
+
+  app:
+    image: node:16-alpine
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    command: npm start
+    environment:
+      - NODE_ENV=production
+```
+
+### Project 3: Infrastructure as Code
+
+```terraform
+# Terraform example for AWS
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_instance" "web_server" {
+  ami           = "ami-12345678"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = "WebServer"
+  }
+}
+
+resource "aws_security_group" "web_sg" {
+  name        = "web-security-group"
+  description = "Security group for web server"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+
+## Cloud Security Best Practices
+
+### Identity and Access Management (IAM)
+
+```bash
+# AWS IAM user creation
+aws iam create-user --user-name devops-user
+
+# Attach policy
+aws iam attach-user-policy \
+  --user-name devops-user \
+  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+```
+
+### Network Security
+
+- Use VPCs for network isolation
+- Implement security groups/firewall rules
+- Enable encryption in transit and at rest
+- Use private subnets for sensitive resources
+
+### Monitoring and Logging
+
+```bash
+# AWS CloudWatch setup
+aws cloudwatch put-metric-alarm \
+  --alarm-name "HighCPU" \
+  --alarm-description "High CPU utilization" \
+  --metric-name CPUUtilization \
+  --namespace AWS/EC2 \
+  --statistic Average \
+  --period 300 \
+  --threshold 80 \
+  --comparison-operator GreaterThanThreshold
+```
+
+## Assessment
+
+**Day 15 Quiz:**
+
+1. Explain the difference between IaaS, PaaS, and SaaS
+2. What are the benefits of cloud computing?
+3. When would you choose private cloud over public cloud?
+
+**Day 16 Quiz:**
+
+1. What is the difference between Type 1 and Type 2 hypervisors?
+2. How does containerization differ from traditional virtualization?
+3. Explain the concept of VDI
+
+**Day 17 Quiz:**
+
+1. What are AWS Availability Zones?
+2. How do you secure cloud resources?
+3. Explain the concept of Infrastructure as Code
+
+## Resources
+
+- **AWS**: [AWS Documentation](https://docs.aws.amazon.com/)
+- **Azure**: [Microsoft Learn](https://docs.microsoft.com/azure/)
+- **GCP**: [Google Cloud Documentation](https://cloud.google.com/docs)
+- **Certifications**: AWS Solutions Architect, Azure Administrator, GCP Professional Cloud Architect
+
+## Next Steps
+
+Tomorrow we'll dive into Python basics, building on our cloud knowledge to automate infrastructure management.

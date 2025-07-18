@@ -1,0 +1,238 @@
+---
+title: "Day 6-8: Networking Basics"
+description: "Learn fundamental networking concepts essential for DevOps engineers"
+---
+
+# Day 6-8: Networking Basics
+
+## Day 6: Network Fundamentals
+
+### Understanding Network Architecture
+
+**Learning Objectives:**
+
+- Understand OSI and TCP/IP models
+- Learn about IP addressing and subnetting
+- Master network protocols and ports
+
+**Core Concepts:**
+
+#### OSI Model (7 Layers)
+
+```
+7. Application Layer (HTTP, FTP, SMTP)
+6. Presentation Layer (SSL/TLS, encryption)
+5. Session Layer (NetBIOS, RPC)
+4. Transport Layer (TCP, UDP)
+3. Network Layer (IP, ICMP)
+2. Data Link Layer (Ethernet, MAC addresses)
+1. Physical Layer (Cables, switches)
+```
+
+#### TCP/IP Model
+
+```
+4. Application Layer
+3. Transport Layer
+2. Internet Layer
+1. Network Access Layer
+```
+
+#### IP Addressing
+
+- **IPv4**: 32-bit addresses (e.g., 192.168.1.1)
+- **IPv6**: 128-bit addresses (e.g., 2001:0db8:85a3:0000:0000:8a2e:0370:7334)
+- **Private IP ranges**: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+
+**Practical Exercise:**
+
+```bash
+# Check your network configuration
+ip addr show
+ip route show
+netstat -tuln
+```
+
+## Day 7: Subnetting and Network Design
+
+### Subnetting Fundamentals
+
+**CIDR Notation:**
+
+- /24 = 255.255.255.0 (256 addresses, 254 usable)
+- /16 = 255.255.0.0 (65,536 addresses)
+- /8 = 255.0.0.0 (16,777,216 addresses)
+
+**Subnetting Examples:**
+
+```
+Network: 192.168.1.0/24
+- Range: 192.168.1.0 - 192.168.1.255
+- Usable: 192.168.1.1 - 192.168.1.254
+- Broadcast: 192.168.1.255
+```
+
+**Network Design Principles:**
+
+- Separate production, staging, and development networks
+- Use VLANs for network segmentation
+- Implement proper firewall rules
+
+**Practical Exercise:**
+
+```bash
+# Calculate subnet information
+ipcalc 192.168.1.0/24
+ipcalc 10.0.0.0/16
+
+# Test network connectivity
+ping -c 4 8.8.8.8
+traceroute google.com
+```
+
+## Day 8: Network Protocols and Services
+
+### Essential Protocols
+
+**Transport Layer Protocols:**
+
+- **TCP**: Connection-oriented, reliable (HTTP, HTTPS, SSH, FTP)
+- **UDP**: Connectionless, fast (DNS, DHCP, streaming)
+
+**Application Layer Protocols:**
+
+- **HTTP/HTTPS**: Web traffic
+- **SSH**: Secure shell access
+- **DNS**: Domain name resolution
+- **DHCP**: Dynamic IP assignment
+
+### Network Services
+
+**DNS Configuration:**
+
+```bash
+# Check DNS resolution
+nslookup google.com
+dig google.com
+cat /etc/resolv.conf
+```
+
+**DHCP Understanding:**
+
+```bash
+# Check DHCP lease
+cat /var/lib/dhcp/dhclient.leases
+systemctl status dhcpd
+```
+
+**Network Troubleshooting:**
+
+```bash
+# Common network commands
+ifconfig eth0
+ip link show
+ss -tuln
+netstat -i
+```
+
+### DevOps Network Considerations
+
+**Container Networking:**
+
+- Bridge networks for container communication
+- Host networking for performance
+- Overlay networks for multi-host setups
+
+**Load Balancer Configuration:**
+
+```nginx
+# Nginx load balancer example
+upstream backend {
+    server 192.168.1.10:8080;
+    server 192.168.1.11:8080;
+    server 192.168.1.12:8080;
+}
+
+server {
+    listen 80;
+    location / {
+        proxy_pass http://backend;
+    }
+}
+```
+
+**Security Best Practices:**
+
+- Use VPNs for remote access
+- Implement network segmentation
+- Monitor network traffic
+- Regular security audits
+
+## Hands-on Projects
+
+### Project 1: Network Analysis
+
+```bash
+# Install network tools
+sudo apt-get install nmap wireshark tcpdump
+
+# Analyze network traffic
+sudo tcpdump -i eth0 -w capture.pcap
+nmap -sS 192.168.1.0/24
+```
+
+### Project 2: Simple Load Balancer
+
+```python
+#!/usr/bin/env python3
+import socket
+import threading
+import time
+
+class SimpleLoadBalancer:
+    def __init__(self, backend_servers):
+        self.backend_servers = backend_servers
+        self.current_server = 0
+
+    def get_next_server(self):
+        server = self.backend_servers[self.current_server]
+        self.current_server = (self.current_server + 1) % len(self.backend_servers)
+        return server
+
+    def handle_client(self, client_socket):
+        backend = self.get_next_server()
+        # Forward request to backend server
+        # Implementation details here
+        pass
+```
+
+## Assessment
+
+**Day 6 Quiz:**
+
+1. What are the 7 layers of the OSI model?
+2. Explain the difference between TCP and UDP
+3. What is the purpose of a subnet mask?
+
+**Day 7 Quiz:**
+
+1. Calculate the network address for 192.168.15.23/26
+2. How many usable IP addresses in a /28 subnet?
+3. Design a network for a company with 3 departments
+
+**Day 8 Quiz:**
+
+1. Explain DNS resolution process
+2. What is the purpose of DHCP?
+3. How would you troubleshoot a network connectivity issue?
+
+## Resources
+
+- **Books**: "Computer Networks" by Andrew Tanenbaum
+- **Tools**: Wireshark, nmap, tcpdump
+- **Practice**: TryHackMe networking modules
+- **Certification**: CompTIA Network+
+
+## Next Steps
+
+Tomorrow we'll dive into Git version control, building on our networking foundation to understand how code flows through distributed systems.

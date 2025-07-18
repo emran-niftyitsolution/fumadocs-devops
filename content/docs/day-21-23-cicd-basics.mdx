@@ -1,0 +1,448 @@
+---
+title: "Day 21-23: CI/CD Basics"
+description: "Learn Continuous Integration and Continuous Deployment fundamentals"
+---
+
+# Day 21-23: CI/CD Basics
+
+## Day 21: Continuous Integration Fundamentals
+
+### Understanding CI/CD
+
+**Learning Objectives:**
+
+- Understand CI/CD pipeline concepts
+- Learn automated testing strategies
+- Master build automation
+
+**What is CI/CD?**
+
+- **CI (Continuous Integration)**: Automatically build and test code changes
+- **CD (Continuous Deployment)**: Automatically deploy to production
+- **CD (Continuous Delivery)**: Prepare code for deployment
+
+### CI/CD Pipeline Stages
+
+**Typical Pipeline:**
+
+```
+Code Commit → Build → Test → Deploy → Monitor
+```
+
+**Pipeline Components:**
+
+1. **Source Control**: Git repository
+2. **Build Server**: Jenkins, GitLab CI, GitHub Actions
+3. **Artifact Repository**: Docker Hub, Nexus, Artifactory
+4. **Deployment Target**: Kubernetes, Cloud platforms
+
+### Basic CI Setup
+
+**GitHub Actions Example:**
+
+```yaml
+# .github/workflows/ci.yml
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build application
+        run: npm run build
+```
+
+## Day 22: Automated Testing
+
+### Testing Strategies
+
+**Testing Pyramid:**
+
+```
+    /\
+   /  \    E2E Tests (Few)
+  /____\   Integration Tests (Some)
+ /______\  Unit Tests (Many)
+```
+
+**Unit Testing:**
+
+```python
+# test_calculator.py
+import unittest
+from calculator import Calculator
+
+class TestCalculator(unittest.TestCase):
+    def setUp(self):
+        self.calc = Calculator()
+
+    def test_add(self):
+        result = self.calc.add(2, 3)
+        self.assertEqual(result, 5)
+
+    def test_subtract(self):
+        result = self.calc.subtract(5, 3)
+        self.assertEqual(result, 2)
+
+    def test_divide_by_zero(self):
+        with self.assertRaises(ValueError):
+            self.calc.divide(10, 0)
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+**Integration Testing:**
+
+```python
+# test_api_integration.py
+import requests
+import unittest
+
+class TestAPI(unittest.TestCase):
+    def setUp(self):
+        self.base_url = "http://localhost:8000"
+
+    def test_user_endpoint(self):
+        response = requests.get(f"{self.base_url}/api/users")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.json(), list)
+
+    def test_create_user(self):
+        user_data = {"name": "John", "email": "john@example.com"}
+        response = requests.post(f"{self.base_url}/api/users", json=user_data)
+        self.assertEqual(response.status_code, 201)
+```
+
+### Test Automation
+
+**Selenium for UI Testing:**
+
+```python
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+class TestWebApp:
+    def setUp(self):
+        self.driver = webdriver.Chrome()
+        self.driver.get("http://localhost:3000")
+
+    def test_login(self):
+        # Find username field
+        username = self.driver.find_element(By.ID, "username")
+        username.send_keys("testuser")
+
+        # Find password field
+        password = self.driver.find_element(By.ID, "password")
+        password.send_keys("testpass")
+
+        # Click login button
+        login_button = self.driver.find_element(By.ID, "login")
+        login_button.click()
+
+        # Wait for dashboard
+        dashboard = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.ID, "dashboard"))
+        )
+
+        self.assertIsNotNone(dashboard)
+
+    def tearDown(self):
+        self.driver.quit()
+```
+
+## Day 23: Build Automation
+
+### Build Tools
+
+**Maven (Java):**
+
+```xml
+<!-- pom.xml -->
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>my-app</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+**npm (Node.js):**
+
+```json
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "jest",
+    "build": "webpack --mode production",
+    "start": "node dist/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "webpack": "^5.0.0",
+    "nodemon": "^2.0.0"
+  }
+}
+```
+
+**Make (C/C++):**
+
+```makefile
+# Makefile
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c99
+TARGET = myapp
+SOURCES = main.c utils.c
+OBJECTS = $(SOURCES:.c=.o)
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(OBJECTS) -o $(TARGET)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+test: $(TARGET)
+	./$(TARGET) --test
+
+clean:
+	rm -f $(OBJECTS) $(TARGET)
+
+.PHONY: test clean
+```
+
+### Docker Integration
+
+**Dockerfile Example:**
+
+```dockerfile
+# Multi-stage build
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+**Docker Compose for Testing:**
+
+```yaml
+# docker-compose.test.yml
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://test:test@db:5432/testdb
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+    volumes:
+      - test_data:/var/lib/postgresql/data
+
+volumes:
+  test_data:
+```
+
+## Hands-on Projects
+
+### Project 1: Complete CI Pipeline
+
+```yaml
+# .github/workflows/complete-ci.yml
+name: Complete CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      - run: npm install
+      - run: npm run lint
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      - run: npm install
+      - run: npm test
+      - run: npm run test:coverage
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker image
+        run: docker build -t myapp:${{ github.sha }} .
+      - name: Push to registry
+        run: |
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push myapp:${{ github.sha }}
+```
+
+### Project 2: Test Automation Framework
+
+```python
+# test_framework.py
+import unittest
+import requests
+import json
+import time
+
+class APITestFramework:
+    def __init__(self, base_url):
+        self.base_url = base_url
+        self.session = requests.Session()
+
+    def test_health_check(self):
+        """Test application health endpoint."""
+        response = self.session.get(f"{self.base_url}/health")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'healthy')
+
+    def test_user_crud(self):
+        """Test user CRUD operations."""
+        # Create user
+        user_data = {
+            "name": "Test User",
+            "email": "test@example.com"
+        }
+        response = self.session.post(f"{self.base_url}/api/users", json=user_data)
+        self.assertEqual(response.status_code, 201)
+        user_id = response.json()['id']
+
+        # Read user
+        response = self.session.get(f"{self.base_url}/api/users/{user_id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['name'], user_data['name'])
+
+        # Update user
+        update_data = {"name": "Updated User"}
+        response = self.session.put(f"{self.base_url}/api/users/{user_id}", json=update_data)
+        self.assertEqual(response.status_code, 200)
+
+        # Delete user
+        response = self.session.delete(f"{self.base_url}/api/users/{user_id}")
+        self.assertEqual(response.status_code, 204)
+
+# Usage
+if __name__ == '__main__':
+    framework = APITestFramework("http://localhost:3000")
+    framework.test_health_check()
+    framework.test_user_crud()
+```
+
+## Assessment
+
+**Day 21 Quiz:**
+
+1. What is the difference between CI and CD?
+2. Name the stages of a typical CI/CD pipeline
+3. What is the purpose of an artifact repository?
+
+**Day 22 Quiz:**
+
+1. Explain the testing pyramid
+2. What is the difference between unit and integration tests?
+3. How do you handle test data in automated testing?
+
+**Day 23 Quiz:**
+
+1. What is a multi-stage Docker build?
+2. How do you configure build tools for CI?
+3. Explain the purpose of Docker Compose in testing
+
+## Resources
+
+- **Jenkins**: [Jenkins Documentation](https://www.jenkins.io/doc/)
+- **GitHub Actions**: [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- **GitLab CI**: [GitLab CI/CD Documentation](https://docs.gitlab.com/ee/ci/)
+- **Testing**: [Jest Documentation](https://jestjs.io/docs/getting-started)
+
+## Next Steps
+
+Tomorrow we'll dive into Jenkins mastery, building on our CI/CD knowledge to create sophisticated automation pipelines.

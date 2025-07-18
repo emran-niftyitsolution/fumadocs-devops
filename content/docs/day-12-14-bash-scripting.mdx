@@ -1,0 +1,753 @@
+---
+title: "Day 12-14: Bash Scripting for DevOps"
+description: "Master Bash scripting and automation for DevOps engineering"
+---
+
+# 🐚 Day 12-14: Bash Scripting for DevOps
+
+## Introduction
+
+Welcome to Days 12-14 of your DevOps journey! Bash scripting is essential for DevOps engineers. It's the primary automation tool for Linux systems and is used extensively in CI/CD pipelines, server administration, and infrastructure management.
+
+## 🏗️ Bash Fundamentals
+
+### **What is Bash?**
+
+- **Bash**: Bourne Again Shell - the default shell for most Linux distributions
+- **Scripting**: Writing sequences of commands to automate tasks
+- **Automation**: Reducing manual work and ensuring consistency
+
+### **Why Bash for DevOps?**
+
+- **Ubiquitous**: Available on all Linux systems
+- **Fast**: Lightweight and efficient
+- **Powerful**: Rich set of built-in commands and utilities
+- **Portable**: Scripts work across different Linux distributions
+
+## 📝 Basic Script Structure
+
+### **Shebang Line**
+
+```bash
+#!/bin/bash
+# This tells the system to use bash to execute the script
+```
+
+### **Basic Script Example**
+
+```bash
+#!/bin/bash
+
+# Script: hello.sh
+# Description: A simple bash script
+
+echo "Hello, DevOps World!"
+echo "Current date: $(date)"
+echo "Current user: $USER"
+```
+
+### **Making Scripts Executable**
+
+```bash
+chmod +x script.sh
+./script.sh
+```
+
+## 🔧 Variables and Data Types
+
+### **Variable Declaration**
+
+```bash
+#!/bin/bash
+
+# String variables
+name="DevOps Engineer"
+company="TechCorp"
+
+# Numeric variables
+age=25
+salary=75000
+
+# Array variables
+tools=("Docker" "Kubernetes" "Jenkins" "Terraform")
+
+# Environment variables
+echo "PATH: $PATH"
+echo "HOME: $HOME"
+echo "USER: $USER"
+```
+
+### **Variable Usage**
+
+```bash
+#!/bin/bash
+
+# Declaring variables
+first_name="John"
+last_name="Doe"
+
+# Using variables
+echo "Full name: $first_name $last_name"
+echo "Full name: ${first_name} ${last_name}"
+
+# String concatenation
+full_name="$first_name $last_name"
+echo "Full name: $full_name"
+```
+
+### **Special Variables**
+
+```bash
+#!/bin/bash
+
+echo "Script name: $0"
+echo "Number of arguments: $#"
+echo "All arguments: $@"
+echo "First argument: $1"
+echo "Second argument: $2"
+echo "Last argument: ${!#}"
+echo "Process ID: $$"
+echo "Exit status: $?"
+```
+
+## 🔄 Control Structures
+
+### **Conditional Statements**
+
+```bash
+#!/bin/bash
+
+# Simple if statement
+if [ $1 -gt 10 ]; then
+    echo "Number is greater than 10"
+fi
+
+# If-else statement
+if [ -f "file.txt" ]; then
+    echo "File exists"
+else
+    echo "File does not exist"
+fi
+
+# If-elif-else statement
+if [ $1 -gt 10 ]; then
+    echo "Number is greater than 10"
+elif [ $1 -eq 10 ]; then
+    echo "Number is equal to 10"
+else
+    echo "Number is less than 10"
+fi
+```
+
+### **Comparison Operators**
+
+```bash
+#!/bin/bash
+
+# Numeric comparisons
+if [ $1 -eq $2 ]; then echo "Equal"; fi
+if [ $1 -ne $2 ]; then echo "Not equal"; fi
+if [ $1 -gt $2 ]; then echo "Greater than"; fi
+if [ $1 -lt $2 ]; then echo "Less than"; fi
+if [ $1 -ge $2 ]; then echo "Greater or equal"; fi
+if [ $1 -le $2 ]; then echo "Less or equal"; fi
+
+# String comparisons
+if [ "$string1" = "$string2" ]; then echo "Strings are equal"; fi
+if [ "$string1" != "$string2" ]; then echo "Strings are not equal"; fi
+if [ -z "$string" ]; then echo "String is empty"; fi
+if [ -n "$string" ]; then echo "String is not empty"; fi
+
+# File tests
+if [ -f "file.txt" ]; then echo "File exists"; fi
+if [ -d "directory" ]; then echo "Directory exists"; fi
+if [ -r "file.txt" ]; then echo "File is readable"; fi
+if [ -w "file.txt" ]; then echo "File is writable"; fi
+if [ -x "script.sh" ]; then echo "Script is executable"; fi
+```
+
+### **Loops**
+
+#### **For Loop**
+
+```bash
+#!/bin/bash
+
+# Basic for loop
+for i in 1 2 3 4 5; do
+    echo "Number: $i"
+done
+
+# For loop with range
+for i in {1..5}; do
+    echo "Number: $i"
+done
+
+# For loop with step
+for i in {0..10..2}; do
+    echo "Even number: $i"
+done
+
+# For loop with command output
+for file in $(ls *.txt); do
+    echo "Processing: $file"
+done
+
+# C-style for loop
+for ((i=0; i<5; i++)); do
+    echo "Counter: $i"
+done
+```
+
+#### **While Loop**
+
+```bash
+#!/bin/bash
+
+# Basic while loop
+counter=1
+while [ $counter -le 5 ]; do
+    echo "Counter: $counter"
+    ((counter++))
+done
+
+# While loop with file reading
+while IFS= read -r line; do
+    echo "Line: $line"
+done < "input.txt"
+
+# Infinite loop with break
+while true; do
+    echo "Press Ctrl+C to exit"
+    sleep 1
+done
+```
+
+## 🔧 Functions
+
+### **Function Definition**
+
+```bash
+#!/bin/bash
+
+# Basic function
+function greet() {
+    echo "Hello, $1!"
+}
+
+# Function with parameters
+function add() {
+    local result=$(( $1 + $2 ))
+    echo "Sum: $result"
+}
+
+# Function with return value
+function multiply() {
+    local result=$(( $1 * $2 ))
+    return $result
+}
+
+# Calling functions
+greet "DevOps Engineer"
+add 5 3
+multiply 4 6
+echo "Multiplication result: $?"
+```
+
+### **Advanced Functions**
+
+```bash
+#!/bin/bash
+
+# Function with default parameters
+function backup_file() {
+    local source_file=${1:-"default.txt"}
+    local backup_dir=${2:-"/tmp/backup"}
+
+    echo "Backing up $source_file to $backup_dir"
+    cp "$source_file" "$backup_dir/"
+}
+
+# Function with error handling
+function safe_delete() {
+    if [ -f "$1" ]; then
+        rm "$1"
+        echo "File $1 deleted successfully"
+    else
+        echo "Error: File $1 does not exist"
+        return 1
+    fi
+}
+```
+
+## 🛠️ DevOps Automation Examples
+
+### **System Monitoring Script**
+
+```bash
+#!/bin/bash
+
+# System monitoring script
+echo "=== System Information ==="
+echo "Date: $(date)"
+echo "Uptime: $(uptime)"
+echo "Memory Usage:"
+free -h
+echo "Disk Usage:"
+df -h
+echo "CPU Usage:"
+top -bn1 | grep "Cpu(s)"
+```
+
+### **Log Analysis Script**
+
+```bash
+#!/bin/bash
+
+# Log analysis script
+log_file="/var/log/application.log"
+
+echo "=== Log Analysis ==="
+echo "Total lines: $(wc -l < $log_file)"
+echo "Error count: $(grep -c "ERROR" $log_file)"
+echo "Warning count: $(grep -c "WARN" $log_file)"
+echo "Recent errors:"
+grep "ERROR" $log_file | tail -5
+```
+
+### **Backup Script**
+
+```bash
+#!/bin/bash
+
+# Backup script
+source_dir="/home/user/documents"
+backup_dir="/backup"
+date_stamp=$(date +%Y%m%d_%H%M%S)
+backup_name="backup_$date_stamp.tar.gz"
+
+echo "Starting backup..."
+tar -czf "$backup_dir/$backup_name" "$source_dir"
+
+if [ $? -eq 0 ]; then
+    echo "Backup completed: $backup_name"
+else
+    echo "Backup failed!"
+    exit 1
+fi
+```
+
+### **Docker Management Script**
+
+```bash
+#!/bin/bash
+
+# Docker management script
+echo "=== Docker Status ==="
+echo "Running containers:"
+docker ps
+
+echo "All containers:"
+docker ps -a
+
+echo "Docker images:"
+docker images
+
+echo "Docker system info:"
+docker system df
+```
+
+### **Kubernetes Helper Script**
+
+```bash
+#!/bin/bash
+
+# Kubernetes helper script
+echo "=== Kubernetes Status ==="
+echo "Nodes:"
+kubectl get nodes
+
+echo "Pods:"
+kubectl get pods --all-namespaces
+
+echo "Services:"
+kubectl get services --all-namespaces
+
+echo "Deployments:"
+kubectl get deployments --all-namespaces
+```
+
+## 🔧 Error Handling
+
+### **Exit Codes**
+
+```bash
+#!/bin/bash
+
+# Check exit status
+command_that_might_fail
+
+if [ $? -eq 0 ]; then
+    echo "Command succeeded"
+else
+    echo "Command failed with exit code: $?"
+fi
+
+# Using exit codes in functions
+function check_file() {
+    if [ -f "$1" ]; then
+        echo "File exists"
+        return 0
+    else
+        echo "File does not exist"
+        return 1
+    fi
+}
+
+check_file "test.txt"
+result=$?
+echo "Function exit code: $result"
+```
+
+### **Trap for Cleanup**
+
+```bash
+#!/bin/bash
+
+# Trap for cleanup
+cleanup() {
+    echo "Cleaning up..."
+    rm -f temp_file.txt
+    exit 0
+}
+
+# Set trap
+trap cleanup EXIT
+
+# Create temporary file
+echo "Creating temporary file..."
+echo "data" > temp_file.txt
+
+# Script continues...
+echo "Script running..."
+sleep 5
+```
+
+## 📊 Best Practices
+
+### **Script Organization**
+
+```bash
+#!/bin/bash
+
+# Script: devops_automation.sh
+# Author: DevOps Engineer
+# Date: 2024-01-01
+# Description: Automation script for DevOps tasks
+
+# Configuration
+CONFIG_FILE="/etc/devops/config.conf"
+LOG_FILE="/var/log/devops.log"
+BACKUP_DIR="/backup"
+
+# Functions
+function log_message() {
+    echo "$(date): $1" >> "$LOG_FILE"
+}
+
+function check_prerequisites() {
+    if ! command -v docker &> /dev/null; then
+        echo "Error: Docker is not installed"
+        exit 1
+    fi
+}
+
+# Main script
+main() {
+    log_message "Starting DevOps automation"
+    check_prerequisites
+
+    # Main logic here
+    echo "Automation completed"
+    log_message "Automation completed successfully"
+}
+
+# Execute main function
+main "$@"
+```
+
+### **Security Considerations**
+
+```bash
+#!/bin/bash
+
+# Security best practices
+set -euo pipefail  # Exit on error, undefined vars, pipe failures
+
+# Use quotes around variables
+file_name="$1"
+echo "Processing: $file_name"
+
+# Validate inputs
+if [ $# -eq 0 ]; then
+    echo "Error: No arguments provided"
+    exit 1
+fi
+
+# Use absolute paths when possible
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_FILE="$SCRIPT_DIR/config.conf"
+```
+
+## 🎯 Day 12-14 Exercises
+
+### **Exercise 1: System Health Check**
+
+Create a script that:
+
+- Checks disk usage and alerts if > 80%
+- Monitors memory usage
+- Checks if critical services are running
+- Sends email alert if issues found
+
+```bash
+#!/bin/bash
+# system_health_check.sh
+
+# Configuration
+DISK_THRESHOLD=80
+MEMORY_THRESHOLD=85
+CRITICAL_SERVICES=("nginx" "docker" "kubelet")
+
+# Check disk usage
+check_disk() {
+    local usage=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
+    if [ $usage -gt $DISK_THRESHOLD ]; then
+        echo "WARNING: Disk usage is ${usage}%"
+        return 1
+    fi
+    return 0
+}
+
+# Check memory usage
+check_memory() {
+    local usage=$(free | awk 'NR==2{printf "%.0f", $3*100/$2}')
+    if [ $usage -gt $MEMORY_THRESHOLD ]; then
+        echo "WARNING: Memory usage is ${usage}%"
+        return 1
+    fi
+    return 0
+}
+
+# Check critical services
+check_services() {
+    for service in "${CRITICAL_SERVICES[@]}"; do
+        if ! systemctl is-active --quiet $service; then
+            echo "WARNING: Service $service is not running"
+            return 1
+        fi
+    done
+    return 0
+}
+
+# Main function
+main() {
+    local issues=0
+
+    echo "=== System Health Check ==="
+    echo "Date: $(date)"
+
+    check_disk || ((issues++))
+    check_memory || ((issues++))
+    check_services || ((issues++))
+
+    if [ $issues -eq 0 ]; then
+        echo "All systems healthy"
+    else
+        echo "Found $issues issue(s)"
+        # Send email alert here
+    fi
+}
+
+main "$@"
+```
+
+### **Exercise 2: Log Parser**
+
+Create a script that:
+
+- Parses application logs
+- Counts different log levels
+- Generates summary report
+- Sends daily report via email
+
+```bash
+#!/bin/bash
+# log_parser.sh
+
+LOG_FILE="/var/log/application.log"
+REPORT_FILE="/tmp/log_report.txt"
+
+parse_logs() {
+    echo "=== Log Analysis Report ===" > $REPORT_FILE
+    echo "Date: $(date)" >> $REPORT_FILE
+    echo "" >> $REPORT_FILE
+
+    if [ -f "$LOG_FILE" ]; then
+        echo "Total lines: $(wc -l < $LOG_FILE)" >> $REPORT_FILE
+        echo "Error count: $(grep -c "ERROR" $LOG_FILE)" >> $REPORT_FILE
+        echo "Warning count: $(grep -c "WARN" $LOG_FILE)" >> $REPORT_FILE
+        echo "Info count: $(grep -c "INFO" $LOG_FILE)" >> $REPORT_FILE
+
+        echo "" >> $REPORT_FILE
+        echo "Recent errors:" >> $REPORT_FILE
+        grep "ERROR" $LOG_FILE | tail -5 >> $REPORT_FILE
+    else
+        echo "Log file not found: $LOG_FILE" >> $REPORT_FILE
+    fi
+}
+
+send_report() {
+    if [ -f "$REPORT_FILE" ]; then
+        mail -s "Daily Log Report" admin@example.com < $REPORT_FILE
+        echo "Report sent successfully"
+    fi
+}
+
+parse_logs
+send_report
+```
+
+### **Exercise 3: Deployment Script**
+
+Create a script that:
+
+- Backs up current version
+- Deploys new version
+- Runs health checks
+- Rolls back if deployment fails
+
+```bash
+#!/bin/bash
+# deploy.sh
+
+APP_NAME="myapp"
+BACKUP_DIR="/backups"
+DEPLOY_DIR="/var/www/$APP_NAME"
+
+deploy() {
+    local version="$1"
+
+    echo "Deploying version $version"
+
+    # Backup current version
+    if [ -d "$DEPLOY_DIR" ]; then
+        local backup_name="${APP_NAME}_$(date +%Y%m%d_%H%M%S)"
+        cp -r "$DEPLOY_DIR" "$BACKUP_DIR/$backup_name"
+        echo "Backup created: $backup_name"
+    fi
+
+    # Deploy new version
+    if [ -d "dist" ]; then
+        cp -r dist/* "$DEPLOY_DIR/"
+        echo "Deployment completed"
+    else
+        echo "Error: dist directory not found"
+        return 1
+    fi
+}
+
+health_check() {
+    local url="http://localhost/health"
+    local response=$(curl -s -o /dev/null -w "%{http_code}" $url)
+
+    if [ "$response" = "200" ]; then
+        echo "Health check passed"
+        return 0
+    else
+        echo "Health check failed: HTTP $response"
+        return 1
+    fi
+}
+
+rollback() {
+    local backup_name="$1"
+    echo "Rolling back to $backup_name"
+
+    if [ -d "$BACKUP_DIR/$backup_name" ]; then
+        rm -rf "$DEPLOY_DIR"
+        cp -r "$BACKUP_DIR/$backup_name" "$DEPLOY_DIR"
+        echo "Rollback completed"
+    else
+        echo "Error: Backup not found"
+        return 1
+    fi
+}
+
+# Main deployment
+main() {
+    local version="$1"
+    local backup_name="${APP_NAME}_$(date +%Y%m%d_%H%M%S)"
+
+    deploy "$version" || exit 1
+
+    # Wait for application to start
+    sleep 10
+
+    if health_check; then
+        echo "Deployment successful"
+    else
+        echo "Deployment failed, rolling back"
+        rollback "$backup_name"
+        exit 1
+    fi
+}
+
+main "$@"
+```
+
+## 📚 Day 12-14 Resources
+
+### **Books**
+
+- "The Linux Command Line" by William Shotts
+- "Bash Cookbook" by Carl Albing
+- "Shell Scripting" by Steve Parker
+
+### **Online Resources**
+
+- Bash Reference Manual
+- Advanced Bash-Scripting Guide
+- Shell Scripting Tutorial
+
+### **Practice Platforms**
+
+- OverTheWire Bandit
+- HackerRank Shell
+- LeetCode Shell problems
+
+## 🚀 Day 12-14 Checklist
+
+- [ ] Understand Bash fundamentals and syntax
+- [ ] Master variables and control structures
+- [ ] Learn function creation and usage
+- [ ] Practice file and directory operations
+- [ ] Complete system monitoring script
+- [ ] Build log analysis script
+- [ ] Create deployment automation script
+- [ ] Implement error handling and security best practices
+- [ ] Prepare for Day 15-17: Cloud & Virtualization
+
+## 🎯 Key Takeaways
+
+1. **Bash scripting is essential** for DevOps automation
+2. **Variables and control structures** enable complex logic
+3. **Functions** promote code reusability
+4. **Error handling** makes scripts robust
+5. **Security practices** protect systems
+6. **Real-world examples** demonstrate practical applications
+7. **Best practices** ensure maintainable code
+
+---
+
+**Next Steps:** You've mastered Bash scripting fundamentals. Get ready for [Day 15-17: Cloud & Virtualization](/docs/day-15-17-cloud-virtualization) where you'll learn cloud computing and virtualization concepts essential for modern DevOps.

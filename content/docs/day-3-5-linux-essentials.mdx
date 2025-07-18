@@ -1,0 +1,603 @@
+---
+title: "Day 3-5: Linux Essentials"
+description: "Master Linux fundamentals for DevOps engineering"
+---
+
+# 🐧 Day 3-5: Linux Essentials
+
+## Introduction
+
+Welcome to Days 3-5 of your DevOps journey! Linux is the foundation of most DevOps tools and cloud infrastructure. These three days will give you the essential Linux skills needed for DevOps engineering.
+
+## 🏗️ Linux Fundamentals
+
+### **Why Linux for DevOps?**
+
+- **Ubiquitous**: Most servers run Linux
+- **Open Source**: Free and customizable
+- **Command Line**: Powerful automation capabilities
+- **Containerization**: Docker and Kubernetes run on Linux
+- **Cloud Native**: Most cloud services are Linux-based
+
+### **Linux Distributions**
+
+#### **Popular Distributions**
+
+- **Ubuntu**: User-friendly, great for beginners
+- **CentOS/RHEL**: Enterprise standard
+- **Debian**: Stable and secure
+- **Alpine**: Lightweight for containers
+- **Amazon Linux**: AWS-optimized
+
+## 📁 Filesystem Hierarchy
+
+### **Standard Linux Directory Structure**
+
+```
+/
+├── bin/          # Essential binaries
+├── boot/         # Boot loader files
+├── dev/          # Device files
+├── etc/          # Configuration files
+├── home/         # User home directories
+├── lib/          # Shared libraries
+├── media/        # Removable media
+├── mnt/          # Mount points
+├── opt/          # Optional applications
+├── proc/         # Process information
+├── root/         # Root user home
+├── run/          # Runtime data
+├── sbin/         # System binaries
+├── srv/          # Service data
+├── sys/          # System information
+├── tmp/          # Temporary files
+├── usr/          # User programs
+└── var/          # Variable data
+```
+
+### **Important Directories for DevOps**
+
+```bash
+# Configuration files
+/etc/
+├── nginx/        # Nginx configuration
+├── docker/       # Docker configuration
+├── kubernetes/   # Kubernetes configuration
+├── systemd/      # Systemd services
+└── ssh/          # SSH configuration
+
+# Log files
+/var/log/
+├── syslog        # System logs
+├── nginx/        # Nginx logs
+├── docker/       # Docker logs
+└── kubernetes/   # Kubernetes logs
+
+# Application data
+/var/
+├── www/          # Web applications
+├── lib/          # Application libraries
+└── cache/        # Application cache
+```
+
+## 🔧 File Operations & Permissions
+
+### **Basic File Commands**
+
+```bash
+# List files and directories
+ls -la
+
+# Create directory
+mkdir -p /opt/myapp
+
+# Copy files
+cp source.txt destination.txt
+cp -r source_dir/ destination_dir/
+
+# Move/rename files
+mv oldname.txt newname.txt
+
+# Remove files
+rm file.txt
+rm -rf directory/
+
+# View file content
+cat file.txt
+less file.txt
+head -10 file.txt
+tail -10 file.txt
+```
+
+### **File Permissions**
+
+```bash
+# Understanding permissions
+ls -la file.txt
+# -rw-r--r-- 1 user group 1024 Jan 1 12:00 file.txt
+#  ^ ^ ^
+#  | | └── Others (read)
+#  | └──── Group (read)
+#  └────── Owner (read/write)
+
+# Change permissions
+chmod 755 script.sh
+chmod +x script.sh
+chmod u+rw,g+r,o+r file.txt
+
+# Change ownership
+chown user:group file.txt
+chown -R user:group directory/
+```
+
+### **Permission Examples**
+
+```bash
+# Common permission patterns
+chmod 644 file.txt    # Owner: read/write, Group: read, Others: read
+chmod 755 script.sh   # Owner: read/write/execute, Group: read/execute, Others: read/execute
+chmod 600 private.txt # Owner: read/write, Group: none, Others: none
+chmod 777 temp.txt    # Everyone: read/write/execute (not recommended)
+```
+
+## 🔍 Process Management
+
+### **Process Commands**
+
+```bash
+# List processes
+ps aux
+ps -ef
+
+# Real-time process monitoring
+top
+htop
+
+# Kill processes
+kill 1234
+kill -9 1234  # Force kill
+pkill nginx
+killall python
+
+# Process information
+ps aux | grep nginx
+pgrep nginx
+```
+
+### **System Monitoring**
+
+```bash
+# System information
+uname -a
+cat /etc/os-release
+
+# Memory usage
+free -h
+vmstat
+
+# Disk usage
+df -h
+du -sh /var/log/
+
+# CPU information
+lscpu
+cat /proc/cpuinfo
+```
+
+### **System Resources**
+
+```bash
+# Monitor system resources
+# CPU usage
+top -p 1
+iostat
+
+# Memory usage
+free -m
+cat /proc/meminfo
+
+# Disk I/O
+iostat -x 1
+iotop
+
+# Network usage
+netstat -tuln
+ss -tuln
+```
+
+## 🌐 SSH Basics
+
+### **SSH Configuration**
+
+```bash
+# SSH to remote server
+ssh user@server.com
+ssh -p 2222 user@server.com
+
+# SSH with key authentication
+ssh -i ~/.ssh/id_rsa user@server.com
+
+# SSH configuration file
+cat ~/.ssh/config
+```
+
+### **SSH Key Management**
+
+```bash
+# Generate SSH key
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+
+# Copy public key to server
+ssh-copy-id user@server.com
+
+# Or manually copy
+cat ~/.ssh/id_rsa.pub | ssh user@server.com "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+```
+
+### **SSH Security**
+
+```bash
+# SSH server configuration
+sudo nano /etc/ssh/sshd_config
+
+# Security settings
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+Port 2222  # Change default port
+```
+
+## 📦 Package Management
+
+### **Ubuntu/Debian (apt)**
+
+```bash
+# Update package list
+sudo apt update
+
+# Upgrade packages
+sudo apt upgrade
+
+# Install package
+sudo apt install nginx
+
+# Remove package
+sudo apt remove nginx
+sudo apt purge nginx
+
+# Search packages
+apt search nginx
+
+# Show package info
+apt show nginx
+```
+
+### **CentOS/RHEL (yum/dnf)**
+
+```bash
+# Update system
+sudo yum update
+
+# Install package
+sudo yum install nginx
+
+# Remove package
+sudo yum remove nginx
+
+# Search packages
+yum search nginx
+
+# Show package info
+yum info nginx
+```
+
+### **Package Management Best Practices**
+
+```bash
+# Keep system updated
+sudo apt update && sudo apt upgrade
+
+# Clean package cache
+sudo apt clean
+sudo apt autoremove
+
+# Install essential tools
+sudo apt install -y curl wget vim git htop
+```
+
+## 🔧 System Administration
+
+### **Service Management**
+
+```bash
+# Systemd commands
+sudo systemctl start nginx
+sudo systemctl stop nginx
+sudo systemctl restart nginx
+sudo systemctl status nginx
+sudo systemctl enable nginx
+sudo systemctl disable nginx
+
+# Check service status
+systemctl is-active nginx
+systemctl is-enabled nginx
+```
+
+### **Log Management**
+
+```bash
+# View system logs
+sudo journalctl -f
+sudo journalctl -u nginx
+sudo journalctl --since "1 hour ago"
+
+# Log files
+sudo tail -f /var/log/syslog
+sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log
+```
+
+### **User Management**
+
+```bash
+# Create user
+sudo useradd -m -s /bin/bash username
+sudo passwd username
+
+# Add user to group
+sudo usermod -aG sudo username
+sudo usermod -aG docker username
+
+# Delete user
+sudo userdel -r username
+
+# List users
+cat /etc/passwd
+getent passwd
+```
+
+## 🛠️ DevOps-Specific Linux Skills
+
+### **Docker Integration**
+
+```bash
+# Check Docker installation
+docker --version
+docker info
+
+# Run container
+docker run -d --name myapp nginx
+
+# View containers
+docker ps
+docker ps -a
+
+# View container logs
+docker logs myapp
+docker logs -f myapp
+
+# Execute command in container
+docker exec -it myapp bash
+```
+
+### **Kubernetes Integration**
+
+```bash
+# Check kubectl
+kubectl version
+
+# View cluster info
+kubectl cluster-info
+
+# List nodes
+kubectl get nodes
+
+# List pods
+kubectl get pods --all-namespaces
+
+# View pod logs
+kubectl logs pod-name
+kubectl logs -f pod-name
+```
+
+### **Network Configuration**
+
+```bash
+# Network interfaces
+ip addr show
+ifconfig
+
+# Network connectivity
+ping google.com
+traceroute google.com
+nslookup google.com
+
+# Port scanning
+netstat -tuln
+ss -tuln
+nmap localhost
+```
+
+## 📊 Monitoring & Troubleshooting
+
+### **System Monitoring**
+
+```bash
+# System load
+uptime
+w
+
+# Memory usage
+free -h
+cat /proc/meminfo
+
+# Disk usage
+df -h
+du -sh /*
+
+# Process monitoring
+ps aux --sort=-%mem | head -10
+ps aux --sort=-%cpu | head -10
+```
+
+### **Troubleshooting Commands**
+
+```bash
+# Check system status
+systemctl status
+systemctl --failed
+
+# Check disk space
+df -h
+du -sh /var/log/*
+
+# Check memory usage
+free -h
+cat /proc/meminfo
+
+# Check network
+ip addr show
+ping -c 4 google.com
+```
+
+### **Log Analysis**
+
+```bash
+# Search logs
+grep "ERROR" /var/log/syslog
+grep "nginx" /var/log/syslog
+
+# Monitor logs in real-time
+tail -f /var/log/syslog
+tail -f /var/log/nginx/access.log
+
+# Log rotation
+sudo logrotate -f /etc/logrotate.conf
+```
+
+## 🎯 Day 3-5 Exercises
+
+### **Exercise 1: File System Navigation**
+
+```bash
+# Create directory structure
+mkdir -p ~/devops-practice/{scripts,configs,logs}
+
+# Create sample files
+echo "Hello DevOps" > ~/devops-practice/scripts/hello.sh
+echo "nginx configuration" > ~/devops-practice/configs/nginx.conf
+echo "application log" > ~/devops-practice/logs/app.log
+
+# Set permissions
+chmod +x ~/devops-practice/scripts/hello.sh
+chmod 644 ~/devops-practice/configs/nginx.conf
+chmod 644 ~/devops-practice/logs/app.log
+
+# List and verify
+ls -la ~/devops-practice/
+```
+
+### **Exercise 2: Process Management**
+
+```bash
+# Start a background process
+sleep 100 &
+
+# Monitor the process
+ps aux | grep sleep
+jobs
+
+# Kill the process
+kill %1
+# or
+pkill sleep
+```
+
+### **Exercise 3: System Monitoring Script**
+
+```bash
+#!/bin/bash
+# Create a system monitoring script
+
+echo "=== System Information ==="
+echo "Date: $(date)"
+echo "Uptime: $(uptime)"
+echo "Load Average: $(cat /proc/loadavg)"
+
+echo -e "\n=== Memory Usage ==="
+free -h
+
+echo -e "\n=== Disk Usage ==="
+df -h
+
+echo -e "\n=== Top Processes ==="
+ps aux --sort=-%cpu | head -5
+
+echo -e "\n=== Network Connections ==="
+netstat -tuln | head -10
+```
+
+### **Exercise 4: SSH Setup**
+
+```bash
+# Generate SSH key
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+
+# Create SSH config
+mkdir -p ~/.ssh
+cat > ~/.ssh/config << EOF
+Host devops-server
+    HostName your-server.com
+    User ubuntu
+    Port 22
+    IdentityFile ~/.ssh/id_rsa
+EOF
+
+# Test SSH connection
+ssh devops-server
+```
+
+## 📚 Day 3-5 Resources
+
+### **Books**
+
+- "The Linux Command Line" by William Shotts
+- "Linux System Administration" by Tom Adelstein
+- "UNIX and Linux System Administration Handbook"
+
+### **Online Resources**
+
+- Linux Documentation Project
+- Ubuntu Documentation
+- Red Hat Documentation
+
+### **Practice Platforms**
+
+- OverTheWire Bandit
+- Linux Academy
+- Katacoda Linux Scenarios
+
+## 🚀 Day 3-5 Checklist
+
+- [ ] Understand Linux filesystem hierarchy
+- [ ] Master basic file operations and permissions
+- [ ] Learn process management and monitoring
+- [ ] Set up SSH and key authentication
+- [ ] Practice package management
+- [ ] Complete system administration exercises
+- [ ] Create monitoring and troubleshooting scripts
+- [ ] Prepare for Day 6-8: Networking Basics
+
+## 🎯 Key Takeaways
+
+1. **Linux is essential** for DevOps engineering
+2. **Command line proficiency** is crucial
+3. **File permissions** are important for security
+4. **Process management** helps with troubleshooting
+5. **SSH** enables remote server management
+6. **Package management** keeps systems updated
+7. **Monitoring skills** are vital for operations
+
+---
+
+**Next Steps:** You've mastered Linux essentials. Get ready for [Day 6-8: Networking Basics](/docs/day-6-8-networking-basics) where you'll learn networking fundamentals essential for DevOps.
