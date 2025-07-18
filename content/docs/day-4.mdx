@@ -1,8 +1,978 @@
 ---
-title: "Day 4: Title"
-description: "DevOps 100 Days - Day 4"
+title: "Day 4: Linux System Administration - User Management"
+description: "Master Linux user and group management, system services, and advanced administration tasks"
 ---
 
-# Day 4
+# Day 4: Linux System Administration - User Management
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Master user and group management
+- Understand Linux system services
+- Learn package management systems
+- Master system monitoring and logging
+- Understand security fundamentals
+- Learn backup and recovery procedures
+
+## 👥 User and Group Management
+
+### Understanding Users and Groups
+
+**Linux User Types:**
+
+```bash
+# Root User (UID 0)
+# - Superuser with all privileges
+# - Can access all files and commands
+# - Home directory: /root
+
+# System Users (UID 1-999)
+# - Created for system services
+# - Usually cannot log in interactively
+# - Examples: www-data, postgres, mysql
+
+# Regular Users (UID 1000+)
+# - Created for human users
+# - Can log in interactively
+# - Home directory: /home/username
+```
+
+**User Information Files:**
+
+```bash
+# /etc/passwd - User account information
+# Format: username:password:UID:GID:comment:home:shell
+# Example: john:x:1000:1000:John Doe:/home/john:/bin/bash
+
+# /etc/shadow - Encrypted password information
+# Format: username:password:last_change:min_age:max_age:warning:inactive:expire
+# Example: john:$6$salt$hash:18000:0:99999:7:::
+
+# /etc/group - Group information
+# Format: groupname:password:GID:members
+# Example: developers:x:1001:john,jane,bob
+```
+
+### User Management Commands
+
+**useradd - Create Users:**
+
+```bash
+# Basic user creation
+useradd username
+
+# Create user with specific options
+useradd -m -d /home/username -s /bin/bash -c "Full Name" username
+
+# Options:
+# -m: Create home directory
+# -d: Specify home directory
+# -s: Specify shell
+# -c: Comment (full name)
+# -u: Specify UID
+# -g: Specify primary group
+# -G: Specify secondary groups
+```
+
+**usermod - Modify Users:**
+
+```bash
+# Change user's home directory
+usermod -d /new/home/directory username
+
+# Change user's shell
+usermod -s /bin/zsh username
+
+# Add user to additional groups
+usermod -a -G sudo,developers username
+
+# Lock/unlock user account
+usermod -L username  # Lock
+usermod -U username  # Unlock
+```
+
+**userdel - Delete Users:**
+
+```bash
+# Delete user (keep home directory)
+userdel username
+
+# Delete user and home directory
+userdel -r username
+
+# Force delete (even if user is logged in)
+userdel -f username
+```
+
+**passwd - Password Management:**
+
+```bash
+# Change your own password
+passwd
+
+# Change another user's password (root only)
+passwd username
+
+# Lock user account
+passwd -l username
+
+# Unlock user account
+passwd -u username
+
+# Force password change on next login
+passwd -e username
+```
+
+### Group Management
+
+**groupadd - Create Groups:**
+
+```bash
+# Create group
+groupadd groupname
+
+# Create group with specific GID
+groupadd -g 1001 groupname
+```
+
+**groupmod - Modify Groups:**
+
+```bash
+# Change group name
+groupmod -n newname oldname
+
+# Change group GID
+groupmod -g 1002 groupname
+```
+
+**groupdel - Delete Groups:**
+
+```bash
+# Delete group (only if empty)
+groupdel groupname
+```
+
+**gpasswd - Group Password Management:**
+
+```bash
+# Set group password
+gpasswd groupname
+
+# Add user to group
+gpasswd -a username groupname
+
+# Remove user from group
+gpasswd -d username groupname
+
+# Set group administrator
+gpasswd -A username groupname
+```
+
+### User Information Commands
+
+**id - User Identity:**
+
+```bash
+# Show current user's identity
+id
+
+# Show specific user's identity
+id username
+
+# Show only user ID
+id -u username
+
+# Show only group ID
+id -g username
+
+# Show all groups
+id -G username
+```
+
+**who/w - Who is Logged In:**
+
+```bash
+# Show logged in users
+who
+
+# Show detailed information
+w
+
+# Show last login times
+last
+
+# Show failed login attempts
+lastb
+```
+
+**su - Switch User:**
+
+```bash
+# Switch to root
+su
+
+# Switch to specific user
+su username
+
+# Switch to user with their environment
+su - username
+
+# Execute command as another user
+su -c "command" username
+```
+
+**sudo - Execute as Superuser:**
+
+```bash
+# Execute command with sudo privileges
+sudo command
+
+# Switch to root shell
+sudo -i
+
+# Execute command as specific user
+sudo -u username command
+
+# Preserve environment
+sudo -E command
+```
+
+## 🔧 System Services Management
+
+### Understanding Systemd
+
+**Systemd** is the modern Linux system and service manager that:
+
+- Manages system services
+- Handles system boot process
+- Manages device and mount points
+- Provides logging and monitoring
+
+**systemctl - Service Management:**
+
+```bash
+# Check service status
+systemctl status servicename
+
+# Start service
+systemctl start servicename
+
+# Stop service
+systemctl stop servicename
+
+# Restart service
+systemctl restart servicename
+
+# Reload service configuration
+systemctl reload servicename
+
+# Enable service (start on boot)
+systemctl enable servicename
+
+# Disable service (don't start on boot)
+systemctl disable servicename
+
+# Check if service is enabled
+systemctl is-enabled servicename
+
+# Check if service is active
+systemctl is-active servicename
+```
+
+**Common Services:**
+
+```bash
+# Web server
+systemctl status nginx
+systemctl status apache2
+
+# Database
+systemctl status mysql
+systemctl status postgresql
+
+# SSH server
+systemctl status ssh
+systemctl status sshd
+
+# Network
+systemctl status NetworkManager
+systemctl status networking
+```
+
+### Service Configuration
+
+**Service Unit Files:**
+
+```ini
+# /etc/systemd/system/myservice.service
+[Unit]
+Description=My Custom Service
+After=network.target
+
+[Service]
+Type=simple
+User=myuser
+ExecStart=/usr/bin/myapp
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**Managing Custom Services:**
+
+```bash
+# Create custom service
+sudo nano /etc/systemd/system/myservice.service
+
+# Reload systemd configuration
+sudo systemctl daemon-reload
+
+# Enable and start service
+sudo systemctl enable myservice
+sudo systemctl start myservice
+```
+
+## 📦 Package Management
+
+### Debian/Ubuntu (apt)
+
+**Package Management Commands:**
+
+```bash
+# Update package list
+sudo apt update
+
+# Upgrade installed packages
+sudo apt upgrade
+
+# Install package
+sudo apt install packagename
+
+# Remove package
+sudo apt remove packagename
+
+# Remove package and configuration files
+sudo apt purge packagename
+
+# Search for packages
+apt search keyword
+
+# Show package information
+apt show packagename
+
+# List installed packages
+apt list --installed
+
+# Clean package cache
+sudo apt clean
+```
+
+**Advanced apt Commands:**
+
+```bash
+# Install specific version
+sudo apt install packagename=version
+
+# Hold package version
+sudo apt hold packagename
+
+# Unhold package
+sudo apt unhold packagename
+
+# Download package without installing
+apt download packagename
+
+# Show package dependencies
+apt depends packagename
+```
+
+### Red Hat/CentOS (yum/dnf)
+
+**Package Management Commands:**
+
+```bash
+# Update system
+sudo yum update
+
+# Install package
+sudo yum install packagename
+
+# Remove package
+sudo yum remove packagename
+
+# Search for packages
+yum search keyword
+
+# Show package information
+yum info packagename
+
+# List installed packages
+yum list installed
+
+# Clean package cache
+sudo yum clean all
+```
+
+**DNF (Modern yum replacement):**
+
+```bash
+# Update system
+sudo dnf update
+
+# Install package
+sudo dnf install packagename
+
+# Remove package
+sudo dnf remove packagename
+
+# Search for packages
+dnf search keyword
+
+# Show package information
+dnf info packagename
+```
+
+## 📊 System Monitoring
+
+### Process Monitoring
+
+**ps - Process Status:**
+
+```bash
+# Show all processes
+ps aux
+
+# Show processes in tree format
+ps auxf
+
+# Show processes by specific user
+ps -u username
+
+# Show processes by PID
+ps -p PID
+
+# Show process hierarchy
+ps -ejH
+```
+
+**top/htop - Interactive Monitoring:**
+
+```bash
+# Start top
+top
+
+# Start htop (if installed)
+htop
+
+# Top interactive commands:
+# k: Kill process
+# r: Renice process
+# h: Help
+# q: Quit
+# 1: Show CPU cores
+# m: Show memory info
+# t: Show tree view
+```
+
+**iotop - I/O Monitoring:**
+
+```bash
+# Monitor disk I/O
+sudo iotop
+
+# Monitor specific process
+sudo iotop -p PID
+```
+
+### System Resource Monitoring
+
+**Memory Monitoring:**
+
+```bash
+# Show memory usage
+free -h
+
+# Show memory info
+cat /proc/meminfo
+
+# Show memory usage by process
+ps aux --sort=-%mem | head -10
+```
+
+**CPU Monitoring:**
+
+```bash
+# Show CPU info
+cat /proc/cpuinfo
+
+# Show CPU usage
+mpstat 1 5
+
+# Show load average
+uptime
+
+# Show CPU usage by process
+ps aux --sort=-%cpu | head -10
+```
+
+**Disk Monitoring:**
+
+```bash
+# Show disk usage
+df -h
+
+# Show disk I/O
+iostat -x 1
+
+# Show disk usage by directory
+du -sh /*
+
+# Show largest files
+find / -type f -exec ls -lh {} + | sort -k5 -hr | head -10
+```
+
+### Network Monitoring
+
+**Network Statistics:**
+
+```bash
+# Show network interfaces
+ip addr show
+
+# Show network statistics
+netstat -i
+
+# Show listening ports
+netstat -tuln
+
+# Show network connections
+ss -tuln
+
+# Show routing table
+ip route show
+```
+
+**Network Performance:**
+
+```bash
+# Test connectivity
+ping google.com
+
+# Test bandwidth
+iperf3 -c server
+
+# Show network usage
+iftop
+
+# Monitor network traffic
+nethogs
+```
+
+## 📝 Logging and Troubleshooting
+
+### System Logs
+
+**Log Locations:**
+
+```bash
+# System logs
+/var/log/syslog          # General system messages
+/var/log/messages        # System messages (RHEL/CentOS)
+/var/log/auth.log        # Authentication messages
+/var/log/kern.log        # Kernel messages
+/var/log/dmesg          # Kernel ring buffer
+
+# Service logs
+/var/log/nginx/         # Nginx logs
+/var/log/apache2/       # Apache logs
+/var/log/mysql/         # MySQL logs
+
+# Application logs
+/var/log/application/   # Custom application logs
+```
+
+**journalctl - Systemd Logs:**
+
+```bash
+# Show all logs
+journalctl
+
+# Show logs for specific service
+journalctl -u servicename
+
+# Show logs since boot
+journalctl -b
+
+# Show logs for specific time
+journalctl --since "2024-01-01 10:00:00"
+
+# Follow logs in real-time
+journalctl -f
+
+# Show logs with priority
+journalctl -p err
+
+# Show logs for specific user
+journalctl _UID=1000
+```
+
+### Log Analysis
+
+**grep for Log Analysis:**
+
+```bash
+# Find error messages
+grep -i error /var/log/syslog
+
+# Find messages from specific time
+grep "Jan 15 10:" /var/log/syslog
+
+# Find messages from specific service
+grep "nginx" /var/log/syslog
+
+# Count occurrences
+grep -c "error" /var/log/syslog
+```
+
+**logrotate - Log Rotation:**
+
+```bash
+# Configuration file
+/etc/logrotate.conf
+
+# Service-specific configuration
+/etc/logrotate.d/application
+
+# Manual rotation
+sudo logrotate /etc/logrotate.conf
+```
+
+## 🔒 Security Fundamentals
+
+### File Permissions
+
+**Understanding Permissions:**
+
+```bash
+# View permissions
+ls -la
+
+# Permission types:
+# r = read (4)
+# w = write (2)
+# x = execute (1)
+
+# Permission categories:
+# Owner (user)
+# Group
+# Others (world)
+```
+
+**Setting Permissions:**
+
+```bash
+# Numeric notation
+chmod 755 file.txt        # rwxr-xr-x
+chmod 644 file.txt        # rw-r--r--
+chmod 600 file.txt        # rw-------
+
+# Symbolic notation
+chmod u+rwx,g+rx,o+rx file.txt
+chmod a+x file.txt        # Add execute for all
+chmod o-w file.txt        # Remove write for others
+```
+
+### User Security
+
+**Password Policies:**
+
+```bash
+# Set password expiration
+chage -M 90 username      # Max days
+chage -W 7 username       # Warning days
+chage -I 30 username      # Inactive days
+
+# View password information
+chage -l username
+```
+
+**Account Lockout:**
+
+```bash
+# Lock account
+passwd -l username
+
+# Unlock account
+passwd -u username
+
+# Check account status
+passwd -S username
+```
+
+### Network Security
+
+**Firewall Management:**
+
+```bash
+# UFW (Ubuntu)
+sudo ufw enable
+sudo ufw allow 22
+sudo ufw deny 23
+sudo ufw status
+
+# iptables
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 23 -j DROP
+sudo iptables -L
+```
+
+**SSH Security:**
+
+```bash
+# SSH configuration
+sudo nano /etc/ssh/sshd_config
+
+# Security settings:
+# PermitRootLogin no
+# PasswordAuthentication no
+# PubkeyAuthentication yes
+# Port 2222
+
+# Restart SSH
+sudo systemctl restart ssh
+```
+
+## 💾 Backup and Recovery
+
+### Backup Strategies
+
+**File Backup:**
+
+```bash
+# Create backup directory
+mkdir -p /backup/$(date +%Y%m%d)
+
+# Backup important files
+cp -r /etc /backup/$(date +%Y%m%d)/etc
+cp -r /home /backup/$(date +%Y%m%d)/home
+
+# Compress backup
+tar -czf /backup/$(date +%Y%m%d).tar.gz /backup/$(date +%Y%m%d)
+```
+
+**Database Backup:**
+
+```bash
+# MySQL backup
+mysqldump -u root -p database > backup.sql
+
+# PostgreSQL backup
+pg_dump database > backup.sql
+
+# MongoDB backup
+mongodump --db database --out /backup
+```
+
+**System Backup:**
+
+```bash
+# Create system image
+dd if=/dev/sda of=/backup/system.img bs=4M
+
+# Clone disk
+dd if=/dev/sda of=/dev/sdb bs=4M
+
+# Create partition backup
+dd if=/dev/sda1 of=/backup/partition.img bs=4M
+```
+
+### Recovery Procedures
+
+**File Recovery:**
+
+```bash
+# Restore from backup
+tar -xzf backup.tar.gz -C /restore/
+
+# Copy files back
+cp -r /restore/etc /etc
+cp -r /restore/home /home
+```
+
+**System Recovery:**
+
+```bash
+# Boot from recovery media
+# Mount system partition
+mount /dev/sda1 /mnt
+
+# Restore system
+dd if=/backup/system.img of=/dev/sda bs=4M
+
+# Update bootloader
+grub-install /dev/sda
+update-grub
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: User Management
+
+**Objective:** Practice user and group management
+
+**Tasks:**
+
+```bash
+# 1. Create a new user
+sudo useradd -m -s /bin/bash -c "Test User" testuser
+
+# 2. Set password
+sudo passwd testuser
+
+# 3. Create a group
+sudo groupadd developers
+
+# 4. Add user to group
+sudo usermod -a -G developers testuser
+
+# 5. Verify user information
+id testuser
+
+# 6. Test login
+su - testuser
+
+# 7. Clean up
+sudo userdel -r testuser
+sudo groupdel developers
+```
+
+### Exercise 2: Service Management
+
+**Objective:** Practice service management
+
+**Tasks:**
+
+```bash
+# 1. Check service status
+systemctl status ssh
+
+# 2. Restart service
+sudo systemctl restart ssh
+
+# 3. Check if service is enabled
+systemctl is-enabled ssh
+
+# 4. View service logs
+journalctl -u ssh
+
+# 5. Create custom service
+sudo nano /etc/systemd/system/testservice.service
+```
+
+### Exercise 3: System Monitoring
+
+**Objective:** Practice system monitoring
+
+**Tasks:**
+
+```bash
+# 1. Check system resources
+free -h
+df -h
+top -n 1
+
+# 2. Monitor processes
+ps aux --sort=-%cpu | head -5
+ps aux --sort=-%mem | head -5
+
+# 3. Check system logs
+journalctl --since "1 hour ago"
+tail -f /var/log/syslog
+
+# 4. Monitor network
+ss -tuln
+netstat -i
+```
+
+## 📊 Assessment Questions
+
+**Day 4 Quiz:**
+
+1. **What command creates a new user with home directory?**
+
+   - Answer: `useradd -m username`
+
+2. **How do you add a user to a group?**
+
+   - Answer: `usermod -a -G groupname username`
+
+3. **What command shows all logged in users?**
+
+   - Answer: `who` or `w`
+
+4. **How do you start a system service?**
+
+   - Answer: `systemctl start servicename`
+
+5. **What command updates package list in Ubuntu?**
+
+   - Answer: `sudo apt update`
+
+6. **How do you check disk usage?**
+
+   - Answer: `df -h`
+
+7. **What file contains user account information?**
+
+   - Answer: `/etc/passwd`
+
+8. **How do you view system logs in real-time?**
+   - Answer: `journalctl -f`
+
+## 📚 Additional Resources
+
+### Books
+
+- **"Linux System Administration"** by Tom Adelstein
+- **"The Linux System Administrator's Guide"** by Lars Wirzenius
+- **"UNIX and Linux System Administration Handbook"** by Evi Nemeth
+
+### Online Resources
+
+- [Linux System Administration](https://www.linux.org/forums/linux-system-administration.21/)
+- [Systemd Documentation](https://systemd.io/)
+- [Linux Security](https://linuxsecurity.com/)
+
+### Tools
+
+- **Monitoring**: htop, iotop, nethogs
+- **Logging**: journalctl, logrotate
+- **Security**: fail2ban, rkhunter
+
+## 🎉 Day 4 Summary
+
+**What You've Learned:**
+
+- ✅ User and group management
+- ✅ System service management
+- ✅ Package management systems
+- ✅ System monitoring and logging
+- ✅ Security fundamentals
+- ✅ Backup and recovery procedures
+
+**Key Takeaways:**
+
+- User management is fundamental to system administration
+- Systemd provides modern service management
+- Package management varies by distribution
+- Monitoring and logging are essential for troubleshooting
+- Security should be implemented at multiple levels
+- Regular backups are crucial for system reliability
+
+**Tomorrow:** We'll continue with advanced Linux administration, covering networking, storage, and performance tuning.
+
+**Remember:** System administration requires both technical skills and good practices. Always test changes in a safe environment first!

@@ -1,8 +1,607 @@
 ---
-title: "Day 3: Title"
-description: "DevOps 100 Days - Day 3"
+title: "Day 3: Linux Fundamentals - Command Line Basics"
+description: "Master essential Linux command line operations, file system navigation, and basic system administration"
 ---
 
-# Day 3
+# Day 3: Linux Fundamentals - Command Line Basics
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Master essential Linux command line operations
+- Understand the Linux file system hierarchy
+- Learn file and directory management
+- Master text processing and manipulation
+- Understand process management basics
+- Learn system information commands
+
+## 🐧 Understanding Linux
+
+### What is Linux?
+
+**Linux** is a free, open-source operating system kernel that serves as the foundation for many operating systems (distributions). It's the most popular operating system for servers, cloud computing, and DevOps environments.
+
+**Why Linux for DevOps?**
+
+- **Server Dominance**: 96% of the world's top 1 million servers run Linux
+- **Cloud Native**: All major cloud providers use Linux
+- **Container Technology**: Docker and Kubernetes are built on Linux
+- **Cost Effective**: Free and open-source
+- **Customizable**: Highly configurable for specific needs
+
+### Linux Distributions
+
+**Popular Distributions for DevOps:**
+
+```bash
+# Ubuntu/Debian (Debian-based)
+# - Most popular for cloud and containers
+# - Excellent package management
+# - Large community support
+
+# CentOS/RHEL (Red Hat-based)
+# - Enterprise standard
+# - Long-term support
+# - Security-focused
+
+# Alpine Linux
+# - Minimal footprint
+# - Perfect for containers
+# - Security-focused
+
+# Amazon Linux
+# - Optimized for AWS
+# - Cloud-native features
+# - AWS integration
+```
+
+## 🖥️ Getting Started with the Command Line
+
+### Terminal Basics
+
+**Opening Terminal:**
+
+```bash
+# Ubuntu/Debian
+Ctrl + Alt + T
+
+# macOS
+Cmd + Space, type "Terminal"
+
+# Windows (WSL)
+wsl
+```
+
+**Basic Command Structure:**
+
+```bash
+command [options] [arguments]
+
+# Examples:
+ls -la /home/user
+# ls = command
+# -la = options (flags)
+# /home/user = argument
+```
+
+### Essential Commands
+
+**1. Navigation Commands**
+
+```bash
+# pwd - Print Working Directory
+pwd
+# Output: /home/user/current/directory
+
+# ls - List Directory Contents
+ls
+ls -la  # Show all files (including hidden) with details
+ls -lh  # Human-readable file sizes
+ls -lt  # Sort by modification time
+
+# cd - Change Directory
+cd /home/user
+cd ..    # Go to parent directory
+cd ~     # Go to home directory
+cd -     # Go to previous directory
+```
+
+**2. File System Navigation**
+
+```bash
+# Understanding Linux File System
+/                    # Root directory
+├── bin/            # Essential system binaries
+├── boot/           # Boot loader files
+├── dev/            # Device files
+├── etc/            # Configuration files
+├── home/           # User home directories
+├── lib/            # Shared libraries
+├── media/          # Mount points for removable media
+├── mnt/            # Mount points
+├── opt/            # Optional applications
+├── proc/           # Process information
+├── root/           # Root user home
+├── run/            # Runtime data
+├── sbin/           # System binaries
+├── srv/            # Service data
+├── sys/            # System information
+├── tmp/            # Temporary files
+├── usr/            # User programs and data
+└── var/            # Variable data
+```
+
+**3. File and Directory Management**
+
+```bash
+# mkdir - Create Directory
+mkdir new_directory
+mkdir -p parent/child/grandchild  # Create nested directories
+
+# touch - Create Empty File
+touch new_file.txt
+touch file1.txt file2.txt file3.txt  # Create multiple files
+
+# cp - Copy Files and Directories
+cp source.txt destination.txt
+cp -r source_directory/ destination_directory/  # Copy directory recursively
+
+# mv - Move/Rename Files
+mv old_name.txt new_name.txt
+mv file.txt /path/to/destination/
+
+# rm - Remove Files
+rm file.txt
+rm -r directory/  # Remove directory recursively
+rm -f file.txt    # Force remove (no confirmation)
+rm -rf directory/ # Force remove directory (dangerous!)
+
+# rmdir - Remove Empty Directory
+rmdir empty_directory
+```
+
+## 📁 File System Operations
+
+### File Permissions
+
+**Understanding Permissions:**
+
+```bash
+# View file permissions
+ls -la
+# Output: -rw-r--r-- 1 user group 1234 Jan 1 12:00 file.txt
+#         ^^^^^^^^^^
+#         ||||||||
+#         |||||||└── Others: read, write, execute
+#         ||||||└─── Group: read, write, execute
+#         |||||└──── Owner: read, write, execute
+#         ||||└───── File type (- = file, d = directory, l = link)
+
+# Permission Types:
+# r = read (4)
+# w = write (2)
+# x = execute (1)
+# - = no permission (0)
+```
+
+**Changing Permissions:**
+
+```bash
+# chmod - Change File Permissions
+chmod 755 file.txt        # Numeric notation
+chmod u+rwx,g+rx,o+rx file.txt  # Symbolic notation
+chmod +x script.sh        # Make executable
+
+# chown - Change File Owner
+chown user:group file.txt
+chown user file.txt
+
+# chgrp - Change File Group
+chgrp group file.txt
+```
+
+### File Operations
+
+**Viewing File Contents:**
+
+```bash
+# cat - Concatenate and Display
+cat file.txt
+cat file1.txt file2.txt > combined.txt
+
+# less - View File Page by Page
+less large_file.txt
+# Navigation: Space (next page), b (previous page), q (quit)
+
+# head - Show First Lines
+head file.txt
+head -n 10 file.txt  # Show first 10 lines
+
+# tail - Show Last Lines
+tail file.txt
+tail -n 20 file.txt  # Show last 20 lines
+tail -f log.txt      # Follow file (real-time updates)
+```
+
+**File Search and Filtering:**
+
+```bash
+# find - Find Files
+find /path -name "*.txt"           # Find files by name
+find /path -type f -mtime -7       # Find files modified in last 7 days
+find /path -size +100M             # Find files larger than 100MB
+
+# grep - Search Text
+grep "pattern" file.txt
+grep -i "pattern" file.txt         # Case-insensitive
+grep -r "pattern" directory/       # Recursive search
+grep -v "pattern" file.txt         # Invert match (exclude)
+
+# wc - Word Count
+wc file.txt                         # Lines, words, characters
+wc -l file.txt                     # Line count only
+```
+
+## 🔧 Text Processing
+
+### Text Manipulation
+
+**cut - Extract Sections:**
+
+```bash
+# Extract specific columns
+cut -d: -f1 /etc/passwd           # Extract usernames
+cut -d',' -f1,3 data.csv          # Extract columns 1 and 3
+
+# Options:
+# -d: delimiter
+# -f: field numbers
+```
+
+**sed - Stream Editor:**
+
+```bash
+# Basic text substitution
+sed 's/old/new/g' file.txt
+sed 's/old/new/' file.txt          # Replace first occurrence only
+
+# Delete lines
+sed '5d' file.txt                  # Delete line 5
+sed '1,10d' file.txt              # Delete lines 1-10
+
+# Add text
+sed '1i\New line' file.txt        # Insert at line 1
+sed '$a\New line' file.txt        # Append at end
+```
+
+**awk - Pattern Processing:**
+
+```bash
+# Print specific fields
+awk '{print $1}' file.txt         # Print first field
+awk '{print $1, $3}' file.txt     # Print fields 1 and 3
+
+# Conditional processing
+awk '$3 > 100 {print $1}' file.txt  # Print field 1 if field 3 > 100
+
+# Field separator
+awk -F: '{print $1}' /etc/passwd  # Use : as separator
+```
+
+### Advanced Text Processing
+
+**sort - Sort Lines:**
+
+```bash
+sort file.txt                      # Sort alphabetically
+sort -n file.txt                   # Sort numerically
+sort -r file.txt                   # Sort in reverse order
+sort -k2 file.txt                  # Sort by second field
+```
+
+**uniq - Remove Duplicates:**
+
+```bash
+sort file.txt | uniq              # Sort and remove duplicates
+uniq -c file.txt                  # Count occurrences
+uniq -d file.txt                  # Show only duplicates
+```
+
+**paste - Merge Lines:**
+
+```bash
+paste file1.txt file2.txt         # Merge files side by side
+paste -d',' file1.txt file2.txt   # Use comma as delimiter
+```
+
+## 🔍 Process Management
+
+### Process Commands
+
+**ps - Process Status:**
+
+```bash
+ps aux                            # Show all processes
+ps -ef                            # Alternative format
+ps aux | grep process_name        # Find specific process
+
+# Output columns:
+# USER: Process owner
+# PID: Process ID
+# %CPU: CPU usage
+# %MEM: Memory usage
+# VSZ: Virtual memory size
+# RSS: Resident set size
+# TTY: Terminal
+# STAT: Process state
+# START: Start time
+# TIME: CPU time
+# COMMAND: Command line
+```
+
+**top - Interactive Process Viewer:**
+
+```bash
+top                               # Interactive process monitor
+top -p PID                        # Monitor specific process
+top -u username                   # Monitor specific user
+
+# Interactive commands:
+# k: Kill process
+# r: Renice process
+# h: Help
+# q: Quit
+```
+
+**htop - Enhanced Process Viewer:**
+
+```bash
+htop                              # Enhanced top (if installed)
+# Features: Color, mouse support, tree view
+```
+
+### Process Control
+
+**kill - Terminate Processes:**
+
+```bash
+kill PID                          # Send SIGTERM (graceful termination)
+kill -9 PID                       # Send SIGKILL (force termination)
+kill -l                           # List all signals
+
+# Common signals:
+# SIGTERM (15): Graceful termination
+# SIGKILL (9): Force termination
+# SIGSTOP: Pause process
+# SIGCONT: Resume process
+```
+
+**nice/renice - Process Priority:**
+
+```bash
+nice -n 10 command                # Run command with lower priority
+renice 10 PID                     # Change priority of running process
+
+# Priority range: -20 (highest) to 19 (lowest)
+# Only root can set negative priorities
+```
+
+## 📊 System Information
+
+### System Commands
+
+**uname - System Information:**
+
+```bash
+uname -a                          # All system information
+uname -s                          # Kernel name
+uname -r                          # Kernel release
+uname -m                          # Machine architecture
+```
+
+**df - Disk Space:**
+
+```bash
+df                                # Disk space for all filesystems
+df -h                             # Human-readable sizes
+df -i                             # Inode information
+```
+
+**du - Disk Usage:**
+
+```bash
+du directory/                     # Disk usage of directory
+du -h directory/                  # Human-readable sizes
+du -sh directory/                 # Summary for directory
+du -sh *                          # Summary for all items in current directory
+```
+
+**free - Memory Usage:**
+
+```bash
+free                              # Memory usage
+free -h                           # Human-readable sizes
+free -t                           # Show total line
+```
+
+### Network Commands
+
+**ifconfig/ip - Network Configuration:**
+
+```bash
+ifconfig                          # Network interface information
+ip addr show                      # Modern alternative
+ip route show                     # Routing table
+```
+
+**netstat - Network Statistics:**
+
+```bash
+netstat -tuln                     # TCP/UDP listening ports
+netstat -i                        # Interface statistics
+netstat -r                        # Routing table
+```
+
+**ss - Socket Statistics:**
+
+```bash
+ss -tuln                          # Modern alternative to netstat
+ss -s                             # Summary statistics
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: File System Navigation
+
+**Objective:** Master basic file system operations
+
+**Tasks:**
+
+```bash
+# 1. Create a directory structure
+mkdir -p ~/devops-practice/{scripts,logs,configs}
+
+# 2. Create sample files
+cd ~/devops-practice
+echo "This is a sample log entry" > logs/app.log
+echo "#!/bin/bash" > scripts/deploy.sh
+echo "database_url=localhost" > configs/app.conf
+
+# 3. Practice file operations
+cp logs/app.log logs/app.log.backup
+mv configs/app.conf configs/production.conf
+rm logs/app.log.backup
+
+# 4. Set permissions
+chmod +x scripts/deploy.sh
+chmod 644 configs/production.conf
+```
+
+### Exercise 2: Text Processing
+
+**Objective:** Master text processing commands
+
+**Tasks:**
+
+```bash
+# 1. Create sample data
+cat > users.txt << EOF
+john,25,developer
+jane,30,manager
+bob,28,designer
+alice,32,architect
+EOF
+
+# 2. Extract usernames
+cut -d',' -f1 users.txt
+
+# 3. Find users over 30
+awk -F',' '$2 > 30 {print $1}' users.txt
+
+# 4. Sort by age
+sort -t',' -k2 -n users.txt
+
+# 5. Count total users
+wc -l users.txt
+```
+
+### Exercise 3: Process Management
+
+**Objective:** Understand process management
+
+**Tasks:**
+
+```bash
+# 1. View system processes
+ps aux | head -10
+
+# 2. Find specific process
+ps aux | grep bash
+
+# 3. Monitor system resources
+top -n 1
+
+# 4. Check disk usage
+df -h
+
+# 5. Check memory usage
+free -h
+```
+
+## 📊 Assessment Questions
+
+**Day 3 Quiz:**
+
+1. **What command shows the current working directory?**
+
+   - Answer: `pwd`
+
+2. **How do you create a directory named "test" in the current directory?**
+
+   - Answer: `mkdir test`
+
+3. **What does the command `ls -la` show?**
+
+   - Answer: All files (including hidden) with detailed information
+
+4. **How do you change file permissions to read/write/execute for owner, read/execute for group and others?**
+
+   - Answer: `chmod 755 filename`
+
+5. **What command shows real-time process information?**
+
+   - Answer: `top`
+
+6. **How do you find all .txt files in the current directory and subdirectories?**
+
+   - Answer: `find . -name "*.txt"`
+
+7. **What does `grep -i "pattern" file.txt` do?**
+
+   - Answer: Searches for "pattern" case-insensitively in file.txt
+
+8. **How do you check disk space usage?**
+   - Answer: `df -h`
+
+## 📚 Additional Resources
+
+### Books
+
+- **"The Linux Command Line"** by William Shotts
+- **"Linux Pocket Guide"** by Daniel J. Barrett
+- **"UNIX and Linux System Administration Handbook"** by Evi Nemeth
+
+### Online Resources
+
+- [Linux Documentation Project](https://tldp.org/)
+- [Bash Reference Manual](https://www.gnu.org/software/bash/manual/)
+- [Linux Command Library](https://linuxcommandlibrary.com/)
+
+### Practice Platforms
+
+- [OverTheWire Bandit](https://overthewire.org/wargames/bandit/)
+- [Linux Journey](https://linuxjourney.com/)
+- [Codecademy Linux Course](https://www.codecademy.com/learn/learn-the-command-line)
+
+## 🎉 Day 3 Summary
+
+**What You've Learned:**
+
+- ✅ Essential Linux command line operations
+- ✅ File system navigation and management
+- ✅ Text processing and manipulation
+- ✅ Process management basics
+- ✅ System information commands
+
+**Key Takeaways:**
+
+- Linux is the foundation of modern DevOps
+- Command line proficiency is essential
+- Text processing skills are invaluable
+- Understanding processes is crucial for troubleshooting
+- System monitoring starts with basic commands
+
+**Tomorrow:** We'll continue with Linux system administration, covering user management, services, and advanced system operations.
+
+**Remember:** Practice these commands daily. The command line is your primary tool in DevOps - master it well!

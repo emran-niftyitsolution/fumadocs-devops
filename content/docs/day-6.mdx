@@ -1,8 +1,625 @@
 ---
-title: "Day 6: Title"
-description: "DevOps 100 Days - Day 6"
+title: "Day 6: Networking Fundamentals - OSI Model & Protocols"
+description: "Understanding network architecture, OSI model, TCP/IP, and fundamental networking concepts"
 ---
 
-# Day 6
+# Day 6: Networking Fundamentals - OSI Model & Protocols
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Understand the OSI 7-layer model
+- Master TCP/IP protocol suite
+- Learn IP addressing and subnetting
+- Understand network protocols and ports
+- Master network troubleshooting basics
+- Learn network security fundamentals
+
+## 🌐 Understanding Network Architecture
+
+### The OSI Model (7 Layers)
+
+**Layer 7: Application Layer**
+
+```bash
+# Protocols: HTTP, HTTPS, FTP, SMTP, DNS, SSH
+# Functions: User interface, application services
+# Examples:
+- Web browsers (HTTP/HTTPS)
+- Email clients (SMTP/POP3/IMAP)
+- File transfer (FTP/SFTP)
+- Domain resolution (DNS)
+```
+
+**Layer 6: Presentation Layer**
+
+```bash
+# Functions: Data formatting, encryption, compression
+# Examples:
+- SSL/TLS encryption
+- Data compression (gzip)
+- Character encoding (UTF-8)
+- Image formatting (JPEG, PNG)
+```
+
+**Layer 5: Session Layer**
+
+```bash
+# Functions: Session management, authentication
+# Examples:
+- NetBIOS sessions
+- RPC (Remote Procedure Call)
+- SQL sessions
+- Authentication protocols
+```
+
+**Layer 4: Transport Layer**
+
+```bash
+# Protocols: TCP, UDP
+# Functions: End-to-end communication, flow control
+# TCP: Connection-oriented, reliable
+# UDP: Connectionless, fast
+```
+
+**Layer 3: Network Layer**
+
+```bash
+# Protocols: IP, ICMP, ARP
+# Functions: Routing, logical addressing
+# Examples:
+- IP addressing
+- Routing protocols (OSPF, BGP)
+- Network diagnostics (ping, traceroute)
+```
+
+**Layer 2: Data Link Layer**
+
+```bash
+# Functions: Physical addressing, error detection
+# Examples:
+- Ethernet frames
+- MAC addresses
+- VLANs
+- Switches
+```
+
+**Layer 1: Physical Layer**
+
+```bash
+# Functions: Physical transmission, hardware
+# Examples:
+- Cables (Ethernet, fiber)
+- Network cards
+- Hubs
+- Physical connectors
+```
+
+### TCP/IP Model
+
+**Application Layer**
+
+```bash
+# Combines OSI Layers 5-7
+# Protocols: HTTP, FTP, SMTP, DNS, SSH
+```
+
+**Transport Layer**
+
+```bash
+# Same as OSI Layer 4
+# Protocols: TCP, UDP
+```
+
+**Internet Layer**
+
+```bash
+# Same as OSI Layer 3
+# Protocols: IP, ICMP, ARP
+```
+
+**Network Access Layer**
+
+```bash
+# Combines OSI Layers 1-2
+# Functions: Physical and data link
+```
+
+## 🔢 IP Addressing Fundamentals
+
+### IPv4 Addressing
+
+**Address Structure:**
+
+```bash
+# 32-bit address (4 bytes)
+# Format: xxx.xxx.xxx.xxx
+# Example: 192.168.1.1
+
+# Address Classes:
+Class A: 1.0.0.0 - 126.255.255.255 (Default mask: 255.0.0.0)
+Class B: 128.0.0.0 - 191.255.255.255 (Default mask: 255.255.0.0)
+Class C: 192.0.0.0 - 223.255.255.255 (Default mask: 255.255.255.0)
+Class D: 224.0.0.0 - 239.255.255.255 (Multicast)
+Class E: 240.0.0.0 - 255.255.255.255 (Reserved)
+```
+
+**Private IP Ranges:**
+
+```bash
+# RFC 1918 Private Addresses:
+10.0.0.0/8      # 10.0.0.0 - 10.255.255.255
+172.16.0.0/12    # 172.16.0.0 - 172.31.255.255
+192.168.0.0/16   # 192.168.0.0 - 192.168.255.255
+
+# Special Addresses:
+127.0.0.0/8      # Loopback (127.0.0.1)
+169.254.0.0/16   # Link-local (APIPA)
+```
+
+### Subnetting
+
+**CIDR Notation:**
+
+```bash
+# /24 = 255.255.255.0 (256 addresses, 254 usable)
+# /16 = 255.255.0.0 (65,536 addresses)
+# /8 = 255.0.0.0 (16,777,216 addresses)
+
+# Subnetting Examples:
+Network: 192.168.1.0/24
+- Range: 192.168.1.0 - 192.168.1.255
+- Usable: 192.168.1.1 - 192.168.1.254
+- Broadcast: 192.168.1.255
+- Gateway: 192.168.1.1 (typically)
+```
+
+**Subnetting Practice:**
+
+```bash
+# Calculate subnet information
+ipcalc 192.168.1.0/24
+ipcalc 10.0.0.0/16
+
+# Manual calculation:
+# For /24: 256 addresses (2^8)
+# For /16: 65,536 addresses (2^16)
+# For /8: 16,777,216 addresses (2^24)
+```
+
+### IPv6 Addressing
+
+**IPv6 Structure:**
+
+```bash
+# 128-bit address (16 bytes)
+# Format: xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx
+# Example: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+
+# Shortened form:
+2001:db8:85a3::8a2e:370:7334
+
+# Special addresses:
+::1              # Loopback
+::/128           # Unspecified
+fe80::/10        # Link-local
+fc00::/7         # Unique local
+```
+
+## 🔌 Network Protocols
+
+### Transport Layer Protocols
+
+**TCP (Transmission Control Protocol):**
+
+```bash
+# Connection-oriented, reliable
+# Features:
+- Three-way handshake
+- Flow control
+- Error checking
+- Retransmission
+- Ordered delivery
+
+# Common ports:
+80   # HTTP
+443  # HTTPS
+22   # SSH
+21   # FTP
+25   # SMTP
+53   # DNS
+```
+
+**UDP (User Datagram Protocol):**
+
+```bash
+# Connectionless, unreliable but fast
+# Features:
+- No handshake
+- No flow control
+- No retransmission
+- No ordering guarantee
+
+# Common ports:
+53   # DNS
+67/68 # DHCP
+123  # NTP
+161  # SNMP
+```
+
+### Application Layer Protocols
+
+**HTTP/HTTPS:**
+
+```bash
+# HTTP (Port 80)
+GET /index.html HTTP/1.1
+Host: example.com
+User-Agent: Mozilla/5.0
+
+# HTTPS (Port 443)
+# HTTP over SSL/TLS encryption
+```
+
+**SSH (Secure Shell):**
+
+```bash
+# Port 22
+# Secure remote access
+ssh user@hostname
+ssh -p 2222 user@hostname
+ssh -i key.pem user@hostname
+```
+
+**DNS (Domain Name System):**
+
+```bash
+# Port 53
+# Resolves domain names to IP addresses
+
+# Query types:
+A     # IPv4 address
+AAAA  # IPv6 address
+CNAME # Canonical name
+MX    # Mail exchange
+NS    # Name server
+PTR   # Pointer (reverse lookup)
+```
+
+**DHCP (Dynamic Host Configuration Protocol):**
+
+```bash
+# Ports 67/68
+# Automatically assigns IP addresses
+
+# DHCP Process:
+1. Discover (Client → Server)
+2. Offer (Server → Client)
+3. Request (Client → Server)
+4. ACK (Server → Client)
+```
+
+## 🛠️ Network Troubleshooting
+
+### Basic Connectivity
+
+**ping - Test Connectivity:**
+
+```bash
+# Basic ping
+ping google.com
+ping -c 4 google.com  # Send 4 packets
+ping -I eth0 google.com  # Use specific interface
+
+# IPv6 ping
+ping6 ipv6.google.com
+```
+
+**traceroute - Path Discovery:**
+
+```bash
+# Show network path
+traceroute google.com
+traceroute -n google.com  # Don't resolve names
+traceroute -I google.com  # Use ICMP
+
+# IPv6 traceroute
+traceroute6 ipv6.google.com
+```
+
+**mtr - Continuous Traceroute:**
+
+```bash
+# Continuous path monitoring
+mtr google.com
+mtr -n google.com  # Don't resolve names
+mtr -r google.com  # Report mode
+```
+
+### Port and Service Testing
+
+**telnet - Test Port Connectivity:**
+
+```bash
+# Test specific port
+telnet google.com 80
+telnet google.com 443
+
+# Test local ports
+telnet localhost 22
+telnet localhost 80
+```
+
+**nc (netcat) - Network Swiss Army Knife:**
+
+```bash
+# Test port connectivity
+nc -zv google.com 80
+nc -zv google.com 443
+
+# Listen on port
+nc -l 8080
+
+# Transfer file
+nc -w 3 hostname 1234 < file.txt
+```
+
+**nmap - Network Discovery:**
+
+```bash
+# Scan single host
+nmap localhost
+nmap 192.168.1.1
+
+# Scan specific ports
+nmap -p 80,443,22 google.com
+
+# Scan network
+nmap 192.168.1.0/24
+
+# Service detection
+nmap -sV localhost
+```
+
+### Network Information
+
+**Network Interface Configuration:**
+
+```bash
+# Show interface information
+ip addr show
+ifconfig
+
+# Show interface statistics
+ip -s link show
+cat /proc/net/dev
+```
+
+**Routing Information:**
+
+```bash
+# Show routing table
+ip route show
+route -n
+
+# Show ARP table
+arp -a
+ip neigh show
+```
+
+**Network Statistics:**
+
+```bash
+# Show listening ports
+ss -tuln
+netstat -tuln
+
+# Show network connections
+ss -tuln
+netstat -tuln
+
+# Show interface statistics
+netstat -i
+ss -s
+```
+
+## 🔒 Network Security Fundamentals
+
+### Firewall Concepts
+
+**Packet Filtering:**
+
+```bash
+# Allow/deny based on:
+- Source IP
+- Destination IP
+- Protocol (TCP/UDP)
+- Port number
+- Interface
+```
+
+**Stateful Inspection:**
+
+```bash
+# Tracks connection state:
+- NEW: New connection
+- ESTABLISHED: Active connection
+- RELATED: Related connection
+- INVALID: Invalid packets
+```
+
+### Common Security Practices
+
+**Port Security:**
+
+```bash
+# Close unnecessary ports
+# Common ports to close:
+23   # Telnet (unencrypted)
+21   # FTP (unencrypted)
+135  # RPC
+139  # NetBIOS
+445  # SMB
+```
+
+**Access Control:**
+
+```bash
+# Restrict access by IP
+# Use VPN for remote access
+# Implement strong authentication
+# Regular security audits
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: Network Analysis
+
+**Objective:** Analyze network configuration
+
+**Tasks:**
+
+```bash
+# 1. Check network interfaces
+ip addr show
+ifconfig
+
+# 2. Check routing table
+ip route show
+route -n
+
+# 3. Test connectivity
+ping -c 4 8.8.8.8
+ping -c 4 google.com
+
+# 4. Check DNS resolution
+nslookup google.com
+dig google.com
+
+# 5. Test specific ports
+nc -zv google.com 80
+nc -zv google.com 443
+```
+
+### Exercise 2: Subnetting Practice
+
+**Objective:** Practice subnetting calculations
+
+**Tasks:**
+
+```bash
+# 1. Calculate subnet information
+ipcalc 192.168.1.0/24
+ipcalc 10.0.0.0/16
+ipcalc 172.16.0.0/12
+
+# 2. Manual calculations:
+# Network: 192.168.15.0/26
+# - Subnet mask: 255.255.255.192
+# - Network address: 192.168.15.0
+# - Broadcast: 192.168.15.63
+# - Usable range: 192.168.15.1 - 192.168.15.62
+```
+
+### Exercise 3: Network Troubleshooting
+
+**Objective:** Practice network troubleshooting
+
+**Tasks:**
+
+```bash
+# 1. Test basic connectivity
+ping -c 4 8.8.8.8
+ping -c 4 google.com
+
+# 2. Trace network path
+traceroute google.com
+mtr google.com
+
+# 3. Check local services
+nc -zv localhost 22
+nc -zv localhost 80
+nc -zv localhost 443
+
+# 4. Check network statistics
+ss -tuln
+netstat -i
+```
+
+## 📊 Assessment Questions
+
+**Day 6 Quiz:**
+
+1. **What are the 7 layers of the OSI model?**
+
+   - Answer: Physical, Data Link, Network, Transport, Session, Presentation, Application
+
+2. **What is the difference between TCP and UDP?**
+
+   - Answer: TCP is connection-oriented and reliable, UDP is connectionless and fast
+
+3. **What is the purpose of a subnet mask?**
+
+   - Answer: To identify which part of an IP address is network and which is host
+
+4. **What port does HTTP use?**
+
+   - Answer: Port 80
+
+5. **What command shows the routing table?**
+
+   - Answer: `ip route show` or `route -n`
+
+6. **What is the loopback address?**
+
+   - Answer: 127.0.0.1 (IPv4) or ::1 (IPv6)
+
+7. **What protocol does ping use?**
+
+   - Answer: ICMP (Internet Control Message Protocol)
+
+8. **What is the purpose of DNS?**
+   - Answer: To resolve domain names to IP addresses
+
+## 📚 Additional Resources
+
+### Books
+
+- **"Computer Networks"** by Andrew Tanenbaum
+- **"TCP/IP Illustrated"** by W. Richard Stevens
+- **"Network Security Essentials"** by William Stallings
+
+### Online Resources
+
+- [Cisco Networking Academy](https://www.netacad.com/)
+- [Wireshark Documentation](https://www.wireshark.org/docs/)
+- [RFC Documents](https://www.rfc-editor.org/)
+
+### Tools
+
+- **Network Analysis**: Wireshark, tcpdump, nmap
+- **Network Monitoring**: Nagios, Zabbix, PRTG
+- **Network Security**: Snort, Suricata, pfSense
+
+## 🎉 Day 6 Summary
+
+**What You've Learned:**
+
+- ✅ OSI 7-layer model and TCP/IP protocol suite
+- ✅ IP addressing and subnetting fundamentals
+- ✅ Network protocols and common ports
+- ✅ Network troubleshooting tools and techniques
+- ✅ Basic network security concepts
+
+**Key Takeaways:**
+
+- Understanding network layers is fundamental to DevOps
+- TCP/IP is the foundation of modern networking
+- Subnetting is essential for network design
+- Network troubleshooting requires systematic approach
+- Security should be built into network design
+
+**Tomorrow:** We'll continue with subnetting and network design, building on today's fundamentals.
+
+**Remember:** Networking is the backbone of modern IT infrastructure. Master these concepts well!

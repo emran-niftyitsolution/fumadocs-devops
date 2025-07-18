@@ -1,8 +1,777 @@
 ---
-title: "Day 5: Title"
-description: "DevOps 100 Days - Day 5"
+title: "Day 5: Advanced Linux Administration - Networking & Storage"
+description: "Master advanced Linux networking, storage management, and performance tuning for DevOps environments"
 ---
 
-# Day 5
+# Day 5: Advanced Linux Administration - Networking & Storage
 
-Content coming soon.
+## 🎯 What You'll Learn Today
+
+**Learning Objectives:**
+
+- Master Linux networking configuration
+- Understand storage management and filesystems
+- Learn performance tuning techniques
+- Master network troubleshooting
+- Understand disk partitioning and RAID
+- Learn system optimization strategies
+
+## 🌐 Advanced Networking
+
+### Network Configuration
+
+**Network Interfaces:**
+
+```bash
+# View network interfaces
+ip addr show
+ifconfig
+
+# Show interface statistics
+ip -s link show
+ethtool eth0
+
+# Configure IP address
+sudo ip addr add 192.168.1.100/24 dev eth0
+sudo ip link set eth0 up
+
+# Remove IP address
+sudo ip addr del 192.168.1.100/24 dev eth0
+```
+
+**Network Configuration Files:**
+
+```bash
+# Ubuntu/Debian
+/etc/network/interfaces
+
+# Example configuration:
+auto eth0
+iface eth0 inet static
+    address 192.168.1.100
+    netmask 255.255.255.0
+    gateway 192.168.1.1
+    dns-nameservers 8.8.8.8 8.8.4.4
+
+# RHEL/CentOS
+/etc/sysconfig/network-scripts/ifcfg-eth0
+
+# Example configuration:
+DEVICE=eth0
+BOOTPROTO=static
+IPADDR=192.168.1.100
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+DNS1=8.8.8.8
+DNS2=8.8.4.4
+ONBOOT=yes
+```
+
+### Network Troubleshooting
+
+**Connectivity Testing:**
+
+```bash
+# Test connectivity
+ping -c 4 google.com
+ping -I eth0 google.com
+
+# Test specific port
+telnet google.com 80
+nc -zv google.com 80
+
+# Test DNS resolution
+nslookup google.com
+dig google.com
+host google.com
+
+# Trace route
+traceroute google.com
+mtr google.com
+```
+
+**Network Diagnostics:**
+
+```bash
+# Show routing table
+ip route show
+route -n
+
+# Show ARP table
+arp -a
+
+# Show network connections
+ss -tuln
+netstat -tuln
+
+# Show interface statistics
+cat /proc/net/dev
+```
+
+### Network Services
+
+**SSH Configuration:**
+
+```bash
+# SSH server configuration
+sudo nano /etc/ssh/sshd_config
+
+# Key security settings:
+Port 2222
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+AllowUsers username1 username2
+MaxAuthTries 3
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
+# Restart SSH service
+sudo systemctl restart ssh
+```
+
+**DNS Configuration:**
+
+```bash
+# Edit resolv.conf
+sudo nano /etc/resolv.conf
+
+# Example:
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+search example.com
+
+# Make it persistent (Ubuntu)
+sudo nano /etc/systemd/resolved.conf
+```
+
+**Firewall Management:**
+
+```bash
+# UFW (Ubuntu)
+sudo ufw enable
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw deny 23/tcp
+sudo ufw status
+
+# iptables
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+sudo iptables -A INPUT -j DROP
+
+# Save iptables rules
+sudo iptables-save > /etc/iptables/rules.v4
+```
+
+## 💾 Storage Management
+
+### Disk Partitioning
+
+**fdisk - Disk Partitioning:**
+
+```bash
+# List disk partitions
+sudo fdisk -l
+
+# Create new partition table
+sudo fdisk /dev/sdb
+
+# fdisk commands:
+# n: New partition
+# p: Print partition table
+# d: Delete partition
+# w: Write changes
+# q: Quit without saving
+
+# Example session:
+# n (new partition)
+# p (primary)
+# 1 (partition number)
+# Enter (default start)
+# +10G (size)
+# w (write and quit)
+```
+
+**parted - Advanced Partitioning:**
+
+```bash
+# Start parted
+sudo parted /dev/sdb
+
+# Create partition table
+mklabel gpt
+
+# Create partition
+mkpart primary ext4 0% 100%
+
+# Print partition table
+print
+
+# Quit
+quit
+```
+
+### Filesystem Management
+
+**Creating Filesystems:**
+
+```bash
+# Format partition with ext4
+sudo mkfs.ext4 /dev/sdb1
+
+# Format with XFS
+sudo mkfs.xfs /dev/sdb1
+
+# Format with Btrfs
+sudo mkfs.btrfs /dev/sdb1
+
+# Check filesystem
+sudo fsck /dev/sdb1
+```
+
+**Mounting Filesystems:**
+
+```bash
+# Create mount point
+sudo mkdir /mnt/data
+
+# Mount filesystem
+sudo mount /dev/sdb1 /mnt/data
+
+# Mount with options
+sudo mount -o defaults,noatime /dev/sdb1 /mnt/data
+
+# Unmount
+sudo umount /mnt/data
+
+# Auto-mount on boot
+echo "/dev/sdb1 /mnt/data ext4 defaults,noatime 0 2" | sudo tee -a /etc/fstab
+```
+
+### LVM (Logical Volume Management)
+
+**LVM Concepts:**
+
+```bash
+# Physical Volume (PV)
+# Volume Group (VG)
+# Logical Volume (LV)
+
+# Create physical volume
+sudo pvcreate /dev/sdb1
+
+# Create volume group
+sudo vgcreate datavg /dev/sdb1
+
+# Create logical volume
+sudo lvcreate -L 10G -n datalv datavg
+
+# Format logical volume
+sudo mkfs.ext4 /dev/datavg/datalv
+
+# Mount logical volume
+sudo mount /dev/datavg/datalv /mnt/data
+```
+
+**LVM Management:**
+
+```bash
+# Extend logical volume
+sudo lvextend -L +5G /dev/datavg/datalv
+sudo resize2fs /dev/datavg/datalv
+
+# Reduce logical volume
+sudo lvreduce -L 8G /dev/datavg/datalv
+sudo resize2fs /dev/datavg/datalv
+
+# Add physical volume to volume group
+sudo vgextend datavg /dev/sdc1
+
+# Show LVM information
+sudo pvs
+sudo vgs
+sudo lvs
+```
+
+### RAID Management
+
+**Software RAID (mdadm):**
+
+```bash
+# Create RAID 1 (mirror)
+sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sdb1 /dev/sdc1
+
+# Create RAID 5
+sudo mdadm --create /dev/md0 --level=5 --raid-devices=3 /dev/sdb1 /dev/sdc1 /dev/sdd1
+
+# Format RAID device
+sudo mkfs.ext4 /dev/md0
+
+# Mount RAID device
+sudo mount /dev/md0 /mnt/raid
+
+# Check RAID status
+sudo mdadm --detail /dev/md0
+cat /proc/mdstat
+```
+
+**RAID Monitoring:**
+
+```bash
+# Monitor RAID health
+sudo mdadm --monitor --daemonise --scan
+
+# Add spare disk
+sudo mdadm --add /dev/md0 /dev/sde1
+
+# Remove failed disk
+sudo mdadm --remove /dev/md0 /dev/sdb1
+```
+
+## ⚡ Performance Tuning
+
+### System Monitoring
+
+**CPU Performance:**
+
+```bash
+# CPU information
+lscpu
+cat /proc/cpuinfo
+
+# CPU usage
+mpstat 1 5
+iostat -c 1 5
+
+# CPU load
+uptime
+cat /proc/loadavg
+
+# Process CPU usage
+ps aux --sort=-%cpu | head -10
+```
+
+**Memory Performance:**
+
+```bash
+# Memory information
+free -h
+cat /proc/meminfo
+
+# Memory usage by process
+ps aux --sort=-%mem | head -10
+
+# Memory pressure
+cat /proc/vmstat
+
+# Swap usage
+swapon -s
+```
+
+**Disk Performance:**
+
+```bash
+# Disk I/O statistics
+iostat -x 1 5
+
+# Disk usage
+df -h
+du -sh /*
+
+# Disk performance test
+dd if=/dev/zero of=testfile bs=1M count=1000
+hdparm -t /dev/sda
+```
+
+### Kernel Tuning
+
+**sysctl Configuration:**
+
+```bash
+# View kernel parameters
+sysctl -a
+
+# Set kernel parameter
+sudo sysctl -w vm.swappiness=10
+
+# Make changes permanent
+echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+```
+
+**Common Tuning Parameters:**
+
+```bash
+# Memory management
+vm.swappiness=10
+vm.dirty_ratio=15
+vm.dirty_background_ratio=5
+
+# Network tuning
+net.core.rmem_max=16777216
+net.core.wmem_max=16777216
+net.ipv4.tcp_rmem=4096 87380 16777216
+net.ipv4.tcp_wmem=4096 65536 16777216
+
+# File system tuning
+fs.file-max=65536
+fs.inotify.max_user_watches=524288
+```
+
+### Application Tuning
+
+**Web Server Tuning:**
+
+```bash
+# Nginx tuning
+sudo nano /etc/nginx/nginx.conf
+
+# Worker processes
+worker_processes auto;
+
+# Worker connections
+events {
+    worker_connections 1024;
+    use epoll;
+}
+
+# HTTP tuning
+http {
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+}
+```
+
+**Database Tuning:**
+
+```bash
+# MySQL tuning
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+
+[mysqld]
+innodb_buffer_pool_size = 1G
+innodb_log_file_size = 256M
+innodb_flush_log_at_trx_commit = 2
+max_connections = 200
+query_cache_size = 64M
+```
+
+## 🔧 System Optimization
+
+### Boot Optimization
+
+**Boot Time Analysis:**
+
+```bash
+# Check boot time
+systemd-analyze time
+
+# Check boot process
+systemd-analyze blame
+
+# Check critical chain
+systemd-analyze critical-chain
+
+# Check boot chart
+systemd-analyze plot > boot-analysis.svg
+```
+
+**Service Optimization:**
+
+```bash
+# Disable unnecessary services
+sudo systemctl disable bluetooth
+sudo systemctl disable cups
+sudo systemctl disable avahi-daemon
+
+# Enable parallel boot
+sudo systemctl enable systemd-analyze
+```
+
+### Resource Limits
+
+**ulimit Configuration:**
+
+```bash
+# View current limits
+ulimit -a
+
+# Set limits for current session
+ulimit -n 65536
+ulimit -u 2048
+
+# Permanent limits
+sudo nano /etc/security/limits.conf
+
+# Example:
+* soft nofile 65536
+* hard nofile 65536
+* soft nproc 2048
+* hard nproc 2048
+```
+
+**cgroups Configuration:**
+
+```bash
+# Create cgroup
+sudo mkdir /sys/fs/cgroup/memory/myapp
+
+# Set memory limit
+echo 100M > /sys/fs/cgroup/memory/myapp/memory.limit_in_bytes
+
+# Add process to cgroup
+echo $PID > /sys/fs/cgroup/memory/myapp/tasks
+```
+
+## 🛠️ Advanced Troubleshooting
+
+### System Diagnostics
+
+**System Information:**
+
+```bash
+# Hardware information
+lshw
+dmidecode
+
+# PCI devices
+lspci
+lspci -v
+
+# USB devices
+lsusb
+lsusb -v
+
+# Kernel modules
+lsmod
+modinfo module_name
+```
+
+**Process Analysis:**
+
+```bash
+# Process tree
+pstree
+pstree -p
+
+# Process memory map
+cat /proc/PID/maps
+
+# Process status
+cat /proc/PID/status
+
+# Process file descriptors
+ls -la /proc/PID/fd
+```
+
+**Network Diagnostics:**
+
+```bash
+# Network interface details
+ethtool eth0
+ethtool -S eth0
+
+# Network buffer statistics
+cat /proc/net/dev
+cat /proc/net/sockstat
+
+# Network connection states
+ss -s
+netstat -s
+```
+
+### Performance Profiling
+
+**CPU Profiling:**
+
+```bash
+# perf tool
+sudo perf record -g command
+sudo perf report
+
+# strace for system calls
+strace -p PID
+strace -c command
+
+# ltrace for library calls
+ltrace -p PID
+ltrace -c command
+```
+
+**Memory Profiling:**
+
+```bash
+# valgrind for memory analysis
+valgrind --tool=memcheck program
+valgrind --tool=massif program
+
+# Memory leak detection
+valgrind --leak-check=full program
+```
+
+## 🧪 Hands-on Exercises
+
+### Exercise 1: Network Configuration
+
+**Objective:** Configure network interfaces
+
+**Tasks:**
+
+```bash
+# 1. Check current network configuration
+ip addr show
+ip route show
+
+# 2. Configure static IP (if possible)
+sudo ip addr add 192.168.1.100/24 dev eth0
+sudo ip link set eth0 up
+
+# 3. Test connectivity
+ping -c 4 8.8.8.8
+ping -c 4 google.com
+
+# 4. Check DNS resolution
+nslookup google.com
+dig google.com
+
+# 5. Test specific ports
+nc -zv google.com 80
+nc -zv google.com 443
+```
+
+### Exercise 2: Storage Management
+
+**Objective:** Practice storage management
+
+**Tasks:**
+
+```bash
+# 1. Check disk usage
+df -h
+du -sh /*
+
+# 2. Create test filesystem (if spare disk available)
+sudo fdisk /dev/sdb
+sudo mkfs.ext4 /dev/sdb1
+sudo mkdir /mnt/test
+sudo mount /dev/sdb1 /mnt/test
+
+# 3. Test filesystem performance
+dd if=/dev/zero of=/mnt/test/testfile bs=1M count=1000
+hdparm -t /dev/sdb1
+
+# 4. Clean up
+sudo umount /mnt/test
+```
+
+### Exercise 3: Performance Monitoring
+
+**Objective:** Monitor system performance
+
+**Tasks:**
+
+```bash
+# 1. Monitor system resources
+top -n 1
+free -h
+df -h
+
+# 2. Check process resource usage
+ps aux --sort=-%cpu | head -5
+ps aux --sort=-%mem | head -5
+
+# 3. Monitor network usage
+ss -tuln
+netstat -i
+
+# 4. Check system load
+uptime
+cat /proc/loadavg
+
+# 5. Monitor disk I/O
+iostat -x 1 5
+```
+
+## 📊 Assessment Questions
+
+**Day 5 Quiz:**
+
+1. **What command shows network interface statistics?**
+
+   - Answer: `ip -s link show` or `ethtool eth0`
+
+2. **How do you create a logical volume in LVM?**
+
+   - Answer: `lvcreate -L size -n name vgname`
+
+3. **What command shows CPU load average?**
+
+   - Answer: `uptime` or `cat /proc/loadavg`
+
+4. **How do you check RAID status?**
+
+   - Answer: `cat /proc/mdstat` or `mdadm --detail /dev/md0`
+
+5. **What command shows disk I/O statistics?**
+
+   - Answer: `iostat -x 1 5`
+
+6. **How do you make kernel parameter changes permanent?**
+
+   - Answer: Add to `/etc/sysctl.conf` and run `sysctl -p`
+
+7. **What command shows network connections?**
+
+   - Answer: `ss -tuln` or `netstat -tuln`
+
+8. **How do you check filesystem integrity?**
+   - Answer: `fsck /dev/partition`
+
+## 📚 Additional Resources
+
+### Books
+
+- **"Linux Performance and Tuning Guidelines"** by IBM
+- **"Systems Performance"** by Brendan Gregg
+- **"The Practice of Network Security Monitoring"** by Richard Bejtlich
+
+### Online Resources
+
+- [Linux Performance](http://www.brendangregg.com/linuxperf.html)
+- [Linux Network Administration](https://tldp.org/LDP/nag2/)
+- [Storage Administration](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/storage_administration_guide/)
+
+### Tools
+
+- **Performance**: perf, strace, ltrace, valgrind
+- **Monitoring**: htop, iotop, nethogs, dstat
+- **Storage**: fdisk, parted, lvm, mdadm
+
+## 🎉 Day 5 Summary
+
+**What You've Learned:**
+
+- ✅ Advanced networking configuration and troubleshooting
+- ✅ Storage management and filesystem operations
+- ✅ LVM and RAID management
+- ✅ Performance tuning and monitoring
+- ✅ System optimization techniques
+- ✅ Advanced troubleshooting methods
+
+**Key Takeaways:**
+
+- Networking is fundamental to DevOps infrastructure
+- Storage management requires understanding of filesystems and RAID
+- Performance tuning is an iterative process
+- Monitoring and profiling are essential for optimization
+- Advanced troubleshooting requires systematic approach
+
+**Tomorrow:** We'll dive into networking basics, building on our Linux foundation to understand network protocols and services.
+
+**Remember:** Performance tuning is both an art and a science. Always measure before and after changes, and test in safe environments!
