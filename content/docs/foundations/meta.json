@@ -3,6 +3,9 @@
     "what-is-devops",
     "linux-essentials",
     "networking-basics",
-    "git-version-control"
+    "git-version-control",
+    "bash-scripting",
+    "cloud-virtualization",
+    "python-basics"
   ]
 }

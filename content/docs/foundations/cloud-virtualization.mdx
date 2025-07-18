@@ -1,0 +1,674 @@
+---
+title: "Cloud & Virtualization"
+description: "Understanding cloud computing and virtualization fundamentals"
+---
+
+# ☁️ Cloud & Virtualization for DevOps
+
+## Introduction
+
+Cloud computing and virtualization are fundamental concepts in modern DevOps. Understanding these technologies is essential for building scalable, reliable, and cost-effective infrastructure.
+
+## 🏗️ Virtualization Fundamentals
+
+### **What is Virtualization?**
+
+Virtualization is the process of creating a virtual version of computing resources, including hardware, operating systems, storage devices, and network resources.
+
+### **Types of Virtualization**
+
+#### **1. Hardware Virtualization (Type 1 Hypervisor)**
+
+- **Bare-metal hypervisors**: Run directly on hardware
+- **Examples**: VMware ESXi, Microsoft Hyper-V, Xen
+- **Use cases**: Data centers, enterprise environments
+
+#### **2. Hosted Virtualization (Type 2 Hypervisor)**
+
+- **Hosted hypervisors**: Run on top of an operating system
+- **Examples**: VMware Workstation, VirtualBox, Parallels
+- **Use cases**: Development, testing, personal use
+
+#### **3. Container Virtualization**
+
+- **Lightweight virtualization**: Share host OS kernel
+- **Examples**: Docker, LXC, containerd
+- **Use cases**: Application deployment, microservices
+
+### **Virtualization vs Containerization**
+
+| Aspect             | Virtualization        | Containerization    |
+| ------------------ | --------------------- | ------------------- |
+| **Isolation**      | Complete OS isolation | Process isolation   |
+| **Resource Usage** | High (full OS per VM) | Low (shared kernel) |
+| **Startup Time**   | Minutes               | Seconds             |
+| **Portability**    | Limited               | High                |
+| **Security**       | Strong isolation      | Namespace isolation |
+
+## ☁️ Cloud Computing Models
+
+### **1. Infrastructure as a Service (IaaS)**
+
+**What it provides:**
+
+- Virtual machines
+- Storage
+- Networking
+- Load balancers
+
+**Examples:**
+
+- AWS EC2, Azure VMs, Google Compute Engine
+- DigitalOcean Droplets, Linode
+
+**Use cases:**
+
+- Full control over infrastructure
+- Custom configurations
+- Legacy application migration
+
+### **2. Platform as a Service (PaaS)**
+
+**What it provides:**
+
+- Application runtime environment
+- Development tools
+- Database services
+- Middleware
+
+**Examples:**
+
+- AWS Elastic Beanstalk, Azure App Service
+- Google App Engine, Heroku
+
+**Use cases:**
+
+- Application development
+- Rapid prototyping
+- Managed application hosting
+
+### **3. Software as a Service (SaaS)**
+
+**What it provides:**
+
+- Complete applications
+- User interfaces
+- Data management
+
+**Examples:**
+
+- Salesforce, Gmail, Slack
+- GitHub, Jira, Confluence
+
+**Use cases:**
+
+- Business applications
+- Collaboration tools
+- Customer relationship management
+
+## 🌐 Cloud Deployment Models
+
+### **Public Cloud**
+
+```yaml
+# Example: AWS EC2 instance
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-app
+spec:
+  containers:
+    - name: web
+      image: nginx:latest
+      ports:
+        - containerPort: 80
+```
+
+**Characteristics:**
+
+- Shared infrastructure
+- Pay-per-use pricing
+- Scalable resources
+- Managed by cloud provider
+
+**Providers:**
+
+- Amazon Web Services (AWS)
+- Microsoft Azure
+- Google Cloud Platform (GCP)
+- DigitalOcean, Linode
+
+### **Private Cloud**
+
+```yaml
+# Example: On-premises Kubernetes cluster
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: private-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: private-app
+  template:
+    metadata:
+      labels:
+        app: private-app
+    spec:
+      containers:
+        - name: app
+          image: private-registry/app:latest
+```
+
+**Characteristics:**
+
+- Dedicated infrastructure
+- Full control
+- Higher costs
+- Self-managed
+
+### **Hybrid Cloud**
+
+```yaml
+# Example: Multi-cloud deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: hybrid-app
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: hybrid-app
+```
+
+**Characteristics:**
+
+- Combination of public and private
+- Workload portability
+- Cost optimization
+- Regulatory compliance
+
+## 🚀 Major Cloud Providers
+
+### **Amazon Web Services (AWS)**
+
+#### **Core Services**
+
+```bash
+# AWS CLI examples
+aws ec2 run-instances \
+  --image-id ami-12345678 \
+  --instance-type t2.micro \
+  --key-name my-key-pair
+
+aws s3 cp file.txt s3://my-bucket/
+aws rds create-db-instance \
+  --db-instance-identifier mydb \
+  --db-instance-class db.t2.micro
+```
+
+**Popular Services:**
+
+- **Compute**: EC2, Lambda, ECS, EKS
+- **Storage**: S3, EBS, EFS, Glacier
+- **Database**: RDS, DynamoDB, ElastiCache
+- **Networking**: VPC, Route 53, CloudFront
+- **Security**: IAM, KMS, Secrets Manager
+
+#### **AWS Architecture Example**
+
+```yaml
+# AWS CloudFormation template
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "DevOps infrastructure"
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: us-west-2a
+
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-12345678
+      InstanceType: t2.micro
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref WebSecurityGroup
+```
+
+### **Microsoft Azure**
+
+#### **Core Services**
+
+```bash
+# Azure CLI examples
+az vm create \
+  --resource-group my-rg \
+  --name my-vm \
+  --image UbuntuLTS \
+  --size Standard_B1s
+
+az storage account create \
+  --name mystorageaccount \
+  --resource-group my-rg \
+  --location westus2
+
+az aks create \
+  --resource-group my-rg \
+  --name my-cluster \
+  --node-count 3
+```
+
+**Popular Services:**
+
+- **Compute**: Virtual Machines, App Service, AKS
+- **Storage**: Blob Storage, File Storage, Disk Storage
+- **Database**: SQL Database, Cosmos DB, Redis Cache
+- **Networking**: Virtual Network, Load Balancer, CDN
+- **Security**: Azure AD, Key Vault, Security Center
+
+### **Google Cloud Platform (GCP)**
+
+#### **Core Services**
+
+```bash
+# Google Cloud CLI examples
+gcloud compute instances create my-instance \
+  --zone=us-central1-a \
+  --machine-type=e2-micro \
+  --image-family=debian-11
+
+gcloud storage cp file.txt gs://my-bucket/
+gcloud container clusters create my-cluster \
+  --zone=us-central1-a \
+  --num-nodes=3
+```
+
+**Popular Services:**
+
+- **Compute**: Compute Engine, Cloud Run, GKE
+- **Storage**: Cloud Storage, Persistent Disk, Filestore
+- **Database**: Cloud SQL, Firestore, BigQuery
+- **Networking**: VPC, Cloud Load Balancing, Cloud CDN
+- **Security**: IAM, Secret Manager, Security Command Center
+
+## 🐳 Containerization
+
+### **Docker Fundamentals**
+
+```dockerfile
+# Example Dockerfile
+FROM ubuntu:20.04
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    nginx \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy application
+COPY app/ /var/www/html/
+
+# Expose port
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### **Docker Compose**
+
+```yaml
+# docker-compose.yml
+version: "3.8"
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/myapp
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=myapp
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+```
+
+### **Kubernetes Basics**
+
+```yaml
+# Example Kubernetes deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+        - name: web
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+```
+
+## 💰 Cost Optimization
+
+### **Cloud Cost Management**
+
+#### **AWS Cost Optimization**
+
+```bash
+# Check unused resources
+aws ec2 describe-instances \
+  --filters "Name=instance-state-name,Values=stopped"
+
+# Check unused EBS volumes
+aws ec2 describe-volumes \
+  --filters "Name=status,Values=available"
+
+# Check unused Elastic IPs
+aws ec2 describe-addresses
+```
+
+#### **Azure Cost Optimization**
+
+```bash
+# Check unused VMs
+az vm list --query "[?powerState!='VM running']"
+
+# Check unused disks
+az disk list --query "[?diskState!='Attached']"
+
+# Check unused public IPs
+az network public-ip list --query "[?ipConfiguration==null]"
+```
+
+### **Cost Optimization Strategies**
+
+1. **Right-sizing Resources**
+
+   - Monitor usage patterns
+   - Use appropriate instance types
+   - Implement auto-scaling
+
+2. **Reserved Instances**
+
+   - Commit to 1-3 year terms
+   - Significant cost savings
+   - Predictable workloads
+
+3. **Spot Instances**
+
+   - Use for fault-tolerant workloads
+   - Up to 90% cost savings
+   - Handle interruptions gracefully
+
+4. **Storage Optimization**
+   - Use appropriate storage classes
+   - Implement lifecycle policies
+   - Compress data when possible
+
+## 🔒 Security Best Practices
+
+### **Identity and Access Management**
+
+```yaml
+# AWS IAM policy example
+{
+  "Version": "2012-10-17",
+  "Statement":
+    [
+      {
+        "Effect": "Allow",
+        "Action": ["s3:GetObject", "s3:PutObject"],
+        "Resource": "arn:aws:s3:::my-bucket/*",
+        "Condition":
+          { "StringEquals": { "aws:RequestTag/Environment": "Production" } },
+      },
+    ],
+}
+```
+
+### **Network Security**
+
+```yaml
+# AWS Security Group example
+apiVersion: v1
+kind: Service
+metadata:
+  name: secure-app
+spec:
+  type: ClusterIP
+  ports:
+    - port: 443
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: secure-app
+```
+
+### **Data Encryption**
+
+```yaml
+# Encrypted storage example
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: encrypted-storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: encrypted-storage-class
+```
+
+## 📊 Monitoring and Observability
+
+### **Cloud Monitoring Tools**
+
+#### **AWS CloudWatch**
+
+```bash
+# Create CloudWatch alarm
+aws cloudwatch put-metric-alarm \
+  --alarm-name "HighCPUUtilization" \
+  --alarm-description "Alarm when CPU exceeds 80%" \
+  --metric-name CPUUtilization \
+  --namespace AWS/EC2 \
+  --statistic Average \
+  --period 300 \
+  --threshold 80 \
+  --comparison-operator GreaterThanThreshold
+```
+
+#### **Azure Monitor**
+
+```bash
+# Create Azure Monitor alert
+az monitor metrics alert create \
+  --name "HighCPUAlert" \
+  --resource-group my-rg \
+  --scopes /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/my-rg/providers/Microsoft.Compute/virtualMachines/my-vm \
+  --condition "avg Percentage CPU > 80" \
+  --window-size 5m
+```
+
+### **Logging and Tracing**
+
+```yaml
+# Centralized logging example
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-config
+data:
+  fluentd.conf: |
+    <source>
+      @type tail
+      path /var/log/containers/*.log
+      pos_file /var/log/fluentd-containers.log.pos
+      tag kubernetes.*
+      read_from_head true
+      <parse>
+        @type json
+        time_format %Y-%m-%dT%H:%M:%S.%NZ
+      </parse>
+    </source>
+```
+
+## 🚀 DevOps Integration
+
+### **Infrastructure as Code**
+
+```hcl
+# Terraform example for AWS
+provider "aws" {
+  region = "us-west-2"
+}
+
+resource "aws_instance" "web" {
+  ami           = "ami-12345678"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = "WebServer"
+    Environment = "Production"
+  }
+}
+
+resource "aws_security_group" "web" {
+  name        = "web-sg"
+  description = "Security group for web server"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+
+### **CI/CD Pipeline Integration**
+
+```yaml
+# GitHub Actions example
+name: Deploy to Cloud
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Deploy to AWS
+        run: |
+          aws s3 sync dist/ s3://my-bucket/
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+```
+
+## 🎯 Practice Exercises
+
+### **Exercise 1: Multi-Cloud Deployment**
+
+Create a deployment that works on both AWS and Azure:
+
+- Use Terraform for infrastructure
+- Implement containerized applications
+- Set up monitoring and logging
+- Implement cost optimization
+
+### **Exercise 2: Hybrid Cloud Setup**
+
+Build a hybrid cloud environment:
+
+- On-premises Kubernetes cluster
+- Cloud-based services integration
+- Secure connectivity (VPN/Direct Connect)
+- Workload migration strategies
+
+### **Exercise 3: Cost Optimization**
+
+Implement cost optimization strategies:
+
+- Set up monitoring and alerting
+- Implement auto-scaling policies
+- Use spot instances for non-critical workloads
+- Implement storage lifecycle policies
+
+## 📚 Resources
+
+### **Books**
+
+- "The Phoenix Project" by Gene Kim
+- "Cloud Native Infrastructure" by Justin Garrison
+- "Site Reliability Engineering" by Google
+
+### **Online Courses**
+
+- AWS Training and Certification
+- Microsoft Learn (Azure)
+- Google Cloud Training
+- Linux Academy
+
+### **Practice Platforms**
+
+- AWS Free Tier
+- Azure Free Account
+- Google Cloud Free Tier
+- Katacoda Cloud Scenarios
+
+---
+
+**Next Steps:** Now that you understand cloud and virtualization fundamentals, move on to [Phase 2: CI/CD & Infrastructure as Code](/docs/cicd-infrastructure) to learn about Jenkins, Docker, Kubernetes, and Terraform.

@@ -1,0 +1,785 @@
+---
+title: "Python Basics for DevOps"
+description: "Learn Python programming fundamentals for DevOps automation"
+---
+
+# 🐍 Python Basics for DevOps
+
+## Introduction
+
+Python is a powerful programming language widely used in DevOps for automation, scripting, and building tools. Its simplicity, extensive libraries, and cross-platform compatibility make it ideal for DevOps tasks.
+
+## 🏗️ Python Fundamentals
+
+### **Why Python for DevOps?**
+
+- **Readability**: Clean, simple syntax
+- **Rich Ecosystem**: Extensive libraries and frameworks
+- **Cross-platform**: Works on Windows, Linux, macOS
+- **Automation**: Perfect for scripting and automation
+- **Integration**: Easy integration with APIs and services
+
+### **Python Installation**
+
+```bash
+# Install Python (Ubuntu/Debian)
+sudo apt update
+sudo apt install python3 python3-pip
+
+# Install Python (CentOS/RHEL)
+sudo yum install python3 python3-pip
+
+# Check Python version
+python3 --version
+pip3 --version
+```
+
+## 📝 Basic Syntax
+
+### **Hello World**
+
+```python
+#!/usr/bin/env python3
+
+# Simple Python script
+print("Hello, DevOps World!")
+
+# Variables
+name = "DevOps Engineer"
+company = "TechCorp"
+print(f"Hello, {name} from {company}!")
+```
+
+### **Variables and Data Types**
+
+```python
+# String
+name = "John Doe"
+message = 'Hello, World!'
+
+# Numbers
+age = 25
+salary = 75000.50
+is_active = True
+
+# Lists (mutable)
+tools = ["Docker", "Kubernetes", "Jenkins", "Terraform"]
+tools.append("Ansible")
+
+# Tuples (immutable)
+coordinates = (10, 20)
+rgb = (255, 128, 0)
+
+# Dictionaries
+config = {
+    "host": "localhost",
+    "port": 8080,
+    "debug": True
+}
+
+# Sets
+unique_tools = {"Docker", "Kubernetes", "Jenkins"}
+```
+
+### **String Operations**
+
+```python
+# String formatting
+name = "DevOps"
+version = "2.0"
+message = f"Welcome to {name} {version}"
+
+# String methods
+text = "  Hello, World!  "
+print(text.strip())  # Remove whitespace
+print(text.upper())  # Convert to uppercase
+print(text.lower())  # Convert to lowercase
+print(text.replace("World", "DevOps"))
+
+# String splitting and joining
+log_line = "2024-01-01 10:30:45 ERROR Database connection failed"
+parts = log_line.split()
+timestamp = " ".join(parts[:2])
+level = parts[2]
+message = " ".join(parts[3:])
+```
+
+## 🔄 Control Structures
+
+### **Conditional Statements**
+
+```python
+# Simple if statement
+age = 25
+if age >= 18:
+    print("Adult")
+else:
+    print("Minor")
+
+# If-elif-else
+score = 85
+if score >= 90:
+    grade = "A"
+elif score >= 80:
+    grade = "B"
+elif score >= 70:
+    grade = "C"
+else:
+    grade = "F"
+
+print(f"Grade: {grade}")
+
+# Ternary operator
+status = "active" if age >= 18 else "inactive"
+```
+
+### **Loops**
+
+```python
+# For loop with range
+for i in range(5):
+    print(f"Count: {i}")
+
+# For loop with list
+tools = ["Docker", "Kubernetes", "Jenkins"]
+for tool in tools:
+    print(f"Learning: {tool}")
+
+# For loop with enumerate
+for index, tool in enumerate(tools, 1):
+    print(f"{index}. {tool}")
+
+# While loop
+counter = 0
+while counter < 5:
+    print(f"Counter: {counter}")
+    counter += 1
+
+# List comprehension
+squares = [x**2 for x in range(10)]
+even_numbers = [x for x in range(20) if x % 2 == 0]
+```
+
+## 🔧 Functions
+
+### **Basic Functions**
+
+```python
+def greet(name):
+    """Simple greeting function"""
+    return f"Hello, {name}!"
+
+def add_numbers(a, b):
+    """Add two numbers"""
+    return a + b
+
+def calculate_area(length, width):
+    """Calculate area of rectangle"""
+    area = length * width
+    return area
+
+# Function calls
+print(greet("DevOps Engineer"))
+result = add_numbers(5, 3)
+print(f"Sum: {result}")
+```
+
+### **Advanced Functions**
+
+```python
+# Function with default parameters
+def create_backup(source, destination="/backup", compress=True):
+    """Create backup with optional compression"""
+    print(f"Backing up {source} to {destination}")
+    if compress:
+        print("Compression enabled")
+    return True
+
+# Function with variable arguments
+def sum_all(*args):
+    """Sum all provided numbers"""
+    return sum(args)
+
+# Function with keyword arguments
+def configure_service(**kwargs):
+    """Configure service with keyword arguments"""
+    for key, value in kwargs.items():
+        print(f"Setting {key} = {value}")
+
+# Lambda functions
+square = lambda x: x**2
+add = lambda x, y: x + y
+
+# Using functions
+create_backup("/home/user/documents")
+print(sum_all(1, 2, 3, 4, 5))
+configure_service(host="localhost", port=8080, debug=True)
+```
+
+## 📁 File Operations
+
+### **Reading Files**
+
+```python
+# Read entire file
+with open("config.txt", "r") as file:
+    content = file.read()
+    print(content)
+
+# Read file line by line
+with open("logs.txt", "r") as file:
+    for line in file:
+        print(line.strip())
+
+# Read specific lines
+with open("data.txt", "r") as file:
+    lines = file.readlines()
+    first_line = lines[0]
+    last_line = lines[-1]
+```
+
+### **Writing Files**
+
+```python
+# Write to file
+with open("output.txt", "w") as file:
+    file.write("Hello, DevOps!\n")
+    file.write("This is a test file.\n")
+
+# Append to file
+with open("log.txt", "a") as file:
+    file.write(f"{datetime.now()}: Application started\n")
+
+# Write multiple lines
+lines = ["Line 1", "Line 2", "Line 3"]
+with open("multiple.txt", "w") as file:
+    file.writelines(line + "\n" for line in lines)
+```
+
+### **CSV Operations**
+
+```python
+import csv
+
+# Read CSV file
+with open("data.csv", "r") as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        print(f"Name: {row['name']}, Age: {row['age']}")
+
+# Write CSV file
+data = [
+    {"name": "John", "age": 25, "role": "DevOps"},
+    {"name": "Jane", "age": 30, "role": "SRE"}
+]
+
+with open("output.csv", "w", newline="") as file:
+    writer = csv.DictWriter(file, fieldnames=["name", "age", "role"])
+    writer.writeheader()
+    writer.writerows(data)
+```
+
+## 🔍 Error Handling
+
+### **Try-Except Blocks**
+
+```python
+# Basic error handling
+try:
+    result = 10 / 0
+except ZeroDivisionError:
+    print("Error: Division by zero")
+
+# Multiple exception types
+try:
+    file = open("nonexistent.txt", "r")
+    content = file.read()
+except FileNotFoundError:
+    print("Error: File not found")
+except PermissionError:
+    print("Error: Permission denied")
+except Exception as e:
+    print(f"Unexpected error: {e}")
+finally:
+    print("Cleanup completed")
+```
+
+### **Custom Exceptions**
+
+```python
+class DevOpsError(Exception):
+    """Custom exception for DevOps operations"""
+    pass
+
+class ConfigurationError(DevOpsError):
+    """Exception for configuration errors"""
+    pass
+
+def validate_config(config):
+    """Validate configuration"""
+    if not config.get("host"):
+        raise ConfigurationError("Host is required")
+    if not config.get("port"):
+        raise ConfigurationError("Port is required")
+    return True
+
+# Using custom exceptions
+try:
+    config = {"host": "localhost"}
+    validate_config(config)
+except ConfigurationError as e:
+    print(f"Configuration error: {e}")
+```
+
+## 📦 Modules and Packages
+
+### **Importing Modules**
+
+```python
+# Standard library imports
+import os
+import sys
+import json
+import datetime
+import subprocess
+
+# Third-party imports
+import requests
+import boto3
+import docker
+
+# Import specific functions
+from datetime import datetime, timedelta
+from os import path, makedirs
+```
+
+### **Creating Modules**
+
+```python
+# devops_utils.py
+import os
+import subprocess
+import json
+
+def run_command(command):
+    """Run shell command and return result"""
+    try:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        return result.returncode, result.stdout, result.stderr
+    except Exception as e:
+        return 1, "", str(e)
+
+def check_disk_usage(path="/"):
+    """Check disk usage for given path"""
+    returncode, stdout, stderr = run_command(f"df -h {path}")
+    return stdout if returncode == 0 else stderr
+
+def get_system_info():
+    """Get basic system information"""
+    info = {
+        "hostname": os.uname().nodename,
+        "platform": os.uname().sysname,
+        "kernel": os.uname().release
+    }
+    return info
+
+# Using the module
+if __name__ == "__main__":
+    print("System Info:", get_system_info())
+    print("Disk Usage:", check_disk_usage())
+```
+
+## 🛠️ DevOps Automation Examples
+
+### **System Monitoring Script**
+
+```python
+#!/usr/bin/env python3
+
+import psutil
+import datetime
+import json
+
+def get_system_stats():
+    """Get system statistics"""
+    stats = {
+        "timestamp": datetime.datetime.now().isoformat(),
+        "cpu_percent": psutil.cpu_percent(interval=1),
+        "memory_percent": psutil.virtual_memory().percent,
+        "disk_percent": psutil.disk_usage('/').percent,
+        "load_average": psutil.getloadavg()
+    }
+    return stats
+
+def check_thresholds(stats):
+    """Check if any metrics exceed thresholds"""
+    alerts = []
+
+    if stats["cpu_percent"] > 80:
+        alerts.append(f"High CPU usage: {stats['cpu_percent']}%")
+
+    if stats["memory_percent"] > 85:
+        alerts.append(f"High memory usage: {stats['memory_percent']}%")
+
+    if stats["disk_percent"] > 90:
+        alerts.append(f"High disk usage: {stats['disk_percent']}%")
+
+    return alerts
+
+def main():
+    """Main monitoring function"""
+    stats = get_system_stats()
+    alerts = check_thresholds(stats)
+
+    print(json.dumps(stats, indent=2))
+
+    if alerts:
+        print("\nALERTS:")
+        for alert in alerts:
+            print(f"⚠️  {alert}")
+    else:
+        print("\n✅ All systems normal")
+
+if __name__ == "__main__":
+    main()
+```
+
+### **Docker Management Script**
+
+```python
+#!/usr/bin/env python3
+
+import docker
+import json
+
+def get_docker_info():
+    """Get Docker system information"""
+    client = docker.from_env()
+
+    try:
+        containers = client.containers.list()
+        images = client.images.list()
+
+        info = {
+            "containers": len(containers),
+            "images": len(images),
+            "running_containers": len([c for c in containers if c.status == "running"]),
+            "stopped_containers": len([c for c in containers if c.status == "exited"])
+        }
+
+        return info
+    except Exception as e:
+        return {"error": str(e)}
+
+def list_containers():
+    """List all containers with details"""
+    client = docker.from_env()
+
+    containers = []
+    for container in client.containers.list(all=True):
+        containers.append({
+            "id": container.short_id,
+            "name": container.name,
+            "status": container.status,
+            "image": container.image.tags[0] if container.image.tags else container.image.id
+        })
+
+    return containers
+
+def cleanup_containers():
+    """Remove stopped containers"""
+    client = docker.from_env()
+
+    stopped_containers = client.containers.list(filters={"status": "exited"})
+    for container in stopped_containers:
+        container.remove()
+        print(f"Removed container: {container.name}")
+
+if __name__ == "__main__":
+    print("Docker Info:", json.dumps(get_docker_info(), indent=2))
+    print("\nContainers:", json.dumps(list_containers(), indent=2))
+    cleanup_containers()
+```
+
+### **Log Analysis Script**
+
+```python
+#!/usr/bin/env python3
+
+import re
+import json
+from collections import Counter
+from datetime import datetime
+
+def parse_log_file(filename):
+    """Parse log file and extract information"""
+    log_pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+) (.+)'
+
+    log_entries = []
+    with open(filename, 'r') as file:
+        for line in file:
+            match = re.match(log_pattern, line.strip())
+            if match:
+                timestamp, level, message = match.groups()
+                log_entries.append({
+                    "timestamp": timestamp,
+                    "level": level,
+                    "message": message
+                })
+
+    return log_entries
+
+def analyze_logs(log_entries):
+    """Analyze log entries"""
+    analysis = {
+        "total_entries": len(log_entries),
+        "levels": Counter(entry["level"] for entry in log_entries),
+        "error_count": len([e for e in log_entries if e["level"] == "ERROR"]),
+        "warning_count": len([e for e in log_entries if e["level"] == "WARN"]),
+        "recent_errors": [e for e in log_entries if e["level"] == "ERROR"][-5:]
+    }
+
+    return analysis
+
+def main():
+    """Main log analysis function"""
+    try:
+        log_entries = parse_log_file("application.log")
+        analysis = analyze_logs(log_entries)
+
+        print("Log Analysis Report")
+        print("=" * 50)
+        print(f"Total entries: {analysis['total_entries']}")
+        print(f"Error count: {analysis['error_count']}")
+        print(f"Warning count: {analysis['warning_count']}")
+        print("\nLog levels:")
+        for level, count in analysis['levels'].items():
+            print(f"  {level}: {count}")
+
+        if analysis['recent_errors']:
+            print("\nRecent errors:")
+            for error in analysis['recent_errors']:
+                print(f"  {error['timestamp']}: {error['message']}")
+
+    except FileNotFoundError:
+        print("Error: Log file not found")
+    except Exception as e:
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
+    main()
+```
+
+### **Configuration Management**
+
+```python
+#!/usr/bin/env python3
+
+import yaml
+import json
+import os
+from pathlib import Path
+
+class ConfigManager:
+    """Configuration manager for DevOps applications"""
+
+    def __init__(self, config_file="config.yaml"):
+        self.config_file = config_file
+        self.config = self.load_config()
+
+    def load_config(self):
+        """Load configuration from file"""
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r') as file:
+                return yaml.safe_load(file)
+        return {}
+
+    def save_config(self):
+        """Save configuration to file"""
+        with open(self.config_file, 'w') as file:
+            yaml.dump(self.config, file, default_flow_style=False)
+
+    def get(self, key, default=None):
+        """Get configuration value"""
+        keys = key.split('.')
+        value = self.config
+
+        for k in keys:
+            if isinstance(value, dict) and k in value:
+                value = value[k]
+            else:
+                return default
+
+        return value
+
+    def set(self, key, value):
+        """Set configuration value"""
+        keys = key.split('.')
+        config = self.config
+
+        for k in keys[:-1]:
+            if k not in config:
+                config[k] = {}
+            config = config[k]
+
+        config[keys[-1]] = value
+        self.save_config()
+
+    def validate(self):
+        """Validate configuration"""
+        required_keys = ['database', 'api', 'logging']
+        missing_keys = []
+
+        for key in required_keys:
+            if not self.get(key):
+                missing_keys.append(key)
+
+        if missing_keys:
+            raise ValueError(f"Missing required configuration: {missing_keys}")
+
+        return True
+
+# Example usage
+if __name__ == "__main__":
+    config = ConfigManager()
+
+    # Set configuration
+    config.set('database.host', 'localhost')
+    config.set('database.port', 5432)
+    config.set('api.timeout', 30)
+
+    # Get configuration
+    db_host = config.get('database.host')
+    api_timeout = config.get('api.timeout', 60)
+
+    print(f"Database host: {db_host}")
+    print(f"API timeout: {api_timeout}")
+```
+
+## 📊 Best Practices
+
+### **Code Organization**
+
+```python
+#!/usr/bin/env python3
+"""
+DevOps Automation Script
+Author: DevOps Engineer
+Date: 2024-01-01
+Description: Automation script for DevOps tasks
+"""
+
+import os
+import sys
+import logging
+from typing import Dict, List, Optional
+
+# Configuration
+CONFIG_FILE = "/etc/devops/config.yaml"
+LOG_FILE = "/var/log/devops.log"
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+def main():
+    """Main function"""
+    try:
+        logger.info("Starting DevOps automation")
+        # Main logic here
+        logger.info("Automation completed successfully")
+    except Exception as e:
+        logger.error(f"Automation failed: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+```
+
+### **Error Handling and Logging**
+
+```python
+import logging
+import traceback
+from functools import wraps
+
+def handle_exceptions(func):
+    """Decorator for exception handling"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.error(f"Error in {func.__name__}: {e}")
+            logging.debug(traceback.format_exc())
+            raise
+    return wrapper
+
+@handle_exceptions
+def risky_operation():
+    """Example of risky operation with error handling"""
+    # Some operation that might fail
+    result = 10 / 0
+    return result
+```
+
+## 🎯 Practice Exercises
+
+### **Exercise 1: System Monitor**
+
+Create a Python script that:
+
+- Monitors CPU, memory, and disk usage
+- Logs metrics to a file
+- Sends alerts when thresholds are exceeded
+- Generates daily reports
+
+### **Exercise 2: Log Parser**
+
+Build a log parser that:
+
+- Parses different log formats
+- Extracts error patterns
+- Generates statistics
+- Creates visualizations
+
+### **Exercise 3: Configuration Manager**
+
+Develop a configuration manager that:
+
+- Supports multiple formats (YAML, JSON, INI)
+- Validates configuration
+- Provides default values
+- Supports environment variables
+
+## 📚 Resources
+
+### **Books**
+
+- "Python for DevOps" by Noah Gift
+- "Automate the Boring Stuff with Python" by Al Sweigart
+- "Fluent Python" by Luciano Ramalho
+
+### **Online Resources**
+
+- Python Official Documentation
+- Real Python Tutorials
+- Python for DevOps Course
+
+### **Practice Platforms**
+
+- HackerRank Python
+- LeetCode Python problems
+- Codewars Python challenges
+
+---
+
+**Next Steps:** Practice Python programming daily and build automation scripts. Move on to [Phase 2: CI/CD & Infrastructure as Code](/docs/cicd-infrastructure) to learn about Jenkins, Docker, Kubernetes, and Terraform.

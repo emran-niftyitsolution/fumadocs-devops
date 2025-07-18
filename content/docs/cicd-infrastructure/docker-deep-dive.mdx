@@ -1,0 +1,770 @@
+---
+title: "Docker Deep Dive"
+description: "Master Docker containerization and orchestration"
+---
+
+# 🐳 Docker Deep Dive
+
+## Introduction
+
+Docker is a platform for developing, shipping, and running applications in containers. It provides a way to package applications with their dependencies into standardized units called containers, ensuring consistency across different environments.
+
+## 🏗️ Docker Fundamentals
+
+### **What is Docker?**
+
+Docker is a containerization platform that:
+
+- **Packages applications**: Bundles apps with dependencies
+- **Ensures consistency**: Same behavior across environments
+- **Provides isolation**: Applications run in isolated containers
+- **Enables portability**: Run anywhere Docker is installed
+- **Improves efficiency**: Lightweight compared to VMs
+
+### **Docker Architecture**
+
+```
+Docker Host
+├── Docker Daemon
+├── Docker CLI
+├── Images
+├── Containers
+└── Registry
+
+Components:
+├── Client (docker CLI)
+├── Daemon (docker daemon)
+├── Registry (Docker Hub, private registries)
+└── Images & Containers
+```
+
+## 🛠️ Docker Installation
+
+### **Ubuntu/Debian Installation**
+
+```bash
+# Update package index
+sudo apt-get update
+
+# Install prerequisites
+sudo apt-get install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+
+# Add Docker's official GPG key
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# Set up repository
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker Engine
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# Start Docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+```
+
+### **CentOS/RHEL Installation**
+
+```bash
+# Install required packages
+sudo yum install -y yum-utils
+
+# Add Docker repository
+sudo yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+
+# Install Docker Engine
+sudo yum install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# Start Docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+```
+
+### **Docker Desktop (Windows/macOS)**
+
+```bash
+# Download and install Docker Desktop
+# https://www.docker.com/products/docker-desktop
+
+# Verify installation
+docker --version
+docker-compose --version
+```
+
+## 📦 Docker Images
+
+### **Image Basics**
+
+```bash
+# List images
+docker images
+
+# Pull image from registry
+docker pull ubuntu:20.04
+docker pull nginx:latest
+docker pull node:16-alpine
+
+# Inspect image
+docker inspect ubuntu:20.04
+
+# Remove image
+docker rmi ubuntu:20.04
+
+# Remove all unused images
+docker image prune -a
+```
+
+### **Building Images**
+
+#### **Basic Dockerfile**
+
+```dockerfile
+# Simple Dockerfile
+FROM ubuntu:20.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update package list and install dependencies
+RUN apt-get update && apt-get install -y \
+    nginx \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy application files
+COPY app/ /var/www/html/
+
+# Expose port
+EXPOSE 80
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Default command
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+#### **Multi-stage Dockerfile**
+
+```dockerfile
+# Multi-stage build for Node.js application
+FROM node:16-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy source code
+COPY . .
+
+# Build application
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+
+# Copy built application
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+#### **Advanced Dockerfile**
+
+```dockerfile
+# Advanced Dockerfile with security best practices
+FROM python:3.9-slim
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Run application
+CMD ["python", "app.py"]
+```
+
+### **Building and Tagging**
+
+```bash
+# Build image
+docker build -t myapp:latest .
+
+# Build with specific tag
+docker build -t myapp:v1.0.0 .
+
+# Build with build arguments
+docker build --build-arg VERSION=1.0.0 -t myapp:$VERSION .
+
+# Tag existing image
+docker tag myapp:latest registry.example.com/myapp:latest
+
+# Push to registry
+docker push registry.example.com/myapp:latest
+```
+
+## 🐳 Docker Containers
+
+### **Container Lifecycle**
+
+```bash
+# Create and start container
+docker run -d --name myapp -p 8080:80 nginx:latest
+
+# Start existing container
+docker start myapp
+
+# Stop container
+docker stop myapp
+
+# Restart container
+docker restart myapp
+
+# Remove container
+docker rm myapp
+
+# Remove all stopped containers
+docker container prune
+```
+
+### **Container Management**
+
+```bash
+# List running containers
+docker ps
+
+# List all containers
+docker ps -a
+
+# Inspect container
+docker inspect myapp
+
+# View container logs
+docker logs myapp
+
+# Follow logs
+docker logs -f myapp
+
+# Execute command in running container
+docker exec -it myapp bash
+
+# Copy files from/to container
+docker cp myapp:/app/config.json ./config.json
+docker cp ./config.json myapp:/app/config.json
+```
+
+### **Container Networking**
+
+```bash
+# Create custom network
+docker network create mynetwork
+
+# Run container with custom network
+docker run -d --name myapp --network mynetwork nginx:latest
+
+# List networks
+docker network ls
+
+# Inspect network
+docker network inspect mynetwork
+
+# Connect container to network
+docker network connect mynetwork existing-container
+
+# Disconnect container from network
+docker network disconnect mynetwork existing-container
+```
+
+## 🔧 Docker Compose
+
+### **Basic docker-compose.yml**
+
+```yaml
+# docker-compose.yml
+version: "3.8"
+
+services:
+  web:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./html:/usr/share/nginx/html
+    depends_on:
+      - db
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+### **Advanced docker-compose.yml**
+
+```yaml
+# Advanced docker-compose.yml
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: 1.0.0
+    image: myapp:latest
+    container_name: myapp
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/myapp
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=production
+    volumes:
+      - app_data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:13-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d myapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+volumes:
+  app_data:
+  postgres_data:
+  redis_data:
+
+networks:
+  app-network:
+    driver: bridge
+```
+
+### **Docker Compose Commands**
+
+```bash
+# Start services
+docker-compose up -d
+
+# Start specific service
+docker-compose up -d app
+
+# View logs
+docker-compose logs
+
+# View logs for specific service
+docker-compose logs app
+
+# Follow logs
+docker-compose logs -f app
+
+# Stop services
+docker-compose down
+
+# Stop and remove volumes
+docker-compose down -v
+
+# Rebuild services
+docker-compose build
+
+# Scale services
+docker-compose up -d --scale app=3
+
+# Execute command in service
+docker-compose exec app bash
+
+# View service status
+docker-compose ps
+```
+
+## 🔒 Security Best Practices
+
+### **Security Scanning**
+
+```bash
+# Scan image for vulnerabilities
+docker scan nginx:latest
+
+# Scan with detailed output
+docker scan --severity high nginx:latest
+
+# Scan with JSON output
+docker scan --format json nginx:latest
+```
+
+### **Security Hardening**
+
+```dockerfile
+# Security-hardened Dockerfile
+FROM python:3.9-slim
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Set working directory
+WORKDIR /app
+
+# Install security updates
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application
+COPY . .
+
+# Set proper permissions
+RUN chown -R appuser:appuser /app && \
+    chmod -R 755 /app
+
+# Switch to non-root user
+USER appuser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+EXPOSE 8000
+
+CMD ["python", "app.py"]
+```
+
+### **Secrets Management**
+
+```yaml
+# docker-compose.yml with secrets
+version: "3.8"
+
+services:
+  app:
+    image: myapp:latest
+    secrets:
+      - db_password
+      - api_key
+    environment:
+      - DB_PASSWORD_FILE=/run/secrets/db_password
+      - API_KEY_FILE=/run/secrets/api_key
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  api_key:
+    file: ./secrets/api_key.txt
+```
+
+## 📊 Monitoring and Logging
+
+### **Container Monitoring**
+
+```bash
+# View container stats
+docker stats
+
+# View stats for specific container
+docker stats myapp
+
+# View container resource usage
+docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
+
+# Monitor container logs
+docker logs -f --tail=100 myapp
+```
+
+### **Logging Configuration**
+
+```yaml
+# docker-compose.yml with logging
+version: "3.8"
+
+services:
+  app:
+    image: myapp:latest
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Alternative: syslog driver
+    # logging:
+    #   driver: "syslog"
+    #   options:
+    #     syslog-address: "udp://localhost:514"
+```
+
+## 🚀 Advanced Docker Features
+
+### **Multi-platform Builds**
+
+```bash
+# Build for multiple platforms
+docker buildx create --use
+
+# Build and push multi-platform image
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t myapp:latest \
+  --push .
+```
+
+### **Docker BuildKit**
+
+```dockerfile
+# syntax=docker/dockerfile:1
+FROM node:16-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# Production image, copy all the files and run the app
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+
+CMD ["node", "server.js"]
+```
+
+### **Docker Swarm**
+
+```bash
+# Initialize swarm
+docker swarm init
+
+# Create overlay network
+docker network create --driver overlay mynetwork
+
+# Deploy stack
+docker stack deploy -c docker-compose.yml myapp
+
+# List services
+docker service ls
+
+# Scale service
+docker service scale myapp_web=3
+
+# Remove stack
+docker stack rm myapp
+```
+
+## 🎯 Practice Exercises
+
+### **Exercise 1: Multi-stage Build**
+
+Create a multi-stage Dockerfile that:
+
+- Builds a Node.js application
+- Runs tests in the build stage
+- Creates a minimal production image
+- Includes health checks
+
+### **Exercise 2: Microservices with Docker Compose**
+
+Build a microservices application with:
+
+- Web application
+- API service
+- Database
+- Cache
+- Load balancer
+- Monitoring
+
+### **Exercise 3: Docker Security**
+
+Implement security best practices:
+
+- Non-root user
+- Minimal base image
+- Security scanning
+- Secrets management
+- Resource limits
+
+## 📚 Resources
+
+### **Books**
+
+- "Docker in Action" by Jeff Nickoloff
+- "Using Docker" by Adrian Mouat
+- "Docker Deep Dive" by Nigel Poulton
+
+### **Online Resources**
+
+- Docker Official Documentation
+- Docker Hub
+- Docker Blog
+
+### **Practice Platforms**
+
+- Docker Playground
+- Katacoda Docker Scenarios
+- Docker Labs
+
+---
+
+**Next Steps:** Now that you've mastered Docker, move on to [Kubernetes Fundamentals](/docs/cicd-infrastructure/kubernetes-fundamentals) to learn container orchestration and cluster management.

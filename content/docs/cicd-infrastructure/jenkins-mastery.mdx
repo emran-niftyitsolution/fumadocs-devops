@@ -1,0 +1,936 @@
+---
+title: "Jenkins Mastery"
+description: "Master Jenkins CI/CD automation and pipeline management"
+---
+
+# 🚀 Jenkins Mastery
+
+## Introduction
+
+Jenkins is the leading open-source automation server that enables developers to build, test, and deploy their software reliably and efficiently. It's a critical tool in the DevOps toolkit for implementing continuous integration and continuous deployment.
+
+## 🏗️ Jenkins Fundamentals
+
+### **What is Jenkins?**
+
+Jenkins is an automation server that:
+
+- **Automates builds**: Compiles code and creates artifacts
+- **Runs tests**: Executes automated test suites
+- **Deploys applications**: Automates deployment processes
+- **Monitors jobs**: Tracks build and deployment status
+- **Integrates tools**: Connects with various DevOps tools
+
+### **Jenkins Architecture**
+
+```
+Jenkins Master
+├── Build Executors
+├── Plugin System
+├── Job Configuration
+└── Web Interface
+
+Jenkins Agents (Optional)
+├── Remote Build Executors
+├── Different Environments
+└── Resource Distribution
+```
+
+## 🛠️ Jenkins Installation and Setup
+
+### **Docker Installation**
+
+```bash
+# Run Jenkins with Docker
+docker run -d \
+  --name jenkins \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  jenkins/jenkins:lts
+
+# Check Jenkins status
+docker ps
+docker logs jenkins
+```
+
+### **System Installation (Ubuntu)**
+
+```bash
+# Add Jenkins repository
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
+  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+# Install Jenkins
+sudo apt-get update
+sudo apt-get install jenkins
+
+# Start Jenkins
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+
+# Get initial admin password
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+```
+
+### **Initial Configuration**
+
+```bash
+# Access Jenkins
+# Open browser: http://localhost:8080
+
+# Install suggested plugins
+# Create admin user
+# Configure Jenkins URL
+```
+
+## 📝 Jenkins Pipeline Types
+
+### **Declarative Pipeline**
+
+```groovy
+// Jenkinsfile (Declarative)
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = 'myapp'
+        DOCKER_TAG = 'latest'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    publishTestResults testResultsPattern: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                sh 'npm audit'
+                sh 'sonar-scanner'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://registry.example.com', 'registry-credentials') {
+                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                    }
+                }
+                sh 'kubectl apply -f k8s/staging/'
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
+```
+
+### **Scripted Pipeline**
+
+```groovy
+// Jenkinsfile (Scripted)
+node {
+    def mvnHome = tool 'Maven'
+    def dockerImage = 'myapp'
+    def dockerTag = 'latest'
+
+    stage('Checkout') {
+        checkout scm
+    }
+
+    stage('Build') {
+        sh "${mvnHome}/bin/mvn clean package"
+        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+    }
+
+    stage('Test') {
+        sh "${mvnHome}/bin/mvn test"
+        publishTestResults testResultsPattern: '**/target/surefire-reports/*.xml'
+    }
+
+    stage('Security Scan') {
+        parallel(
+            "npm audit": {
+                sh 'npm audit'
+            },
+            "sonar-scanner": {
+                sh 'sonar-scanner'
+            }
+        )
+    }
+
+    stage('Docker Build') {
+        docker.build("${dockerImage}:${dockerTag}")
+    }
+
+    stage('Deploy') {
+        if (env.BRANCH_NAME == 'main') {
+            docker.withRegistry('https://registry.example.com', 'registry-credentials') {
+                docker.image("${dockerImage}:${dockerTag}").push()
+            }
+            sh 'kubectl apply -f k8s/production/'
+        }
+    }
+
+    stage('Cleanup') {
+        cleanWs()
+    }
+}
+```
+
+### **Multibranch Pipeline**
+
+```groovy
+// Jenkinsfile for multibranch pipeline
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven-3.8.1'
+        jdk 'JDK-11'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            }
+        }
+
+        stage('Test') {
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        sh 'mvn test'
+                    }
+                }
+                stage('Integration Tests') {
+                    steps {
+                        sh 'mvn verify -Pintegration'
+                    }
+                }
+            }
+            post {
+                always {
+                    publishTestResults testResultsPattern: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                sh 'mvn sonar:sonar'
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                }
+            }
+            steps {
+                script {
+                    def environment = env.BRANCH_NAME == 'main' ? 'production' : 'staging'
+                    sh "kubectl apply -f k8s/${environment}/"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo "Pipeline succeeded on branch ${env.BRANCH_NAME}"
+        }
+        failure {
+            echo "Pipeline failed on branch ${env.BRANCH_NAME}"
+        }
+    }
+}
+```
+
+## 🔧 Advanced Pipeline Features
+
+### **Parallel Execution**
+
+```groovy
+stage('Parallel Tests') {
+    parallel {
+        stage('Unit Tests') {
+            agent { label 'linux' }
+            steps {
+                sh 'mvn test'
+            }
+        }
+        stage('Integration Tests') {
+            agent { label 'linux' }
+            steps {
+                sh 'mvn verify -Pintegration'
+            }
+        }
+        stage('Security Tests') {
+            agent { label 'linux' }
+            steps {
+                sh 'npm audit'
+                sh 'sonar-scanner'
+            }
+        }
+    }
+}
+```
+
+### **Conditional Execution**
+
+```groovy
+stage('Deploy') {
+    when {
+        anyOf {
+            branch 'main'
+            branch 'develop'
+        }
+        not {
+            changeRequest()
+        }
+    }
+    steps {
+        script {
+            if (env.BRANCH_NAME == 'main') {
+                sh 'kubectl apply -f k8s/production/'
+            } else {
+                sh 'kubectl apply -f k8s/staging/'
+            }
+        }
+    }
+}
+```
+
+### **Error Handling**
+
+```groovy
+stage('Deploy') {
+    steps {
+        script {
+            try {
+                sh 'kubectl apply -f k8s/production/'
+                echo 'Deployment successful'
+            } catch (Exception e) {
+                echo "Deployment failed: ${e.getMessage()}"
+                sh 'kubectl rollout undo deployment/myapp'
+                error 'Deployment failed, rolled back'
+            }
+        }
+    }
+}
+```
+
+### **Environment Variables**
+
+```groovy
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_REGISTRY = 'registry.example.com'
+        DOCKER_IMAGE = 'myapp'
+        DOCKER_TAG = "${env.BUILD_NUMBER}"
+        KUBECONFIG = credentials('kubeconfig')
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'registry-credentials') {
+                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+## 🔌 Jenkins Plugins
+
+### **Essential Plugins**
+
+#### **Git Plugin**
+
+```groovy
+// Git configuration in pipeline
+stage('Checkout') {
+    steps {
+        checkout([
+            $class: 'GitSCM',
+            branches: [[name: '*/main']],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [],
+            submoduleCfg: [],
+            userRemoteConfigs: [[
+                credentialsId: 'git-credentials',
+                url: 'https://github.com/example/myapp.git'
+            ]]
+        ])
+    }
+}
+```
+
+#### **Docker Plugin**
+
+```groovy
+// Docker integration
+stage('Docker Build') {
+    steps {
+        script {
+            def customImage = docker.build("myapp:${env.BUILD_NUMBER}")
+            customImage.inside {
+                sh 'mvn test'
+            }
+        }
+    }
+}
+```
+
+#### **Kubernetes Plugin**
+
+```groovy
+// Kubernetes deployment
+stage('Deploy to K8s') {
+    steps {
+        script {
+            withKubeConfig([credentialsId: 'kubeconfig']) {
+                sh 'kubectl apply -f k8s/'
+                sh 'kubectl rollout status deployment/myapp'
+            }
+        }
+    }
+}
+```
+
+#### **SonarQube Plugin**
+
+```groovy
+// SonarQube integration
+stage('Code Quality') {
+    steps {
+        withSonarQubeEnv('SonarQube') {
+            sh 'mvn sonar:sonar'
+        }
+    }
+}
+```
+
+### **Plugin Management**
+
+```groovy
+// Install plugins via Jenkins CLI
+jenkins-cli install-plugin git
+jenkins-cli install-plugin docker
+jenkins-cli install-plugin kubernetes
+jenkins-cli install-plugin sonar
+jenkins-cli restart
+```
+
+## 🔐 Security and Credentials
+
+### **Credential Types**
+
+```groovy
+// Using different credential types
+pipeline {
+    agent any
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    userRemoteConfigs: [[
+                        credentialsId: 'git-ssh-key',
+                        url: 'git@github.com:example/myapp.git'
+                    ]]
+                ])
+            }
+        }
+
+        stage('Docker Registry') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.example.com', 'docker-registry-credentials') {
+                        docker.image('myapp:latest').push()
+                    }
+                }
+            }
+        }
+
+        stage('Kubernetes Deploy') {
+            steps {
+                script {
+                    withKubeConfig([credentialsId: 'kubeconfig']) {
+                        sh 'kubectl apply -f k8s/'
+                    }
+                }
+            }
+        }
+
+        stage('API Call') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'api-token', variable: 'API_TOKEN')]) {
+                        sh 'curl -H "Authorization: Bearer $API_TOKEN" https://api.example.com/deploy'
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+### **Secrets Management**
+
+```groovy
+// Using Jenkins secrets
+pipeline {
+    agent any
+
+    environment {
+        DATABASE_URL = credentials('database-url')
+        API_KEY = credentials('api-key')
+    }
+
+    stages {
+        stage('Deploy') {
+            steps {
+                script {
+                    sh '''
+                        echo "Database URL: $DATABASE_URL"
+                        echo "API Key: $API_KEY"
+                        # Use secrets in deployment
+                    '''
+                }
+            }
+        }
+    }
+}
+```
+
+## 📊 Monitoring and Reporting
+
+### **Test Results**
+
+```groovy
+stage('Test') {
+    steps {
+        sh 'mvn test'
+    }
+    post {
+        always {
+            publishTestResults testResultsPattern: '**/target/surefire-reports/*.xml'
+            publishCoverage adapters: [jacocoAdapter('**/target/site/jacoco/jacoco.xml')], sourceFileResolver: sourceFiles('NEVER_STORE')
+        }
+    }
+}
+```
+
+### **Build Notifications**
+
+```groovy
+post {
+    always {
+        cleanWs()
+    }
+    success {
+        emailext (
+            subject: "Pipeline '${env.JOB_NAME}' (${env.BUILD_NUMBER}) succeeded",
+            body: "Pipeline '${env.JOB_NAME}' (${env.BUILD_NUMBER}) succeeded. See ${env.BUILD_URL}",
+            to: 'team@example.com'
+        )
+    }
+    failure {
+        emailext (
+            subject: "Pipeline '${env.JOB_NAME}' (${env.BUILD_NUMBER}) failed",
+            body: "Pipeline '${env.JOB_NAME}' (${env.BUILD_NUMBER}) failed. See ${env.BUILD_URL}",
+            to: 'devops@example.com'
+        )
+    }
+}
+```
+
+### **Slack Notifications**
+
+```groovy
+post {
+    success {
+        slackSend(
+            channel: '#devops',
+            color: 'good',
+            message: "Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} succeeded"
+        )
+    }
+    failure {
+        slackSend(
+            channel: '#devops',
+            color: 'danger',
+            message: "Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed"
+        )
+    }
+}
+```
+
+## 🚀 Advanced Jenkins Features
+
+### **Shared Libraries**
+
+```groovy
+// vars/deploy.groovy
+def call(String environment) {
+    echo "Deploying to ${environment}"
+
+    if (environment == 'production') {
+        sh 'kubectl apply -f k8s/production/'
+        sh 'kubectl rollout status deployment/myapp'
+    } else {
+        sh 'kubectl apply -f k8s/staging/'
+    }
+}
+
+// Using shared library
+@Library('my-shared-library') _
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Deploy') {
+            steps {
+                script {
+                    deploy('staging')
+                }
+            }
+        }
+    }
+}
+```
+
+### **Pipeline Templates**
+
+```groovy
+// templates/java-pipeline.groovy
+def call(Map config) {
+    pipeline {
+        agent any
+
+        tools {
+            maven config.mavenVersion ?: 'Maven-3.8.1'
+            jdk config.jdkVersion ?: 'JDK-11'
+        }
+
+        stages {
+            stage('Checkout') {
+                steps {
+                    checkout scm
+                }
+            }
+
+            stage('Build') {
+                steps {
+                    sh 'mvn clean package'
+                }
+            }
+
+            stage('Test') {
+                steps {
+                    sh 'mvn test'
+                }
+            }
+
+            stage('Deploy') {
+                when {
+                    branch 'main'
+                }
+                steps {
+                    script {
+                        if (config.deployScript) {
+                            sh config.deployScript
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Using template
+@Library('pipeline-templates') _
+
+javaPipeline(
+    mavenVersion: 'Maven-3.8.1',
+    jdkVersion: 'JDK-11',
+    deployScript: 'kubectl apply -f k8s/'
+)
+```
+
+### **Jenkins Configuration as Code (JCasC)**
+
+```yaml
+# jenkins.yaml
+jenkins:
+  systemMessage: "Jenkins configured automatically by Jenkins Configuration as Code plugin"
+  numExecutors: 2
+  scmCheckoutRetryCount: 3
+  mode: NORMAL
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "admin"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: "JAVA_HOME"
+            value: "/usr/lib/jvm/java-11-openjdk"
+          - key: "MAVEN_HOME"
+            value: "/usr/share/maven"
+
+tool:
+  git:
+    installations:
+      - name: "Default"
+        home: "git"
+
+  maven:
+    installations:
+      - name: "Maven-3.8.1"
+        home: "/usr/share/maven"
+
+  jdk:
+    installations:
+      - name: "JDK-11"
+        home: "/usr/lib/jvm/java-11-openjdk"
+
+unclassified:
+  slackNotifier:
+    teamDomain: "example"
+    tokenCredentialId: "slack-token"
+```
+
+## 🔧 Best Practices
+
+### **Pipeline Organization**
+
+1. **Keep Pipelines Simple**
+
+   - Use declarative pipelines when possible
+   - Break complex pipelines into smaller stages
+   - Use shared libraries for common functionality
+
+2. **Security First**
+
+   - Use credentials for sensitive data
+   - Implement least privilege access
+   - Regular security updates
+
+3. **Monitoring and Alerting**
+
+   - Set up build notifications
+   - Monitor pipeline performance
+   - Track build metrics
+
+4. **Backup and Recovery**
+   - Regular Jenkins backup
+   - Version control for configurations
+   - Disaster recovery plan
+
+### **Performance Optimization**
+
+```groovy
+// Optimized pipeline
+pipeline {
+    agent any
+
+    options {
+        timeout(time: 1, unit: 'HOURS')
+        timestamps()
+        ansiColor('xterm')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            parallel {
+                stage('Compile') {
+                    steps {
+                        sh 'mvn compile'
+                    }
+                }
+                stage('Test Compile') {
+                    steps {
+                        sh 'mvn test-compile'
+                    }
+                }
+            }
+        }
+
+        stage('Test') {
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        sh 'mvn test'
+                    }
+                }
+                stage('Integration Tests') {
+                    steps {
+                        sh 'mvn verify -Pintegration'
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+## 🎯 Practice Exercises
+
+### **Exercise 1: Basic Jenkins Pipeline**
+
+Create a Jenkins pipeline that:
+
+- Checks out code from Git
+- Builds a Java application with Maven
+- Runs unit tests
+- Creates a Docker image
+- Deploys to a staging environment
+
+### **Exercise 2: Multi-Stage Pipeline**
+
+Build a comprehensive pipeline with:
+
+- Multiple test types (unit, integration, E2E)
+- Security scanning
+- Code quality analysis
+- Automated deployment with rollback
+
+### **Exercise 3: Jenkins as Code**
+
+Implement Jenkins Configuration as Code:
+
+- Define Jenkins configuration in YAML
+- Set up shared libraries
+- Create pipeline templates
+- Implement automated Jenkins setup
+
+## 📚 Resources
+
+### **Books**
+
+- "Jenkins: The Definitive Guide" by John Smart
+- "Continuous Delivery with Jenkins" by Nikhil Pathania
+- "Jenkins 2: Up and Running" by Brent Laster
+
+### **Online Resources**
+
+- Jenkins Official Documentation
+- Jenkins Pipeline Syntax Reference
+- Jenkins Plugin Documentation
+
+### **Practice Platforms**
+
+- Jenkins Tutorials
+- Jenkins Pipeline Examples
+- Jenkins Community Forums
+
+---
+
+**Next Steps:** Now that you've mastered Jenkins, move on to [Docker Deep Dive](/docs/cicd-infrastructure/docker-deep-dive) to learn containerization fundamentals and advanced Docker concepts.

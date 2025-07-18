@@ -1,0 +1,11 @@
+{
+  "pages": [
+    "cicd-fundamentals",
+    "jenkins-mastery",
+    "docker-deep-dive",
+    "kubernetes-fundamentals",
+    "helm-package-manager",
+    "terraform-infrastructure",
+    "ansible-automation"
+  ]
+}

@@ -1,0 +1,615 @@
+---
+title: "CI/CD Fundamentals"
+description: "Learn continuous integration and deployment concepts"
+---
+
+# 🔄 CI/CD Fundamentals
+
+## Introduction
+
+Continuous Integration (CI) and Continuous Deployment (CD) are core practices in modern DevOps. They enable teams to deliver software faster, more reliably, and with higher quality through automation and collaboration.
+
+## 🏗️ What is CI/CD?
+
+### **Continuous Integration (CI)**
+
+Continuous Integration is the practice of automatically building and testing code changes as they are committed to version control.
+
+**Key Principles:**
+
+- **Frequent Commits**: Developers commit code multiple times per day
+- **Automated Builds**: Every commit triggers an automated build
+- **Automated Testing**: All tests run automatically on every build
+- **Fast Feedback**: Developers get immediate feedback on build/test results
+
+### **Continuous Deployment (CD)**
+
+Continuous Deployment is the practice of automatically deploying code changes to production after passing all tests.
+
+**Key Principles:**
+
+- **Automated Deployment**: Code is deployed automatically after successful tests
+- **Environment Consistency**: Same deployment process across all environments
+- **Rollback Capability**: Ability to quickly revert to previous versions
+- **Monitoring**: Continuous monitoring of deployed applications
+
+## 🔄 CI/CD Pipeline Flow
+
+### **Basic Pipeline Stages**
+
+```
+Code Commit → Build → Test → Package → Deploy → Monitor
+```
+
+### **Detailed Pipeline Flow**
+
+```yaml
+# Example CI/CD pipeline stages
+stages:
+  - checkout # Get latest code
+  - build # Compile and package
+  - test # Run automated tests
+  - security # Security scanning
+  - package # Create deployment artifacts
+  - deploy-staging # Deploy to staging
+  - integration # Integration tests
+  - deploy-prod # Deploy to production
+  - monitor # Monitor deployment
+```
+
+## 🛠️ CI/CD Tools Landscape
+
+### **Build Tools**
+
+#### **Maven (Java)**
+
+```xml
+<!-- pom.xml example -->
+<project>
+  <groupId>com.example</groupId>
+  <artifactId>myapp</artifactId>
+  <version>1.0.0</version>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>11</source>
+          <target>11</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+```
+
+#### **Gradle (Java/Kotlin)**
+
+```groovy
+// build.gradle example
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.example'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
+
+application {
+    mainClass = 'com.example.App'
+}
+```
+
+#### **npm (Node.js)**
+
+```json
+// package.json example
+{
+  "name": "myapp",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "webpack --mode production",
+    "test": "jest",
+    "start": "node dist/app.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "jest": "^27.0.0",
+    "webpack": "^5.0.0"
+  }
+}
+```
+
+### **CI/CD Platforms**
+
+#### **Jenkins**
+
+```groovy
+// Jenkinsfile example
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    publishTestResults testResultsPattern: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh 'docker build -t myapp .'
+                sh 'docker push myapp:latest'
+            }
+        }
+    }
+}
+```
+
+#### **GitHub Actions**
+
+```yaml
+# .github/workflows/ci.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: "11"
+          distribution: "temurin"
+
+      - name: Build with Maven
+        run: mvn clean package
+
+      - name: Run tests
+        run: mvn test
+
+      - name: Build Docker image
+        run: docker build -t myapp .
+
+      - name: Deploy to staging
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "Deploying to staging..."
+          # Deployment commands here
+```
+
+#### **GitLab CI**
+
+```yaml
+# .gitlab-ci.yml
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  script:
+    - mvn clean package
+  artifacts:
+    paths:
+      - target/*.jar
+
+test:
+  stage: test
+  script:
+    - mvn test
+  coverage: '/Code coverage: \d+\.\d+%/'
+
+deploy-staging:
+  stage: deploy
+  script:
+    - docker build -t myapp .
+    - docker push myapp:latest
+  environment:
+    name: staging
+  only:
+    - main
+```
+
+## 🧪 Testing in CI/CD
+
+### **Types of Tests**
+
+#### **Unit Tests**
+
+```java
+// Java unit test example
+@Test
+public void testUserCreation() {
+    User user = new User("john", "john@example.com");
+    assertEquals("john", user.getUsername());
+    assertEquals("john@example.com", user.getEmail());
+}
+```
+
+```javascript
+// JavaScript unit test example
+test("should create user", () => {
+  const user = new User("john", "john@example.com");
+  expect(user.username).toBe("john");
+  expect(user.email).toBe("john@example.com");
+});
+```
+
+#### **Integration Tests**
+
+```java
+// Integration test example
+@SpringBootTest
+@AutoConfigureTestDatabase
+class UserServiceIntegrationTest {
+
+    @Autowired
+    private UserService userService;
+
+    @Test
+    void testUserCreationAndRetrieval() {
+        User user = userService.createUser("john", "john@example.com");
+        User retrieved = userService.getUser(user.getId());
+        assertEquals(user.getUsername(), retrieved.getUsername());
+    }
+}
+```
+
+#### **End-to-End Tests**
+
+```javascript
+// E2E test example with Playwright
+test("user registration flow", async ({ page }) => {
+  await page.goto("/register");
+  await page.fill("[data-testid=username]", "john");
+  await page.fill("[data-testid=email]", "john@example.com");
+  await page.click("[data-testid=submit]");
+
+  await expect(page).toHaveURL("/dashboard");
+  await expect(page.locator("[data-testid=welcome]")).toContainText(
+    "Welcome john"
+  );
+});
+```
+
+### **Test Automation**
+
+```yaml
+# Test automation in CI/CD
+test:
+  stage: test
+  script:
+    - npm install
+    - npm run test:unit
+    - npm run test:integration
+    - npm run test:e2e
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+```
+
+## 🔒 Security in CI/CD
+
+### **Security Scanning**
+
+#### **Static Application Security Testing (SAST)**
+
+```yaml
+# SAST configuration
+sast:
+  stage: test
+  script:
+    - npm audit
+    - sonar-scanner
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+```
+
+#### **Dynamic Application Security Testing (DAST)**
+
+```yaml
+# DAST configuration
+dast:
+  stage: test
+  script:
+    - zap-baseline.py -t https://staging.example.com
+  artifacts:
+    reports:
+      dast: gl-dast-report.json
+```
+
+#### **Container Scanning**
+
+```yaml
+# Container security scanning
+container_scanning:
+  stage: test
+  script:
+    - trivy image myapp:latest
+  artifacts:
+    reports:
+      container_scanning: gl-container-scanning-report.json
+```
+
+### **Secrets Management**
+
+```yaml
+# Using secrets in CI/CD
+deploy:
+  stage: deploy
+  script:
+    - echo $DATABASE_URL
+    - echo $API_KEY
+  variables:
+    DATABASE_URL: $DATABASE_URL
+    API_KEY: $API_KEY
+```
+
+## 🚀 Deployment Strategies
+
+### **Blue-Green Deployment**
+
+```yaml
+# Blue-green deployment example
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: myapp
+        version: blue
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:blue
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  selector:
+    app: myapp
+    version: blue # Switch to green for new version
+  ports:
+    - port: 80
+      targetPort: 8080
+```
+
+### **Canary Deployment**
+
+```yaml
+# Canary deployment with traffic splitting
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "10"
+spec:
+  rules:
+    - host: myapp.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp-canary
+                port:
+                  number: 80
+```
+
+### **Rolling Deployment**
+
+```yaml
+# Rolling deployment configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:latest
+          ports:
+            - containerPort: 8080
+```
+
+## 📊 Monitoring and Observability
+
+### **Pipeline Monitoring**
+
+```yaml
+# Pipeline monitoring configuration
+monitoring:
+  stage: monitor
+  script:
+    - echo "Pipeline execution time: $CI_PIPELINE_DURATION"
+    - echo "Build status: $CI_JOB_STATUS"
+    - curl -X POST $WEBHOOK_URL \
+        -H "Content-Type: application/json" \
+        -d "{\"pipeline\": \"$CI_PIPELINE_ID\", \"status\": \"$CI_JOB_STATUS\"}"
+```
+
+### **Application Monitoring**
+
+```yaml
+# Application health checks
+health_check:
+  stage: test
+  script:
+    - curl -f http://staging.example.com/health
+    - curl -f http://staging.example.com/ready
+  allow_failure: false
+```
+
+## 🔧 Best Practices
+
+### **Pipeline Organization**
+
+1. **Keep Pipelines Fast**
+
+   - Parallel execution where possible
+   - Caching dependencies
+   - Optimized test suites
+
+2. **Fail Fast**
+
+   - Run quick tests first
+   - Stop pipeline on first failure
+   - Clear error messages
+
+3. **Security First**
+
+   - Scan for vulnerabilities
+   - Use secrets management
+   - Implement least privilege
+
+4. **Environment Consistency**
+   - Same deployment process across environments
+   - Infrastructure as Code
+   - Configuration management
+
+### **Pipeline as Code**
+
+```yaml
+# Pipeline configuration as code
+version: "3.8"
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - JENKINS_OPTS=--prefix=/jenkins
+
+volumes:
+  jenkins_home:
+```
+
+## 🎯 Practice Exercises
+
+### **Exercise 1: Basic CI/CD Pipeline**
+
+Create a simple CI/CD pipeline that:
+
+- Builds a web application
+- Runs unit tests
+- Creates a Docker image
+- Deploys to a staging environment
+
+### **Exercise 2: Multi-Stage Pipeline**
+
+Build a comprehensive pipeline with:
+
+- Multiple test types (unit, integration, E2E)
+- Security scanning
+- Performance testing
+- Automated deployment with rollback
+
+### **Exercise 3: Blue-Green Deployment**
+
+Implement a blue-green deployment strategy:
+
+- Set up two identical environments
+- Automate traffic switching
+- Implement rollback mechanism
+- Monitor deployment health
+
+## 📚 Resources
+
+### **Books**
+
+- "Continuous Delivery" by Jez Humble and David Farley
+- "The DevOps Handbook" by Gene Kim
+- "Accelerate" by Nicole Forsgren
+
+### **Online Courses**
+
+- Jenkins User Documentation
+- GitHub Actions Documentation
+- GitLab CI/CD Documentation
+
+### **Practice Platforms**
+
+- Jenkins Tutorials
+- GitHub Learning Lab
+- GitLab CI/CD Examples
+
+---
+
+**Next Steps:** Now that you understand CI/CD fundamentals, move on to [Jenkins Mastery](/docs/cicd-infrastructure/jenkins-mastery) to learn advanced Jenkins concepts and pipeline automation.
