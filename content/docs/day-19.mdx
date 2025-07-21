@@ -97,20 +97,20 @@ db2.example.com
 [loadbalancers]
 lb1.example.com
 
-[production:children]
+[ production:children ]
 webservers
 dbservers
 loadbalancers
 
-[production:vars]
+[ production:vars ]
 ansible_user=ubuntu
 ansible_ssh_private_key_file=~/.ssh/prod_key
 
-[webservers:vars]
+[ webservers:vars ]
 http_port=80
 max_connections=200
 
-[dbservers:vars]
+[ dbservers:vars ]
 mysql_port=3306
 mysql_root_password={{ vault_mysql_root_password }}
 ```
@@ -810,7 +810,7 @@ web2 ansible_host=192.168.1.11
 [dbservers]
 db1 ansible_host=192.168.1.20
 
-[all:vars]
+[ all:vars ]
 ansible_user=ubuntu
 ansible_ssh_private_key_file=~/.ssh/id_rsa
 EOF
