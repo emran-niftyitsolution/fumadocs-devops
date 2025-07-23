@@ -1,4 +1,4 @@
-import { DevOpsDocsHeader } from "@/components/DevOpsDocsHeader";
+import { DevOpsDocsHeader } from "@/components/Header";
 import { source } from "@/lib/source";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { DocsBody } from "fumadocs-ui/page";
