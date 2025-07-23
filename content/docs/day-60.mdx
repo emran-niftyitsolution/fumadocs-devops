@@ -1,8 +1,52 @@
 ---
-title: "Day 60: Title"
-description: "DevOps 100 Days - Day 60"
+title: "Day 60: Kubernetes Ingress & Networking"
+description: "Exposing services externally and managing traffic in Kubernetes."
 ---
 
-# Day 60
+# Day 60: Kubernetes Ingress & Networking
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- What is Ingress?
+- Ingress controllers
+- Basic Ingress YAML
+
+## 🌐 What is Ingress?
+
+- Manages external access to services (HTTP/HTTPS)
+- Supports routing, SSL termination, etc.
+
+## 🛠️ Example Ingress YAML
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-ingress
+spec:
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: example-service
+                port:
+                  number: 80
+```
+
+## 📝 Hands-on Exercise
+
+- Deploy an Ingress controller (e.g., NGINX Ingress)
+- Create an Ingress resource for a service
+
+## ❓ Assessment
+
+- What is the purpose of Ingress?
+- Name a feature of Ingress controllers.
+
+## 🔗 Resources
+
+- [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)

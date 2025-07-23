@@ -1,5 +1,7 @@
+import { DevOpsDocsHeader } from "@/components/DevOpsDocsHeader";
 import { source } from "@/lib/source";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import { DocsBody } from "fumadocs-ui/page";
 import { RootProvider } from "fumadocs-ui/provider";
 
 export default function DevOpsLayout({
@@ -9,7 +11,12 @@ export default function DevOpsLayout({
 }) {
   return (
     <RootProvider>
-      <DocsLayout tree={source.pageTree}>{children}</DocsLayout>
+      <DocsLayout tree={source.pageTree} nav={{ title: "DevOps" }}>
+        <DocsBody>
+          <DevOpsDocsHeader />
+          {children}
+        </DocsBody>
+      </DocsLayout>
     </RootProvider>
   );
 }

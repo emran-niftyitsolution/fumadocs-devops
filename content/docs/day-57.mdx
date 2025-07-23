@@ -1,8 +1,64 @@
 ---
-title: "Day 57: Title"
-description: "DevOps 100 Days - Day 57"
+title: "Day 57: Kubernetes Deployments & Services"
+description: "Managing deployments and exposing applications in Kubernetes."
 ---
 
-# Day 57
+# Day 57: Kubernetes Deployments & Services
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Deployments and ReplicaSets
+- Exposing apps with Services
+- Rolling updates
+
+## 🚀 Deployments & ReplicaSets
+
+- **Deployment:** Manages ReplicaSets and pods
+- **ReplicaSet:** Ensures a specified number of pod replicas
+
+## 🌐 Services
+
+- **ClusterIP:** Internal access
+- **NodePort:** Exposes service on each node's IP
+- **LoadBalancer:** Exposes service externally
+
+## 🔄 Rolling Updates
+
+- Update pods with zero downtime
+
+## 🛠️ Example Deployment YAML
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.14.2
+          ports:
+            - containerPort: 80
+```
+
+## 📝 Hands-on Exercise
+
+- Deploy an Nginx deployment and expose it with a NodePort service
+
+## ❓ Assessment
+
+- What is a ReplicaSet?
+- Name two types of Kubernetes Services.
+
+## 🔗 Resources
+
+- [Kubernetes Services](https://kubernetes.io/docs/concepts/services-networking/service/)

@@ -1,8 +1,49 @@
 ---
-title: "Day 58: Title"
-description: "DevOps 100 Days - Day 58"
+title: "Day 58: Kubernetes ConfigMaps & Secrets"
+description: "Managing configuration and sensitive data in Kubernetes."
 ---
 
-# Day 58
+# Day 58: Kubernetes ConfigMaps & Secrets
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- What are ConfigMaps and Secrets?
+- How to use them in pods
+- Best practices
+
+## 🗂️ ConfigMaps
+
+- Store non-sensitive configuration data
+- Mounted as environment variables or files
+
+## 🔐 Secrets
+
+- Store sensitive data (passwords, tokens)
+- Base64-encoded, not encrypted by default
+
+## 🛠️ Example Secret YAML
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+  namespace: default
+type: Opaque
+data:
+  password: cGFzc3dvcmQ=
+```
+
+## 📝 Hands-on Exercise
+
+- Create a ConfigMap and a Secret
+- Mount them into a pod
+
+## ❓ Assessment
+
+- What is the difference between a ConfigMap and a Secret?
+- How are Secrets stored in Kubernetes?
+
+## 🔗 Resources
+
+- [Kubernetes ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/)

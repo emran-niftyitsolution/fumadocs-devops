@@ -1,8 +1,54 @@
 ---
-title: "Day 59: Title"
-description: "DevOps 100 Days - Day 59"
+title: "Day 59: Kubernetes Volumes & Storage"
+description: "Understanding persistent storage in Kubernetes."
 ---
 
-# Day 59
+# Day 59: Kubernetes Volumes & Storage
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Volumes in Kubernetes
+- PersistentVolume (PV) and PersistentVolumeClaim (PVC)
+- Storage classes
+
+## 💾 Volumes
+
+- Allow data to persist beyond pod lifecycle
+- Types: emptyDir, hostPath, configMap, secret, persistentVolumeClaim
+
+## 🗄️ PersistentVolume & PersistentVolumeClaim
+
+- **PV:** Cluster resource for storage
+- **PVC:** Request for storage by a user
+
+## 🏷️ Storage Classes
+
+- Define types of storage (fast, standard, etc.)
+
+## 🛠️ Example PVC YAML
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mypvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+```
+
+## 📝 Hands-on Exercise
+
+- Create a PVC and use it in a pod
+
+## ❓ Assessment
+
+- What is a PersistentVolumeClaim?
+- Why are volumes important in Kubernetes?
+
+## 🔗 Resources
+
+- [Kubernetes Volumes](https://kubernetes.io/docs/concepts/storage/volumes/)
