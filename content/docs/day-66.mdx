@@ -1,8 +1,66 @@
 ---
-title: "Day 66: Title"
-description: "DevOps 100 Days - Day 66"
+title: "Day 66: Advanced Terraform"
+description: "Deep dive into Terraform modules, state management, and best practices."
 ---
 
-# Day 66
+# Day 66: Advanced Terraform
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Terraform modules
+- State management
+- Remote backends
+- Advanced configurations
+
+## 📦 Terraform Modules
+
+Modules help organize and reuse Terraform code:
+
+```hcl
+module "vpc" {
+  source = "./modules/vpc"
+
+  vpc_cidr = "10.0.0.0/16"
+  environment = var.environment
+}
+```
+
+## 🗄️ State Management
+
+- State files track resource mappings
+- Use remote backends for team collaboration
+- Enable state locking to prevent conflicts
+
+## ☁️ Remote Backends
+
+Example S3 backend:
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket = "my-terraform-state"
+    key    = "infrastructure/terraform.tfstate"
+    region = "us-west-2"
+  }
+}
+```
+
+## ✅ Best Practices
+
+- Use version constraints
+- Validate with `terraform plan`
+- Use workspaces for environments
+
+## 📝 Hands-on Exercise
+
+- Create a reusable module for EC2 instances
+- Configure a remote backend
+
+## ❓ Assessment
+
+- What is a Terraform module?
+- Why use remote backends?
+
+## 🔗 Resources
+
+- [Terraform Modules](https://developer.hashicorp.com/terraform/language/modules)

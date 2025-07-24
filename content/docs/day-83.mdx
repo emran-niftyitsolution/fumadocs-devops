@@ -1,8 +1,75 @@
 ---
-title: "Day 83: Title"
-description: "DevOps 100 Days - Day 83"
+title: "Day 83: Chaos Engineering"
+description: "Principles, tools, and practices for chaos engineering in production."
 ---
 
-# Day 83
+# Day 83: Chaos Engineering
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Chaos engineering principles
+- Tools and frameworks
+- Experiment design
+- Safety practices
+
+## 🌪️ What is Chaos Engineering?
+
+The discipline of experimenting on a distributed system to build confidence in its capability to withstand turbulent conditions.
+
+## 🔬 Principles
+
+1. **Steady State:** Define normal system behavior
+2. **Hypothesis:** Predict what will happen
+3. **Blast Radius:** Limit impact of experiments
+4. **Automation:** Run experiments continuously
+
+## 🛠️ Tools
+
+- **Chaos Monkey:** Netflix's original tool
+- **Gremlin:** Commercial chaos engineering platform
+- **Litmus Chaos:** Kubernetes-native chaos engineering
+- **Chaos Toolkit:** Open-source framework
+
+## 🧪 Experiment Examples
+
+```yaml
+# Litmus Chaos experiment
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: pod-delete
+spec:
+  appinfo:
+    appns: default
+    applabel: app=nginx
+    appkind: deployment
+  jobCleanUpPolicy: retain
+  experiments:
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "30"
+```
+
+## 🛡️ Safety Practices
+
+- Run in non-production first
+- Have rollback procedures
+- Monitor system health
+- Set time limits
+
+## 📝 Hands-on Exercise
+
+- Design a chaos experiment
+- Run a simple failure injection
+
+## ❓ Assessment
+
+- What are the four principles of chaos engineering?
+- Why is blast radius important?
+
+## 🔗 Resources
+
+- [Chaos Engineering Principles](https://principlesofchaos.org/)

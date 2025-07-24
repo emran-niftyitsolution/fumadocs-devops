@@ -1,8 +1,77 @@
 ---
-title: "Day 78: Title"
-description: "DevOps 100 Days - Day 78"
+title: "Day 78: Advanced CI/CD Pipelines"
+description: "Multi-stage pipelines, parallel execution, and advanced automation patterns."
 ---
 
-# Day 78
+# Day 78: Advanced CI/CD Pipelines
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Multi-stage pipeline design
+- Parallel job execution
+- Conditional deployments
+- Pipeline optimization
+
+## 🔄 Multi-Stage Pipelines
+
+```yaml
+# GitLab CI example
+stages:
+  - build
+  - test
+  - security
+  - deploy
+
+build_job:
+  stage: build
+  script:
+    - npm install
+    - npm run build
+
+test_job:
+  stage: test
+  script:
+    - npm run test
+  parallel:
+    matrix:
+      - NODE_VERSION: "16"
+      - NODE_VERSION: "18"
+```
+
+## ⚡ Parallel Execution
+
+- Run tests in parallel
+- Deploy to multiple environments
+- Reduce pipeline duration
+
+## 🎯 Conditional Deployments
+
+```yaml
+deploy_production:
+  stage: deploy
+  script:
+    - ./deploy.sh
+  only:
+    - main
+  when: manual
+```
+
+## 📊 Pipeline Optimization
+
+- Cache dependencies
+- Use lightweight base images
+- Implement early failure detection
+
+## 📝 Hands-on Exercise
+
+- Create a multi-stage pipeline
+- Implement parallel job execution
+
+## ❓ Assessment
+
+- What are the benefits of parallel execution?
+- How do conditional deployments work?
+
+## 🔗 Resources
+
+- [GitLab CI/CD Documentation](https://docs.gitlab.com/ee/ci/)

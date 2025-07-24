@@ -1,8 +1,71 @@
 ---
-title: "Day 81: Title"
-description: "DevOps 100 Days - Day 81"
+title: "Day 81: Service Mesh"
+description: "Istio, Linkerd, and service mesh patterns for microservices."
 ---
 
-# Day 81
+# Day 81: Service Mesh
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- What is a service mesh?
+- Istio fundamentals
+- Traffic management
+- Observability patterns
+
+## 🌐 What is a Service Mesh?
+
+A dedicated infrastructure layer for handling service-to-service communication.
+
+## 🚀 Istio Components
+
+- **Control Plane:** istiod (pilot, citadel, galley)
+- **Data Plane:** Envoy proxy sidecars
+- **Gateway:** Ingress/egress traffic
+
+## 🛣️ Traffic Management
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  hosts:
+    - reviews
+  http:
+    - route:
+        - destination:
+            host: reviews
+            subset: v1
+          weight: 75
+        - destination:
+            host: reviews
+            subset: v2
+          weight: 25
+```
+
+## 📊 Observability
+
+- **Distributed Tracing:** Jaeger, Zipkin
+- **Metrics:** Prometheus integration
+- **Logging:** Centralized log collection
+
+## 🔒 Security
+
+- **mTLS:** Mutual TLS encryption
+- **Authorization:** Service-to-service policies
+- **Certificate Management:** Automatic rotation
+
+## 📝 Hands-on Exercise
+
+- Deploy Istio on Kubernetes
+- Configure traffic splitting
+
+## ❓ Assessment
+
+- What is the purpose of a service mesh?
+- Name Istio components.
+
+## 🔗 Resources
+
+- [Istio Documentation](https://istio.io/latest/docs/)

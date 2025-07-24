@@ -1,8 +1,58 @@
 ---
-title: "Day 69: Title"
-description: "DevOps 100 Days - Day 69"
+title: "Day 69: Database DevOps"
+description: "Database migrations, backup strategies, and database CI/CD."
 ---
 
-# Day 69
+# Day 69: Database DevOps
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Database migrations
+- Backup and recovery strategies
+- Database CI/CD
+- Monitoring database performance
+
+## 🔄 Database Migrations
+
+Version control for database schema changes:
+
+```sql
+-- Migration: 001_create_users_table.sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+## 💾 Backup Strategies
+
+- Full backups (complete database)
+- Incremental backups (changes only)
+- Point-in-time recovery
+
+## 🔄 Database CI/CD
+
+- Automate migrations in pipelines
+- Test database changes
+- Blue-green deployments for databases
+
+## 📊 Monitoring
+
+- Query performance
+- Connection counts
+- Storage usage
+
+## 📝 Hands-on Exercise
+
+- Set up automated database backups
+- Create a migration script
+
+## ❓ Assessment
+
+- What is a database migration?
+- Why are database backups important?
+
+## 🔗 Resources
+
+- [Database Migration Best Practices](https://www.prisma.io/dataguide/types/relational/what-are-database-migrations)

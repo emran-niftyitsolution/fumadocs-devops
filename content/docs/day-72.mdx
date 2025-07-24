@@ -1,8 +1,64 @@
 ---
-title: "Day 72: Title"
-description: "DevOps 100 Days - Day 72"
+title: "Day 72: Feature Flags & Deployment Strategies"
+description: "Using feature flags and advanced deployment patterns for safer releases."
 ---
 
-# Day 72
+# Day 72: Feature Flags & Deployment Strategies
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- What are feature flags?
+- Deployment strategies
+- A/B testing
+- Risk mitigation
+
+## 🚩 Feature Flags
+
+Control feature visibility without code deployments:
+
+```javascript
+if (featureFlag("new-checkout-flow")) {
+  // New checkout process
+} else {
+  // Legacy checkout process
+}
+```
+
+## 🚀 Deployment Strategies
+
+- **Blue-Green:** Two identical environments
+- **Canary:** Gradual rollout to subset of users
+- **Rolling:** Update instances one by one
+
+## 🧪 A/B Testing
+
+- Test different versions with user groups
+- Measure performance and user behavior
+- Data-driven decisions
+
+## ⚠️ Risk Mitigation
+
+- Instant rollback capabilities
+- Gradual feature exposure
+- Monitor key metrics
+
+## 🛠️ Tools
+
+- LaunchDarkly
+- Unleash
+- ConfigCat
+- Split.io
+
+## 📝 Hands-on Exercise
+
+- Implement a simple feature flag system
+- Design a canary deployment strategy
+
+## ❓ Assessment
+
+- What are the benefits of feature flags?
+- Explain blue-green deployment.
+
+## 🔗 Resources
+
+- [Feature Flag Best Practices](https://docs.launchdarkly.com/guides/flags/flag-best-practices)

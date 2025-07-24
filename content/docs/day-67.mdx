@@ -1,8 +1,72 @@
 ---
-title: "Day 67: Title"
-description: "DevOps 100 Days - Day 67"
+title: "Day 67: Advanced Ansible"
+description: "Ansible roles, playbooks, and automation best practices."
 ---
 
-# Day 67
+# Day 67: Advanced Ansible
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Ansible roles and playbooks
+- Variables and templates
+- Ansible Vault for secrets
+- Best practices
+
+## 🎭 Ansible Roles
+
+Roles organize tasks, handlers, variables, and templates:
+
+```yaml
+# roles/webserver/tasks/main.yml
+- name: Install Apache
+  package:
+    name: apache2
+    state: present
+
+- name: Start Apache
+  service:
+    name: apache2
+    state: started
+```
+
+## 📋 Playbooks
+
+Combine roles and tasks:
+
+```yaml
+- name: Deploy web application
+  hosts: webservers
+  become: yes
+  roles:
+    - webserver
+    - database
+```
+
+## 🔐 Ansible Vault
+
+Encrypt sensitive data:
+
+```bash
+ansible-vault create secrets.yml
+ansible-vault edit secrets.yml
+```
+
+## ✅ Best Practices
+
+- Use roles for reusability
+- Encrypt secrets with Vault
+- Test with `--check` and `--diff`
+
+## 📝 Hands-on Exercise
+
+- Create a role for installing Docker
+- Use Ansible Vault to encrypt database passwords
+
+## ❓ Assessment
+
+- What is an Ansible role?
+- How do you encrypt secrets in Ansible?
+
+## 🔗 Resources
+
+- [Ansible Roles](https://docs.ansible.com/ansible/latest/user_guide/playbooks_reuse_roles.html)

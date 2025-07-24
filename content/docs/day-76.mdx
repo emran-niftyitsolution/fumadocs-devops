@@ -1,8 +1,74 @@
 ---
-title: "Day 76: Title"
-description: "DevOps 100 Days - Day 76"
+title: "Day 76: Advanced Git Workflows"
+description: "Git flow, trunk-based development, and advanced branching strategies."
 ---
 
-# Day 76
+# Day 76: Advanced Git Workflows
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Git flow methodology
+- Trunk-based development
+- Feature branch strategies
+- Release management
+
+## 🌊 Git Flow
+
+A branching model for managing releases:
+
+```bash
+# Main branches
+main (production)
+develop (integration)
+
+# Supporting branches
+feature/feature-name
+release/version
+hotfix/urgent-fix
+```
+
+## 🚀 Trunk-Based Development
+
+- Single main branch
+- Short-lived feature branches
+- Continuous integration
+- Frequent small commits
+
+## 🔄 Branching Strategies
+
+- **Feature Branches:** `feature/user-authentication`
+- **Release Branches:** `release/v1.2.0`
+- **Hotfix Branches:** `hotfix/security-patch`
+
+## 📋 Git Commands
+
+```bash
+# Create feature branch
+git checkout -b feature/new-feature
+
+# Rebase to keep history clean
+git rebase main
+
+# Squash commits
+git rebase -i HEAD~3
+```
+
+## ✅ Best Practices
+
+- Keep branches short-lived
+- Use descriptive commit messages
+- Regular integration with main
+
+## 📝 Hands-on Exercise
+
+- Set up Git flow for a project
+- Practice trunk-based development
+
+## ❓ Assessment
+
+- What is the difference between Git flow and trunk-based development?
+- When would you use a hotfix branch?
+
+## 🔗 Resources
+
+- [Git Flow Documentation](https://nvie.com/posts/a-successful-git-branching-model/)

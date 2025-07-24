@@ -1,8 +1,76 @@
 ---
-title: "Day 82: Title"
-description: "DevOps 100 Days - Day 82"
+title: "Day 82: Advanced Monitoring"
+description: "Distributed tracing, APM, and advanced observability patterns."
 ---
 
-# Day 82
+# Day 82: Advanced Monitoring
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Distributed tracing
+- Application performance monitoring
+- Synthetic monitoring
+- Alert fatigue management
+
+## 🔍 Distributed Tracing
+
+Track requests across microservices:
+
+```javascript
+// OpenTelemetry example
+const { trace } = require("@opentelemetry/api");
+const tracer = trace.getTracer("my-service");
+
+function processOrder(orderId) {
+  const span = tracer.startSpan("process-order");
+  span.setAttribute("order.id", orderId);
+
+  try {
+    // Process order logic
+    span.setStatus({ code: SpanStatusCode.OK });
+  } catch (error) {
+    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+  } finally {
+    span.end();
+  }
+}
+```
+
+## 📊 APM (Application Performance Monitoring)
+
+- **New Relic:** Full-stack observability
+- **Datadog:** Infrastructure monitoring
+- **AppDynamics:** Business transaction monitoring
+
+## 🧪 Synthetic Monitoring
+
+- **Uptime Monitoring:** External health checks
+- **Transaction Monitoring:** End-to-end user journeys
+- **Performance Baselines:** SLA monitoring
+
+## ⚠️ Alert Management
+
+- **Alert Fatigue:** Too many false positives
+- **Escalation Policies:** Who gets notified when
+- **Runbooks:** Standardized response procedures
+
+## 📈 Metrics to Track
+
+- Response times (p50, p95, p99)
+- Error rates
+- Throughput
+- Resource utilization
+
+## 📝 Hands-on Exercise
+
+- Set up distributed tracing
+- Create synthetic monitors
+
+## ❓ Assessment
+
+- What is distributed tracing?
+- How do you prevent alert fatigue?
+
+## 🔗 Resources
+
+- [OpenTelemetry Documentation](https://opentelemetry.io/docs/)

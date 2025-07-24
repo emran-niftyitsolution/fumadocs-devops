@@ -1,8 +1,71 @@
 ---
-title: "Day 85: Title"
-description: "DevOps 100 Days - Day 85"
+title: "Day 85: Advanced Logging"
+description: "Centralized logging, log aggregation, and log analysis patterns."
 ---
 
-# Day 85
+# Day 85: Advanced Logging
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Centralized logging architecture
+- Log aggregation tools
+- Log analysis and search
+- Log retention strategies
+
+## 📊 Centralized Logging
+
+Collect logs from multiple sources:
+
+```yaml
+# Fluentd configuration
+<source>
+@type tail
+path /var/log/containers/*.log
+pos_file /var/log/fluentd-containers.log.pos
+tag kubernetes.*
+read_from_head true
+<parse>
+@type json
+time_format %Y-%m-%dT%H:%M:%S.%NZ
+</parse>
+</source>
+```
+
+## 🛠️ Log Aggregation Tools
+
+- **ELK Stack:** Elasticsearch, Logstash, Kibana
+- **Fluentd:** Data collection and routing
+- **Grafana Loki:** Log aggregation system
+- **Splunk:** Enterprise log management
+
+## 🔍 Log Analysis
+
+- **Structured Logging:** JSON format
+- **Log Levels:** DEBUG, INFO, WARN, ERROR
+- **Correlation IDs:** Track requests across services
+
+## 📈 Log Retention
+
+- **Hot Storage:** Recent logs (fast access)
+- **Warm Storage:** Older logs (medium access)
+- **Cold Storage:** Archived logs (slow access)
+
+## 🚨 Alerting
+
+- **Error Rate Thresholds:** Alert on high error rates
+- **Pattern Detection:** Unusual log patterns
+- **Anomaly Detection:** Machine learning for log analysis
+
+## 📝 Hands-on Exercise
+
+- Set up ELK stack
+- Configure structured logging
+
+## ❓ Assessment
+
+- What is centralized logging?
+- Why use structured logging?
+
+## 🔗 Resources
+
+- [ELK Stack Guide](https://www.elastic.co/guide/index.html)

@@ -1,8 +1,78 @@
 ---
-title: "Day 87: Title"
-description: "DevOps 100 Days - Day 87"
+title: "Day 87: Advanced Storage"
+description: "Persistent volumes, storage classes, and data management patterns."
 ---
 
-# Day 87
+# Day 87: Advanced Storage
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Persistent volumes
+- Storage classes
+- Data backup strategies
+- Storage optimization
+
+## 💾 Persistent Volumes
+
+Persistent storage for containers:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: fast-ssd
+  hostPath:
+    path: /data/mysql
+```
+
+## 📦 Storage Classes
+
+- **SSD:** High performance
+- **HDD:** Cost-effective
+- **Network Storage:** NFS, Ceph
+- **Cloud Storage:** EBS, Azure Disk
+
+## 🔄 Data Management
+
+- **Backup Strategies:** Full, incremental, differential
+- **Data Replication:** Synchronous, asynchronous
+- **Data Migration:** Moving data between storage
+
+## 📊 Storage Optimization
+
+- **Compression:** Reduce storage footprint
+- **Deduplication:** Remove duplicate data
+- **Tiering:** Hot, warm, cold storage
+
+## 📝 Hands-on Exercise
+
+- Create persistent volumes
+- Configure storage classes
+
+## ❓ Assessment
+
+- What is a persistent volume?
+- How do storage classes work?
+
+## 🔗 Resources
+
+- [Kubernetes Storage](https://kubernetes.io/docs/concepts/storage/)

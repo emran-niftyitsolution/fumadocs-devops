@@ -1,8 +1,61 @@
 ---
-title: "Day 77: Title"
-description: "DevOps 100 Days - Day 77"
+title: "Day 77: Infrastructure as Code Best Practices"
+description: "IaC patterns, testing, and governance for infrastructure code."
 ---
 
-# Day 77
+# Day 77: Infrastructure as Code Best Practices
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- IaC design patterns
+- Testing infrastructure code
+- Security and compliance
+- Documentation standards
+
+## 🏗️ Design Patterns
+
+- **Modular Design:** Reusable components
+- **Environment Parity:** Consistent across dev/staging/prod
+- **Immutable Infrastructure:** Replace, don't modify
+
+## 🧪 Testing Strategies
+
+```hcl
+# Terraform test example
+resource "aws_instance" "web" {
+  ami           = "ami-123456"
+  instance_type = "t3.micro"
+
+  tags = {
+    Name = "web-server"
+  }
+}
+```
+
+## 🔒 Security Best Practices
+
+- Use IAM roles and policies
+- Encrypt sensitive data
+- Implement least privilege
+- Regular security scanning
+
+## 📚 Documentation
+
+- README files for modules
+- Architecture diagrams
+- Change logs
+- Runbooks
+
+## 📝 Hands-on Exercise
+
+- Create a reusable Terraform module
+- Write tests for infrastructure code
+
+## ❓ Assessment
+
+- What is immutable infrastructure?
+- Why test infrastructure code?
+
+## 🔗 Resources
+
+- [Terraform Best Practices](https://developer.hashicorp.com/terraform/language/modules/develop)

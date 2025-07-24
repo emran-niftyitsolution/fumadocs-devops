@@ -1,8 +1,83 @@
 ---
-title: "Day 93: Title"
-description: "DevOps 100 Days - Day 93"
+title: "Day 93: Advanced API Management"
+description: "API gateway patterns, rate limiting, and API security best practices."
 ---
 
-# Day 93
+# Day 93: Advanced API Management
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- API gateway patterns
+- Rate limiting strategies
+- API security
+- API documentation
+
+## 🚪 API Gateway
+
+Centralized API management:
+
+```yaml
+# Kong API Gateway configuration
+_format_version: "2.1"
+services:
+  - name: user-service
+    url: http://user-service:8080
+    routes:
+      - name: user-routes
+        paths:
+          - /api/users
+        methods:
+          - GET
+          - POST
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          hour: 1000
+      - name: key-auth
+        config:
+          key_names:
+            - apikey
+```
+
+## ⚡ Rate Limiting
+
+- **Token Bucket:** Fixed rate with burst allowance
+- **Leaky Bucket:** Smooth rate limiting
+- **Sliding Window:** Time-based rate limiting
+- **User-based:** Per-user rate limits
+
+## 🔒 API Security
+
+- **Authentication:** API keys, OAuth 2.0, JWT
+- **Authorization:** Role-based access control
+- **Input Validation:** Sanitize and validate inputs
+- **Throttling:** Prevent abuse and DDoS
+
+## 📚 API Documentation
+
+- **OpenAPI/Swagger:** Standard API documentation
+- **Interactive Docs:** Try APIs directly
+- **Versioning:** API version management
+- **Deprecation:** Graceful API evolution
+
+## 🛠️ API Management Tools
+
+- **Kong:** Open-source API gateway
+- **AWS API Gateway:** Managed API service
+- **Azure API Management:** Microsoft's API platform
+- **Apigee:** Google's API management
+
+## 📝 Hands-on Exercise
+
+- Set up an API gateway
+- Implement rate limiting
+
+## ❓ Assessment
+
+- What is an API gateway?
+- Why implement rate limiting?
+
+## 🔗 Resources
+
+- [Kong Documentation](https://docs.konghq.com/)

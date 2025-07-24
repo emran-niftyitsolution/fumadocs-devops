@@ -1,8 +1,76 @@
 ---
-title: "Day 84: Title"
-description: "DevOps 100 Days - Day 84"
+title: "Day 84: GitOps"
+description: "GitOps principles, ArgoCD, and declarative deployment patterns."
 ---
 
-# Day 84
+# Day 84: GitOps
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- GitOps principles
+- ArgoCD implementation
+- Declarative deployments
+- Git as single source of truth
+
+## 🔄 GitOps Principles
+
+1. **Declarative:** Describe desired state
+2. **Versioned:** Git as source of truth
+3. **Automated:** Pull-based deployments
+4. **Observable:** Monitor and alert
+
+## 🚀 ArgoCD
+
+GitOps continuous delivery for Kubernetes:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps
+    targetRevision: HEAD
+    path: guestbook
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: guestbook
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+
+## 📋 Declarative vs Imperative
+
+- **Declarative:** Describe what you want
+- **Imperative:** Describe how to get there
+
+## 🔍 Observability
+
+- **Sync Status:** Are resources in sync?
+- **Health Status:** Are resources healthy?
+- **Drift Detection:** Manual changes detected
+
+## 🛠️ Tools
+
+- **ArgoCD:** Kubernetes-native GitOps
+- **Flux:** GitOps toolkit
+- **Jenkins X:** GitOps with Jenkins
+
+## 📝 Hands-on Exercise
+
+- Set up ArgoCD
+- Create a GitOps workflow
+
+## ❓ Assessment
+
+- What are the four GitOps principles?
+- Why use Git as source of truth?
+
+## 🔗 Resources
+
+- [ArgoCD Documentation](https://argo-cd.readthedocs.io/)

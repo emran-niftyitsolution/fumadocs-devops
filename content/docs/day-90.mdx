@@ -1,8 +1,95 @@
 ---
-title: "Day 90: Title"
-description: "DevOps 100 Days - Day 90"
+title: "Day 90: Advanced Testing"
+description: "Test automation, contract testing, and advanced testing strategies."
 ---
 
-# Day 90
+# Day 90: Advanced Testing
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Test automation frameworks
+- Contract testing
+- Performance testing
+- Test data management
+
+## 🧪 Test Automation
+
+Automate testing across the pipeline:
+
+```javascript
+// Jest test example
+describe("User API", () => {
+  test("should create a new user", async () => {
+    const userData = {
+      name: "John Doe",
+      email: "john@example.com",
+    };
+
+    const response = await request(app).post("/api/users").send(userData);
+
+    expect(response.status).toBe(201);
+    expect(response.body.name).toBe(userData.name);
+  });
+});
+```
+
+## 📋 Contract Testing
+
+Ensure service compatibility:
+
+```javascript
+// Pact contract test
+const { Pact } = require("@pact-foundation/pact");
+
+const provider = new Pact({
+  consumer: "UserService",
+  provider: "EmailService",
+});
+
+describe("Email Service Contract", () => {
+  it("should send welcome email", () => {
+    return provider
+      .given("user registered")
+      .uponReceiving("welcome email request")
+      .withRequest({
+        method: "POST",
+        path: "/api/emails",
+        body: {
+          to: "user@example.com",
+          subject: "Welcome!",
+        },
+      })
+      .willRespondWith({
+        status: 200,
+        body: { sent: true },
+      });
+  });
+});
+```
+
+## ⚡ Performance Testing
+
+- **Load Testing:** Normal expected load
+- **Stress Testing:** Beyond capacity
+- **Spike Testing:** Sudden load increases
+- **Endurance Testing:** Long-duration tests
+
+## 📊 Test Data Management
+
+- **Test Data Generation:** Synthetic data creation
+- **Data Masking:** Protect sensitive data
+- **Data Refresh:** Regular test data updates
+
+## 📝 Hands-on Exercise
+
+- Write automated tests
+- Implement contract testing
+
+## ❓ Assessment
+
+- What is contract testing?
+- Why is test data management important?
+
+## 🔗 Resources
+
+- [Jest Documentation](https://jestjs.io/docs/getting-started)

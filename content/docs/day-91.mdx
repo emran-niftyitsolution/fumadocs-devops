@@ -1,8 +1,71 @@
 ---
-title: "Day 91: Title"
-description: "DevOps 100 Days - Day 91"
+title: "Day 91: Advanced Cloud Native"
+description: "Serverless architecture, event-driven patterns, and cloud-native best practices."
 ---
 
-# Day 91
+# Day 91: Advanced Cloud Native
 
-Content coming soon.
+## 🎯 What You'll Learn
+
+- Serverless architecture
+- Event-driven patterns
+- Cloud-native security
+- Multi-cloud strategies
+
+## ☁️ Serverless Architecture
+
+Function-as-a-Service (FaaS) and Backend-as-a-Service (BaaS):
+
+```javascript
+// AWS Lambda function
+exports.handler = async (event) => {
+  const { name } = JSON.parse(event.body);
+
+  const response = {
+    statusCode: 200,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: `Hello, ${name}!`,
+    }),
+  };
+
+  return response;
+};
+```
+
+## 📡 Event-Driven Patterns
+
+- **Event Sourcing:** Store events instead of state
+- **CQRS:** Command Query Responsibility Segregation
+- **Event Streaming:** Apache Kafka, AWS Kinesis
+- **Webhooks:** HTTP callbacks
+
+## 🔒 Cloud-Native Security
+
+- **Identity Management:** OAuth 2.0, OIDC
+- **Secrets Management:** HashiCorp Vault, AWS Secrets Manager
+- **Network Security:** Zero trust, micro-segmentation
+- **Compliance:** SOC 2, GDPR, HIPAA
+
+## 🌐 Multi-Cloud Strategies
+
+- **Cloud Agnostic:** Avoid vendor lock-in
+- **Hybrid Cloud:** On-premises + cloud
+- **Multi-Region:** Geographic distribution
+- **Disaster Recovery:** Cross-cloud backup
+
+## 📝 Hands-on Exercise
+
+- Deploy a serverless function
+- Implement event-driven architecture
+
+## ❓ Assessment
+
+- What is serverless architecture?
+- Why use event-driven patterns?
+
+## 🔗 Resources
+
+- [AWS Lambda Documentation](https://docs.aws.amazon.com/lambda/)
