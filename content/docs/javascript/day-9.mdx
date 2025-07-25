@@ -1,0 +1,63 @@
+---
+title: "Day 9: Scope and Closures"
+description: "Learn about variable scope, lexical scope, and closures in JavaScript."
+---
+
+# Day 9: Scope and Closures
+
+## 🎯 What You'll Learn
+
+- Global, function, and block scope
+- Lexical scope
+- Closures and their uses
+
+## 🌍 Scope
+
+- **Global Scope:** Variables declared outside any function
+- **Function Scope:** Variables declared inside a function
+- **Block Scope:** Variables declared with `let` or `const` inside `{}`
+
+```js
+let globalVar = "I am global";
+function testScope() {
+  let localVar = "I am local";
+  if (true) {
+    let blockVar = "I am block-scoped";
+  }
+}
+```
+
+## 🔗 Lexical Scope
+
+Functions remember the scope in which they were created.
+
+## 🔒 Closures
+
+A closure is a function that remembers its outer variables:
+
+```js
+function makeCounter() {
+  let count = 0;
+  return function () {
+    count++;
+    return count;
+  };
+}
+let counter = makeCounter();
+console.log(counter()); // 1
+console.log(counter()); // 2
+```
+
+## 📝 Hands-on Exercise
+
+- Write a function that returns another function (closure)
+- Test variable scope in the console
+
+## ❓ Assessment
+
+- What is a closure?
+- What is block scope?
+
+## 🔗 Resources
+
+- [MDN Closures](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures)

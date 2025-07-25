@@ -1,0 +1,66 @@
+---
+title: "Day 2: Variables and Data Types"
+description: "Learn about variables, let/const/var, and JavaScript data types."
+---
+
+# Day 2: Variables and Data Types
+
+## 🎯 What You'll Learn
+
+- Declaring variables with `let`, `const`, and `var`
+- JavaScript data types
+- Type coercion basics
+
+## 📝 Declaring Variables
+
+- `let`: Block-scoped, can be reassigned
+- `const`: Block-scoped, cannot be reassigned
+- `var`: Function-scoped, avoid in modern code
+
+```js
+let name = "Alice";
+const pi = 3.14;
+var age = 30;
+```
+
+## 📦 Data Types
+
+- String
+- Number
+- Boolean
+- Null
+- Undefined
+- Object
+- Symbol (ES6+)
+
+```js
+let str = "hello";
+let num = 42;
+let isActive = true;
+let nothing = null;
+let notDefined;
+let obj = { key: "value" };
+```
+
+## 🔄 Type Coercion
+
+JavaScript automatically converts types in some situations:
+
+```js
+console.log("5" + 1); // '51'
+console.log("5" - 1); // 4
+```
+
+## 📝 Hands-on Exercise
+
+- Declare variables using `let` and `const`
+- Try different data types in the console
+
+## ❓ Assessment
+
+- What is the difference between `let` and `var`?
+- Name three JavaScript data types.
+
+## 🔗 Resources
+
+- [MDN Variables](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Grammar_and_types#Declarations)

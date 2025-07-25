@@ -1,0 +1,62 @@
+---
+title: "Day 8: Objects and Object Methods"
+description: "Learn about objects, properties, methods, and object manipulation in JavaScript."
+---
+
+# Day 8: Objects and Object Methods
+
+## 🎯 What You'll Learn
+
+- Creating objects
+- Accessing and modifying properties
+- Adding methods to objects
+- Object destructuring
+
+## 📝 Creating Objects
+
+```js
+let person = {
+  name: "Alice",
+  age: 25,
+  greet: function () {
+    console.log("Hello!");
+  },
+};
+```
+
+## 🔄 Accessing and Modifying
+
+```js
+console.log(person.name); // 'Alice'
+person.age = 26;
+```
+
+## 🏷️ Adding Methods
+
+```js
+person.sayAge = function () {
+  console.log(`I am ${this.age} years old.`);
+};
+person.sayAge();
+```
+
+## 🧩 Object Destructuring
+
+```js
+let { name, age } = person;
+console.log(name, age);
+```
+
+## 📝 Hands-on Exercise
+
+- Create an object for a book (title, author, pages)
+- Add a method to print book info
+
+## ❓ Assessment
+
+- How do you access an object property?
+- What is object destructuring?
+
+## 🔗 Resources
+
+- [MDN Objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_Objects)

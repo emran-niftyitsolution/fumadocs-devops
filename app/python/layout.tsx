@@ -1,20 +1,20 @@
-import { JavaScriptDocsHeader } from "@/components/JavaScriptDocsHeader";
+import { PythonDocsHeader } from "@/components/PythonDocsHeader";
 import { source } from "@/lib/source";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { DocsBody } from "fumadocs-ui/page";
 import { RootProvider } from "fumadocs-ui/provider";
 
-export default function JavaScriptLayout({
+export default function PythonLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Create a filtered page tree that only shows JavaScript content
-  const javascriptTree = {
+  // Create a filtered page tree that only shows Python content
+  const pythonTree = {
     ...source.pageTree,
     children:
       source.pageTree.children
-        ?.filter((child) => child.name === "javascript")
+        ?.filter((child) => child.name === "python")
         .map((child) => ({
           ...child,
           children:
@@ -26,9 +26,9 @@ export default function JavaScriptLayout({
 
   return (
     <RootProvider>
-      <DocsLayout tree={javascriptTree} nav={{ title: "JavaScript" }}>
+      <DocsLayout tree={pythonTree} nav={{ title: "Python" }}>
         <DocsBody>
-          <JavaScriptDocsHeader />
+          <PythonDocsHeader />
           {children}
         </DocsBody>
       </DocsLayout>
