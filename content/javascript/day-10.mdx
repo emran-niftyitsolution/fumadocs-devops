@@ -1,0 +1,52 @@
+---
+title: "Day 10: The DOM and Basic Events"
+description: "Learn about the Document Object Model (DOM) and handling basic events in JavaScript."
+---
+
+# Day 10: The DOM and Basic Events
+
+## 🎯 What You'll Learn
+
+- What is the DOM?
+- Selecting and modifying DOM elements
+- Handling basic events (click, input)
+
+## 🌳 What is the DOM?
+
+The Document Object Model (DOM) is a tree-like structure representing the HTML of a web page. JavaScript can interact with and modify the DOM.
+
+## 📝 Selecting Elements
+
+```js
+let heading = document.getElementById("main-title");
+let buttons = document.querySelectorAll(".btn");
+```
+
+## ✏️ Modifying Elements
+
+```js
+heading.textContent = "New Title";
+```
+
+## 🖱️ Handling Events
+
+```js
+let btn = document.getElementById("my-btn");
+btn.addEventListener("click", function () {
+  alert("Button clicked!");
+});
+```
+
+## 📝 Hands-on Exercise
+
+- Create a simple HTML file
+- Use JavaScript to change text and handle a button click
+
+## ❓ Assessment
+
+- What is the DOM?
+- How do you add a click event listener?
+
+## 🔗 Resources
+
+- [MDN DOM](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction)

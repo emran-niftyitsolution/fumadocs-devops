@@ -1,5 +1,5 @@
 import { JavaScriptDocsHeader } from "@/components/JavaScriptDocsHeader";
-import { source } from "@/lib/source";
+import { javascriptSource } from "@/lib/javascript-source";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { DocsBody } from "fumadocs-ui/page";
 import { RootProvider } from "fumadocs-ui/provider";
@@ -9,19 +9,15 @@ export default function JavaScriptLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Create a filtered page tree that only shows JavaScript content
+  // Filter the page tree to only show JavaScript content
   const javascriptTree = {
-    ...source.pageTree,
+    ...javascriptSource.pageTree,
     children:
-      source.pageTree.children
-        ?.filter((child) => child.name === "javascript")
-        .map((child) => ({
-          ...child,
-          children:
-            child.children?.filter((grandChild) =>
-              grandChild.name.startsWith("day-")
-            ) || [],
-        })) || [],
+      javascriptSource.pageTree.children?.filter(
+        (child) =>
+          child.name &&
+          (child.name === "javascript" || String(child.name).startsWith("day-"))
+      ) || [],
   };
 
   return (

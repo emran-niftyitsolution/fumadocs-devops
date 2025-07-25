@@ -1,0 +1,64 @@
+---
+title: "Day 7: Arrays and Array Methods"
+description: "Learn about arrays, common array methods, and iteration in JavaScript."
+---
+
+# Day 7: Arrays and Array Methods
+
+## 🎯 What You'll Learn
+
+- Creating arrays
+- Accessing and modifying elements
+- Common array methods: `push`, `pop`, `shift`, `unshift`, `map`, `filter`, `reduce`
+- Iterating over arrays
+
+## 📝 Creating Arrays
+
+```js
+let fruits = ["apple", "banana", "cherry"];
+```
+
+## 🔄 Accessing and Modifying
+
+```js
+console.log(fruits[0]); // 'apple'
+fruits[1] = "blueberry";
+```
+
+## 🛠️ Common Array Methods
+
+```js
+fruits.push("date"); // add to end
+fruits.pop(); // remove from end
+fruits.shift(); // remove from start
+fruits.unshift("apricot"); // add to start
+```
+
+## 🔁 Iterating with forEach
+
+```js
+fruits.forEach((fruit) => console.log(fruit));
+```
+
+## 🧮 Higher-Order Methods
+
+```js
+let numbers = [1, 2, 3, 4];
+let squares = numbers.map((n) => n * n);
+let evens = numbers.filter((n) => n % 2 === 0);
+let sum = numbers.reduce((acc, n) => acc + n, 0);
+```
+
+## 📝 Hands-on Exercise
+
+- Create an array of your favorite colors
+- Use `map` to uppercase them
+
+## ❓ Assessment
+
+- What does `push` do?
+- How do you use `map`?
+
+## 🔗 Resources
+
+- [MDN Arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)

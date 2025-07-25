@@ -1,4 +1,4 @@
-import { javascriptSource } from "@/lib/javascript-source";
+import { mongodbSource } from "@/lib/mongodb-source";
 import { getMDXComponents } from "@/mdx-components";
 import { createRelativeLink } from "fumadocs-ui/mdx";
 import {
@@ -14,14 +14,14 @@ export default async function Page(props: {
 }) {
   const params = await props.params;
 
-  // For JavaScript docs, we need to look for content in the javascript subdirectory
+  // For MongoDB docs, we need to look for content in the mongodb subdirectory
   let page;
   if (!params.slug || params.slug.length === 0) {
-    // If no slug, show the JavaScript index page
-    page = javascriptSource.getPage(["day-0"]);
+    // If no slug, show the MongoDB index page
+    page = mongodbSource.getPage(["day-0"]);
   } else {
-    // If there's a slug, look for it in the javascript directory
-    page = javascriptSource.getPage(params.slug);
+    // If there's a slug, look for it in the mongodb directory
+    page = mongodbSource.getPage(params.slug);
   }
 
   if (!page) notFound();
@@ -35,7 +35,7 @@ export default async function Page(props: {
       <DocsBody>
         <MDXContent
           components={getMDXComponents({
-            a: createRelativeLink(javascriptSource, page),
+            a: createRelativeLink(mongodbSource, page),
           })}
         />
       </DocsBody>
@@ -44,7 +44,7 @@ export default async function Page(props: {
 }
 
 export async function generateStaticParams() {
-  return javascriptSource.generateParams();
+  return mongodbSource.generateParams();
 }
 
 export async function generateMetadata(props: {
@@ -53,9 +53,9 @@ export async function generateMetadata(props: {
   const params = await props.params;
   let page;
   if (!params.slug || params.slug.length === 0) {
-    page = javascriptSource.getPage(["day-0"]);
+    page = mongodbSource.getPage(["day-0"]);
   } else {
-    page = javascriptSource.getPage(params.slug);
+    page = mongodbSource.getPage(params.slug);
   }
   if (!page) notFound();
 

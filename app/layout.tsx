@@ -6,9 +6,9 @@ import "./global.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TechDocs - Multi-Language Documentation",
+  title: "DocHub - Master Modern Technologies",
   description:
-    "Comprehensive documentation for DevOps, JavaScript, TypeScript, MongoDB, MySQL, Python and more",
+    "The ultimate destination for mastering modern technologies through comprehensive, hands-on learning experiences. Learn DevOps, JavaScript, TypeScript, Python, MongoDB, MySQL and more.",
 };
 
 export default function RootLayout({

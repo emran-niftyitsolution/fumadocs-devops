@@ -1,5 +1,5 @@
 import { PythonDocsHeader } from "@/components/PythonDocsHeader";
-import { source } from "@/lib/source";
+import { pythonSource } from "@/lib/python-source";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { DocsBody } from "fumadocs-ui/page";
 import { RootProvider } from "fumadocs-ui/provider";
@@ -9,19 +9,15 @@ export default function PythonLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Create a filtered page tree that only shows Python content
+  // Filter the page tree to only show Python content
   const pythonTree = {
-    ...source.pageTree,
+    ...pythonSource.pageTree,
     children:
-      source.pageTree.children
-        ?.filter((child) => child.name === "python")
-        .map((child) => ({
-          ...child,
-          children:
-            child.children?.filter((grandChild) =>
-              grandChild.name.startsWith("day-")
-            ) || [],
-        })) || [],
+      pythonSource.pageTree.children?.filter(
+        (child) =>
+          child.name &&
+          (child.name === "python" || String(child.name).startsWith("day-"))
+      ) || [],
   };
 
   return (

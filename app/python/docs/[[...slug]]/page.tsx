@@ -1,7 +1,12 @@
-import { source } from "@/lib/source";
+import { pythonSource } from "@/lib/python-source";
 import { getMDXComponents } from "@/mdx-components";
 import { createRelativeLink } from "fumadocs-ui/mdx";
-import { DocsBody, DocsPage } from "fumadocs-ui/page";
+import {
+  DocsBody,
+  DocsDescription,
+  DocsPage,
+  DocsTitle,
+} from "fumadocs-ui/page";
 import { notFound } from "next/navigation";
 
 export default async function Page(props: {
@@ -13,10 +18,10 @@ export default async function Page(props: {
   let page;
   if (!params.slug || params.slug.length === 0) {
     // If no slug, show the Python index page
-    page = source.getPage(["python", "day-0"]);
+    page = pythonSource.getPage(["day-0"]);
   } else {
     // If there's a slug, look for it in the python directory
-    page = source.getPage(["python", ...params.slug]);
+    page = pythonSource.getPage(params.slug);
   }
 
   if (!page) notFound();
@@ -25,13 +30,37 @@ export default async function Page(props: {
 
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
+      <DocsTitle>{page.data.title}</DocsTitle>
+      <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
         <MDXContent
           components={getMDXComponents({
-            a: createRelativeLink(source, page),
+            a: createRelativeLink(pythonSource, page),
           })}
         />
       </DocsBody>
     </DocsPage>
   );
+}
+
+export async function generateStaticParams() {
+  return pythonSource.generateParams();
+}
+
+export async function generateMetadata(props: {
+  params: Promise<{ slug?: string[] }>;
+}) {
+  const params = await props.params;
+  let page;
+  if (!params.slug || params.slug.length === 0) {
+    page = pythonSource.getPage(["day-0"]);
+  } else {
+    page = pythonSource.getPage(params.slug);
+  }
+  if (!page) notFound();
+
+  return {
+    title: page.data.title,
+    description: page.data.description,
+  };
 }
